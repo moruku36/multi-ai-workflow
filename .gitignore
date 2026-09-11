@@ -1,0 +1,24 @@
+# Environment & API keys
+.env
+*.env.local
+
+# Sensitive Persona / Context files (keep local unless deliberately sanitised)
+configs/level3-chatgpt/private_*
+*.private.md
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python & Node
+__pycache__/
+*.pyc
+node_modules/
+.venv/
+
+# Scratch & Temporary outputs
+scratch/
+tmp/
+*.log
