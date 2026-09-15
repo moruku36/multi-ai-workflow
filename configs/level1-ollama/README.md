@@ -7,7 +7,10 @@
 
 ## 1. 構成ファイル
 - **`Modelfile`**: 定型加工に特化したパラメータ（Temperature 0.2等）と、前置きや挨拶を排除してデータ本体のみを出力するシステムプロンプトを定義。
-- **`run.sh`**: Linux/Mac環境でModelfileからカスタムモデル `qwen-processor` を自動作成するスクリプト。
+- **`run.sh`**: Linux/Mac環境でModelfileからカスタムモデル `qwen-processor` を自動作成するシェルスクリプト。
+- **`run.ps1`**: Windows (PowerShell) 環境で `qwen-processor` を自動作成するスクリプト。
+- **`start-webui.bat`**: WindowsでOpen WebUIを起動するバッチファイル。
+- **`launch_silent.vbs`**: Windowsで黒いコマンド画面を出さずにバックグラウンド常駐起動するスクリプト。
 
 ---
 
@@ -15,16 +18,16 @@
 
 ### Step 1: Ollama でモデルを作成
 
-PowerShell (Windows) の場合:
+**Windows (PowerShell) の場合:**
 ```powershell
 # ベースモデルを取得 (7b または 14b)
 ollama pull qwen2.5:14b
 
-# カスタムモデルを作成
-ollama create qwen-processor -f ./Modelfile
+# スクリプトを実行してカスタムモデルを作成
+.\run.ps1
 ```
 
-Bash (Linux / macOS) の場合:
+**Linux / macOS (Bash) の場合:**
 ```bash
 chmod +x ./run.sh
 ./run.sh
@@ -38,12 +41,12 @@ chmod +x ./run.sh
 
 1. **起動**:
    ```powershell
-   open-webui serve
+   .\start-webui.bat
    ```
 2. **ブラウザでアクセス**:
    `http://localhost:8080` を開きます。
 3. **モデル選択**:
-   画面上部のモデル選択で **`qwen-processor`** を選んで利用します。
+   画面上部のモデル選択プルダウンで **`qwen-processor`** を選んで利用します。
 
 > **⚠️ Windows 環境での注意点 (IPv6 / IPv4)**:  
 > Windows では `localhost:11434` への通信が拒否される場合があるため、Open WebUI の管理者設定（または環境変数 `OLLAMA_BASE_URL`）に `http://127.0.0.1:11434` を指定してください。

@@ -15,23 +15,24 @@
 AIを「1つの万能ツール」として使うと、「回答が浅い」「すぐ利用制限にかかる」「機密情報の漏洩が不安」といった壁にぶつかります。  
 本構成では、**得意分野の異なる4つのAIを社内チームのように編成**して協調させます。
 
-```text
-       【 あなたからの依頼・作業発生 】
-                     │
- ┌───────────────────┼───────────────────┐
- ▼                   ▼                   ▼
-【Layer 1】          【Layer 2】          【Layer 3】
-手元の事務アシスタント   現場のリサーチャー・実務役   専属の戦略参謀・設計パートナー
-(Ollama / Qwen)     (Gemini + Antigravity) (ChatGPT + Codex)
- └─ 社外秘データ成形   └─ 最新情報検索・ツール実行  └─ 深い思考・相談・企画立案
-                     │                   │
-                     └─────────┬─────────┘
-                               │ (重要成果物のレビュー)
-                               ▼
-                          【Layer 4】
-                     外部の冷静な監査役・チェッカー
-                             (Claude)
-                               └─ 批判的検証・リスク指摘
+```mermaid
+flowchart TD
+    User([あなたからの依頼・作業発生]) --> L1
+    User --> L2
+    User --> L3
+
+    subgraph "社内AIチーム"
+        L1["🔹 Layer 1: 手元の事務員 (Ollama / Qwen)<br>社外秘データ成形・ローカル高速処理 (通信費ゼロ)"]
+        L2["🔹 Layer 2: 現場実務役 (Gemini + Antigravity)<br>最新Web調査・資料作成・実ファイル自動編集"]
+        L3["🔹 Layer 3: 専属参謀 (ChatGPT + Codex)<br>思考・設計・企画の壁打ち・個人文脈の理解"]
+    end
+
+    L2 --> L4
+    L3 --> L4
+
+    subgraph "外部監査"
+        L4["🔹 Layer 4: 冷静な監査役 (Claude API)<br>批判的検証・論理の穴とリスクのあぶり出し"]
+    end
 ```
 
 ### 👥 各メンバーの役割と強み
@@ -95,29 +96,46 @@ AIを「1つの万能ツール」として使うと、「回答が浅い」「�
 
 ---
 
-## 4. リポジトリ構成
+## 4. 📚 実践レシピ集 (Cookbook)
+
+様々な業務シナリオに合わせた、コピペして使える実践プロンプト集です。
+
+- **[レシピ 01: 議事録・商談メモの高速処理＆リスク検証](docs/cookbook/01-meeting-minutes.md)**
+- **[レシピ 02: 新技術・OSSの選定と比較レポート作成](docs/cookbook/02-tech-selection.md)**
+- **[レシピ 03: 対外発信・プレスリリースの推敲＆炎上リスクチェック](docs/cookbook/03-press-release.md)**
+- **[レシピ 04: レガシーコードのリファクタリング＆セキュリティ監査](docs/cookbook/04-code-refactor.md)**
+
+---
+
+## 5. リポジトリ構成
 
 ```text
 .
 ├── README.md                      # 本ドキュメント（全体像と運用思想・非エンジニア向け解説）
+├── LICENSE                        # MIT ライセンス
 ├── .gitignore                     # Git管理除外設定
+├── .cursorrules                   # Cursor / Windsurf / エージェント用ルール設定
 ├── assets/
 │   └── architecture.jpg           # アーキテクチャ概念図
 ├── docs/
 │   ├── routing-guide.md           # 逆引きタスク振り分けガイド（迷った時の担当決め表）
-│   └── handoff-templates.md       # モデル間のコンテキスト引き継ぎ雛形（コピペ用プロンプト）
+│   ├── handoff-templates.md       # モデル間のコンテキスト引き継ぎ雛形（コピペ用プロンプト）
+│   └── cookbook/                  # 実践レシピ集（議事録、選定、広報、リファクタ）
 ├── configs/
-│   ├── level1-ollama/             # Layer 1 (Qwen + Open WebUI) のModelfile・解説
+│   ├── level1-ollama/             # Layer 1 (Qwen + Open WebUI) の設定・起動スクリプト (Win/Mac/Linux)
 │   ├── level2-antigravity/        # Layer 2 (Gemini) のエージェント行動ルール
 │   ├── level3-chatgpt/            # Layer 3 (ChatGPT) のカスタム指示・ペルソナ定義
 │   └── level4-claude/             # Layer 4 (Claude API) のレビュープロンプト＆CLI
+├── tools/
+│   ├── pipeline.py                # Layer 1 と Layer 4 を直結するCLIツール
+│   └── README.md                  # ツールの利用ガイド
 └── templates/
     └── .env.example               # 環境変数テンプレート
 ```
 
 ---
 
-## 5. クイックスタート
+## 6. クイックスタート
 
 ### 1. 環境変数の設定
 ```bash
@@ -127,6 +145,11 @@ cp templates/.env.example .env
 
 ### 2. 各階層のセットアップ
 - **Layer 1**: `configs/level1-ollama/` を参照。Ollamaでローカルモデル（`qwen-processor`）を作成し、Open WebUIのブラウザ画面から手軽に利用。
-- **Layer 2**: `configs/level2-antigravity/` のルールを Antigravity のプロンプト・設定に反映。
+- **Layer 2**: `configs/level2-antigravity/` のルールを Antigravity や `.cursorrules` に反映。
 - **Layer 3**: `configs/level3-chatgpt/custom_instructions.md` の内容を ChatGPT の「カスタム指示（Custom Instructions）」にコピー。
-- **Layer 4**: `configs/level4-claude/` のスクリプトを使用し、重要成果物をClaudeでワンタッチレビュー。
+- **Layer 4**: `configs/level4-claude/` のスクリプトや `tools/pipeline.py` を使用し、重要成果物をClaudeでワンタッチレビュー。
+
+---
+
+## 7. ライセンス
+本プロジェクトは [MIT License](LICENSE) のもとで公開されています。
