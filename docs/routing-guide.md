@@ -12,16 +12,16 @@
 
 | 作業 | 第一候補 | 代替 / エスカレーション |
 |---|---|---|
-| 要件整理・設計・方針決め | ChatGPT / GPT-5.6 Sol | Claude Opus 5.5 |
-| 技術調査・比較・レポート | ChatGPT | Claude Opus 5.5 |
-| 文章・資料作成 | ChatGPT | Claude Opus 5.5 |
+| 要件整理・設計・方針決め | ChatGPT Chat / Work | Claude（独立した意見が必要な場合） |
+| 技術調査・比較・レポート | ChatGPT Work | ChatGPT Chat（短い比較） |
+| 文章・資料作成 | ChatGPT Work | ChatGPT Chat（短い下書き） |
 | PoC・モック・プロジェクト雛形 | Antigravity / Gemini 3.8 Flash | Claude Sonnet 5 |
-| 初期実装・大量ファイル生成 | Antigravity / Gemini 3.8 Flash | GPT-6 Luna |
+| 初期実装・大量ファイル変更 | Antigravity / Gemini 3.8 Flash | Codex / GPT-6 Sol |
 | 小規模コード修正 | Codex / GPT-6 Luna | Gemini 3.8 Flash |
 | 通常の機能実装 | Codex / GPT-6 Sol | Claude Sonnet 5 |
 | 難しい実装・デバッグ | Codex / GPT-6 Sol | Claude Opus 5.5 |
-| 大規模migration・長期agentic coding | Claude Code / Opus 5.5 | Codex / GPT-6 Sol |
-| コードベース横断レビュー | Claude Code / Opus 5.5 | Codex / GPT-6 Sol |
+| 大規模migration・長期agentic coding | Claude Code / Opus 5.5 または Codex / Sol | 既存の実績と利用枠で選ぶ |
+| コードベース横断レビュー | 実装担当と別のツール | Codex / Sol、Claude Code / Opus 5.5 |
 | レビュー指摘の単純修正 | GPT-6 Luna | Gemini 3.8 Flash |
 | Sol / Opusでも解けない難問 | GPT-6 Astra | Opus 5.5 高effort |
 | 機密ログ・社外秘データの整形 | Ollama / Qwen | - |
@@ -32,20 +32,21 @@
 
 ```mermaid
 flowchart TD
-    P["ChatGPT<br/>要件・設計・受入条件"] --> G["Gemini 3.8 Flash / Antigravity<br/>PoC・モック・初期実装"]
-    G --> C["Codex GPT-6 Sol<br/>本実装・テスト・品質向上"]
-    C --> R["Claude Code Opus 5.5<br/>独立レビュー"]
-    R --> F["Codex GPT-6 Luna / Sol<br/>指摘修正"]
-    F --> D["ChatGPT<br/>文書化・最終整理"]
-
-    C -->|Codex上限| S["Claude Code Sonnet 5<br/>通常実装を継続"]
-    S --> R
+    P["ChatGPT Chat / Work<br/>要件・受入条件"] --> Q{"PoCが必要?"}
+    Q -->|はい| G["Gemini / Antigravity<br/>試作・検証"]
+    Q -->|いいえ| C["Codex / Claude Code / Antigravity<br/>実装・テスト"]
+    G --> C
+    C --> R{"独立レビューが必要?"}
+    R -->|はい| V["実装担当と別のツール<br/>根拠付きレビュー"]
+    R -->|いいえ| F["実装担当<br/>検証・完成"]
+    V --> F
+    F --> D["ChatGPT Work / 実装担当<br/>文書化"]
 ```
 
 ### 開始モデルの決め方
 
 - **仕様がまだ曖昧** → ChatGPT
-- **仕様は決まっていて、まず動くものが欲しい** → Gemini 3.8 Flash
+- **設計の不確実性を試作で減らしたい** → Antigravity / Gemini 3.8 Flash
 - **既存コードへ本番品質で変更したい** → GPT-6 Sol
 - **変更が小さい・定型的** → GPT-6 Luna
 - **長く複雑なコードベース全体を扱う** → Opus 5.5
@@ -84,8 +85,8 @@ Claude Opus 5.5
 
 ## 4. 利用枠を守るルール
 
-1. **初期モックをSol / Opusから始めない**
-   - まずGemini 3.8 Flashで土台を作る。
+1. **PoCが必要なときだけ試作する**
+   - 明確な既存コード修正は、実装担当へ直接渡す。
 2. **Lunaで済む変更をSolに投げない**
    - typo、README、テスト追加、単純修正はLuna。
 3. **レビューの粒度を指定する**
@@ -99,7 +100,7 @@ Claude Opus 5.5
 
 ## 5. ChatGPTの位置づけ
 
-ChatGPTは「コードを書くためだけの場所」ではなく、全体の司令塔です。
+ChatGPT Chatは短い相談や壁打ち、Workは複数ステップの調査・文書作成・成果物に使います。
 
 - 要件・制約の整理
 - アーキテクチャ検討
