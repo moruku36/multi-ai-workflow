@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Level 4: Claude API Review CLI
-標準入力または指定ファイルの内容を、Anthropic Claude API に渡して批判的セカンドオピニオンを取得します。
-依存パッケージ不要（Python標準ライブラリのみで動作）。
+Claude independent review CLI.
+
+標準入力または指定ファイルの内容を Anthropic Claude API に渡して、
+実装者とは独立したコード / ドキュメントレビューを取得します。
+依存パッケージ不要（Python標準ライブラリのみ）。
 """
 
 import sys
@@ -11,9 +13,11 @@ import json
 import urllib.request
 import urllib.error
 
-SYSTEM_PROMPT = """あなたは極めて厳格で客観的なシニアアーキテクト兼セキュリティレビュアーです。
-提出されたコード・設計書の「潜在的欠陥」「境界値の漏れ」「セキュリティリスク」「ボトルネック」を批判的にレビューしてください。
-挨拶は不要で、[Critical / Major / Minor] の重要度順に箇条書きで具体的に指摘してください。"""
+SYSTEM_PROMPT = """あなたは実装者とは独立したシニアアーキテクト兼セキュリティレビュアーです。
+提出されたコード・設計書について、マージ判断に影響する実在の問題を優先してレビューしてください。
+Critical / Major を優先し、Minor・typo・単なる好みは原則省略してください。
+各指摘には根拠、影響、最小修正案を付け、根拠を確認できない推測は「要確認」と明示してください。
+問題がなければ無理に指摘を作らないでください。"""
 
 def main():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -22,9 +26,8 @@ def main():
         print("export ANTHROPIC_API_KEY='your-key' を実行してください。", file=sys.stderr)
         sys.exit(1)
 
-    model = os.environ.get("CLAUDE_MODEL", "claude-3-5-sonnet-latest")
+    model = os.environ.get("CLAUDE_MODEL", "claude-opus-5-5")
 
-    # 入力の取得（引数ファイル または 標準入力）
     if len(sys.argv) > 1:
         filepath = sys.argv[1]
         try:
@@ -45,12 +48,12 @@ def main():
 
     payload = {
         "model": model,
-        "max_tokens": 2048,
+        "max_tokens": 4096,
         "system": SYSTEM_PROMPT,
         "messages": [
             {
                 "role": "user",
-                "content": f"以下のコード/ドキュメントを批判的にレビューしてください:\n\n```\n{content}\n```"
+                "content": f"以下のコード/ドキュメントを独立レビューしてください:\n\n```\n{content}\n```"
             }
         ]
     }

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
 Multi-AI Workflow Pipeline CLI
-Layer 1 (Ollama) による高速整形と Layer 4 (Claude API) による批判的レビューを
-コマンドラインから直結・自動実行するためのオーケストレーションツールです。
+
+Ollama によるローカル前処理と Claude API による独立レビューを、
+コマンドラインから直結・自動実行する補助ツールです。
 標準ライブラリのみで動作します（追加pip不要）。
 """
 
@@ -14,7 +15,7 @@ import urllib.request
 import urllib.error
 
 def query_ollama(prompt: str, text: str, model: str = "qwen-processor", host: str = "http://127.0.0.1:11434") -> str:
-    """Layer 1: Ollama にテキスト加工を依頼する"""
+    """Ollama にテキスト加工を依頼する"""
     url = f"{host.rstrip('/')}/api/generate"
     combined_prompt = f"{prompt}\n\n---\n{text}"
     payload = {
@@ -33,8 +34,8 @@ def query_ollama(prompt: str, text: str, model: str = "qwen-processor", host: st
         print("  ※ Ollama が起動しているか、ポート11434で待機しているか確認してください。", file=sys.stderr)
         sys.exit(1)
 
-def query_claude(prompt: str, text: str, model: str = "claude-3-5-sonnet-latest") -> str:
-    """Layer 4: Claude API に批判的レビューを依頼する"""
+def query_claude(prompt: str, text: str, model: str = "claude-opus-5-5") -> str:
+    """Claude API に独立レビューを依頼する"""
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print("[Error] 環境変数 ANTHROPIC_API_KEY が設定されていません。", file=sys.stderr)
@@ -42,13 +43,14 @@ def query_claude(prompt: str, text: str, model: str = "claude-3-5-sonnet-latest"
 
     url = "https://api.anthropic.com/v1/messages"
     system_prompt = (
-        "あなたは極めて厳格で客観的な監査役・シニアレビュアーです。\n"
-        "提出されたテキストの「潜在的リスク」「論理の欠陥」「誇大表現」「抜け漏れ」を批判的に検証してください。\n"
-        "挨拶は不要で、[Critical / Major / Minor] の重要度順に箇条書きで具体的に指摘してください。"
+        "あなたは実装者とは独立したシニアレビュアーです。\n"
+        "提出されたテキストの重大な欠陥、リスク、抜け漏れを検証してください。\n"
+        "Critical / Major を優先し、Minor・typo・単なる好みは原則省略してください。\n"
+        "各指摘には根拠、影響、最小修正案を付け、問題がなければ無理に指摘を作らないでください。"
     )
     payload = {
         "model": model,
-        "max_tokens": 2048,
+        "max_tokens": 4096,
         "system": system_prompt,
         "messages": [
             {
@@ -80,22 +82,23 @@ def query_claude(prompt: str, text: str, model: str = "claude-3-5-sonnet-latest"
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Multi-AI Workflow: ローカル加工(Ollama)とレビュー(Claude)を繋ぐCLIツール"
+        description="Multi-AI Workflow: ローカル加工(Ollama)と独立レビュー(Claude)を繋ぐCLIツール"
     )
     parser.add_argument("file", nargs="?", help="入力ファイルパス（省略時は標準入力）")
     parser.add_argument("--mode", choices=["clean", "review", "chain"], default="chain",
                         help="clean: Ollamaで整形のみ / review: Claudeでレビューのみ / chain: 整形後にレビュー (デフォルト)")
     parser.add_argument("--clean-prompt", default="以下のテキストからノイズを排除し、重要事項のみを箇条書きで簡潔に整理してください。",
-                        help="Layer 1 (Ollama) に渡す指示")
-    parser.add_argument("--review-prompt", default="以下の内容を批判的にレビューし、リスクや論理の穴を指摘してください。",
-                        help="Layer 4 (Claude) に渡す指示")
+                        help="Ollama に渡す指示")
+    parser.add_argument("--review-prompt", default="以下の内容を独立レビューし、重大なリスクや論理の穴を指摘してください。",
+                        help="Claude に渡す指示")
     parser.add_argument("--ollama-model", default="qwen-processor", help="Ollamaモデル名 (default: qwen-processor)")
-    parser.add_argument("--claude-model", default="claude-3-5-sonnet-latest", help="Claudeモデル名")
+    parser.add_argument("--claude-model",
+                        default=os.environ.get("CLAUDE_MODEL", "claude-opus-5-5"),
+                        help="Claudeモデル名 (default: CLAUDE_MODEL または claude-opus-5-5)")
     parser.add_argument("--output", "-o", help="結果の保存先ファイルパス（省略時は標準出力）")
 
     args = parser.parse_args()
 
-    # 入力の取得
     if args.file:
         try:
             with open(args.file, "r", encoding="utf-8") as f:
@@ -115,15 +118,15 @@ def main():
 
     result = ""
     if args.mode == "clean":
-        print(f"[*] Layer 1 (Ollama: {args.ollama_model}) でデータ整形中...", file=sys.stderr)
+        print(f"[*] Ollama ({args.ollama_model}) でデータ整形中...", file=sys.stderr)
         result = query_ollama(args.clean_prompt, raw_input, model=args.ollama_model)
     elif args.mode == "review":
-        print(f"[*] Layer 4 (Claude: {args.claude_model}) でレビュー中...", file=sys.stderr)
+        print(f"[*] Claude ({args.claude_model}) でレビュー中...", file=sys.stderr)
         result = query_claude(args.review_prompt, raw_input, model=args.claude_model)
     elif args.mode == "chain":
-        print(f"[*] Step 1: Layer 1 (Ollama: {args.ollama_model}) でデータ整形中...", file=sys.stderr)
+        print(f"[*] Step 1: Ollama ({args.ollama_model}) でデータ整形中...", file=sys.stderr)
         cleaned = query_ollama(args.clean_prompt, raw_input, model=args.ollama_model)
-        print("[*] Step 2: Layer 4 (Claude API) へ整形データを引き渡しレビュー中...", file=sys.stderr)
+        print(f"[*] Step 2: Claude ({args.claude_model}) へ整形データを引き渡しレビュー中...", file=sys.stderr)
         result = query_claude(args.review_prompt, cleaned, model=args.claude_model)
 
     if args.output:
