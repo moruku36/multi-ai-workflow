@@ -6,13 +6,15 @@
 
 > **Model snapshot: 2026-09-23**
 >
-> - ChatGPT: GPT-5.6 Sol を対話・設計・文章作成の主軸に使用
+> - ChatGPT Chat: 短い相談・壁打ち・下書き。ChatGPT Work: 調査、資料作成、複数ステップの成果物
 > - Codex: GPT-6 Sol を主力実装、GPT-6 Luna を軽量・高速実装、GPT-6 Astra を最終エスカレーションに使用
 > - Claude Code: Claude Opus 5.5 を難しい実装・独立レビュー、Claude Sonnet 5 を通常実装・代替実装に使用
-> - Google Antigravity: Gemini 3.8 Flash をPoC、モック、初期実装、大量の反復作業に使用
+> - Google Antigravity: Gemini 3.8 Flash をPoC、実装、複数ファイル変更、反復作業の候補に使用
 > - Ollama / Qwen: 外部へ出したくないデータのローカル加工に使用
 >
-> モデル更新が速いため、**製品名より役割を固定し、モデルは差し替え可能にする**のが基本方針です。\n>\n> READMEでは、更新負担の大きい静的なアーキテクチャ画像は表示せず、テキストとMermaidで構成を管理します。
+> モデル更新が速いため、**製品名より役割を固定し、モデルは差し替え可能にする**のが基本方針です。利用可能なモデル・利用枠は契約と画面で確認します。
+>
+> READMEでは、更新負担の大きい静的なアーキテクチャ画像は表示せず、テキストとMermaidで構成を管理します。
 
 ---
 
@@ -20,11 +22,12 @@
 
 | 役割 | 主担当 | 主な用途 |
 |---|---|---|
-| **司令塔 / 思考パートナー** | ChatGPT | 要件整理、設計、調査、文章・資料作成、実装指示の作成 |
-| **高速プロトタイパー / 物量担当** | Gemini 3.8 Flash + Antigravity | PoC、モック、初期実装、UI試作、大量ファイル編集、テストのたたき台 |
+| **相談・短い下書き** | ChatGPT Chat | 要件の壁打ち、選択肢の整理、短い回答 |
+| **非コード成果物** | ChatGPT Work | 出典付き調査、文書・資料・レポートの作成と確認 |
+| **探索・実装の候補** | Gemini 3.8 Flash + Antigravity | PoC、UI試作、複数ファイル変更、反復作業。完成条件とテストを指定する |
 | **主力実装** | Codex + GPT-6 Sol | 本実装、難しいデバッグ、リファクタリング、設計を伴うコード変更 |
 | **軽量実装** | Codex + GPT-6 Luna | 小規模修正、テスト追加、README修正、定型変更、レビュー指摘の反映 |
-| **独立レビュー / 長期作業** | Claude Code + Opus 5.5 | コードベース横断レビュー、難バグ、大規模migration、セキュリティ・設計レビュー |
+| **独立レビュー / 長期作業** | Claude Code + Opus 5.5 または Codex + Sol | 実装担当と異なる視点でのレビュー、難バグ、大規模migration |
 | **通常のClaude実装** | Claude Code + Sonnet 5 | Codex枠を温存したい通常実装、代替実装、並行検証 |
 | **最終エスカレーション** | GPT-6 Astra | Sol / Opus 5.5でも解けない高難度問題 |
 | **ローカル機密処理** | Ollama / Qwen | ログ整形、要約、分類、外部送信したくないデータ加工 |
@@ -33,29 +36,31 @@
 
 ## 2. 基本開発フロー
 
-新規プロジェクトや大きめの機能追加では、最初から高価・希少なモデルに全工程を任せません。
+新規プロジェクトや大きめの機能追加では、仕様と受入条件を決め、必要な工程だけ各ツールに依頼します。既存コードの修正はPoCを挟まず実装担当へ渡せます。
 
 ```mermaid
 flowchart LR
-    A["1. ChatGPT<br/>要件・設計・受入条件"] --> B["2. Antigravity / Gemini 3.8 Flash<br/>PoC・モック・初期実装"]
-    B --> C["3. Codex / GPT-6 Sol<br/>本実装・整理・テスト"]
-    C --> D["4. Claude Code / Opus 5.5<br/>独立レビュー"]
-    D --> E["5. Codex / Luna or Sol<br/>レビュー指摘を修正"]
-    E --> F["6. ChatGPT<br/>README・設計書・レポート化"]
+    A["1. ChatGPT Chat / Work<br/>要件・受入条件"] --> B{"PoCが必要?"}
+    B -->|はい| P["Antigravity / Gemini<br/>試作・検証"]
+    B -->|いいえ| C["Codex / Claude Code / Antigravity<br/>実装・テスト"]
+    P --> C
+    C --> D{"独立レビューが必要?"}
+    D -->|はい| R["別のツール / モデル<br/>重要な指摘をレビュー"]
+    D -->|いいえ| E["担当ツール<br/>検証・完成"]
+    R --> E
+    E --> F["ChatGPT Work / 実装担当<br/>文書化"]
 
-    B -. "Codex上限時の代替" .-> G["Claude Code / Sonnet 5"]
-    C -. "Claude側で実装した場合" .-> H["Codex / GPT-6 Sol<br/>クロスレビュー"]
     I["Ollama / Qwen"] -. "機密・ローカル処理" .-> A
 ```
 
 ### 原則
 
-1. **最初の70〜80%をGemini 3.8 Flashで作る**
-   - モック、PoC、ディレクトリ作成、初期テスト、README草案など、試行錯誤が多い工程を担当。
-2. **本番品質への仕上げをCodex GPT-6 Solで行う**
-   - 設計との整合、複数ファイル変更、難しいデバッグ、テスト品質を詰める。
-3. **別系列モデルで独立レビューする**
-   - Codexで実装したらClaude Code Opus 5.5、Claude Codeで実装したらCodex GPT-6 Solを優先。
+1. **PoCは不確実性があるときに挟む**
+   - UI案や技術選定を試す。既存コードの明確な修正では省略する。
+2. **同じ担当が実装と検証を完了できるようにする**
+   - 設計との整合、テスト、差分確認まで依頼する。ツールを渡すだけで品質が上がるとはみなさない。
+3. **重要な変更は独立レビューを検討する**
+   - 実装担当と異なるツールを使い、根拠と再現手順を求める。指摘は実装担当が検証する。
 4. **修正は必要以上に上位モデルへ戻さない**
    - typo、Markdown、単純なレビュー指摘はGPT-6 LunaまたはGemini 3.8 Flashへ戻す。
 5. **Astraは最後まで温存する**
@@ -67,16 +72,16 @@ flowchart LR
 
 | タスク | 第一候補 | 第二候補 |
 |---|---|---|
-| アイデア整理・要件定義 | ChatGPT | Claude Opus 5.5 |
-| 技術調査・比較・レポート | ChatGPT | Claude Opus 5.5 |
-| 文章・資料作成 | ChatGPT | Claude Opus 5.5 |
+| アイデア整理・要件定義 | ChatGPT Chat / Work | Claude（別の視点が必要な場合） |
+| 技術調査・比較・レポート | ChatGPT Work | ChatGPT Chat（短い比較） |
+| 文章・資料作成 | ChatGPT Work | ChatGPT Chat（短い下書き） |
 | PoC / モック / 新規プロジェクトの土台 | Gemini 3.8 Flash | Claude Sonnet 5 |
 | 大量の定型修正 | Gemini 3.8 Flash | GPT-6 Luna |
 | 小さなコード修正 | GPT-6 Luna | Gemini 3.8 Flash |
 | 通常の機能実装 | GPT-6 Sol | Claude Sonnet 5 |
 | 難しい機能実装・デバッグ | GPT-6 Sol | Claude Opus 5.5 |
-| 大規模migration / 長時間の自律作業 | Claude Opus 5.5 | GPT-6 Sol |
-| 独立コードレビュー | Claude Opus 5.5 | GPT-6 Sol |
+| 大規模migration / 長時間の自律作業 | Claude Code / Opus 5.5 または Codex / Sol | 実績と利用枠で選ぶ |
+| 独立コードレビュー | 実装担当と別のツール | Claude Code / Opus 5.5、Codex / Sol |
 | 最終的な難問 | GPT-6 Astra | Claude Opus 5.5 |
 | 機密データの整形 | Ollama / Qwen | - |
 
@@ -88,7 +93,7 @@ flowchart LR
 
 ### Codexの利用枠を温存する
 
-- 初期モックや探索的実装は Antigravity + Gemini 3.8 Flash。
+- 初期モックや探索的実装は Antigravity + Gemini 3.8 Flash も候補にする。
 - Codexでは **Luna → Sol → Astra** の順にエスカレーション。
 - Lunaで十分な作業をSol/Astraへ投げない。
 - Solで2回程度試して解決しない場合に、Opus 5.5またはAstraへ切り替える。
@@ -112,12 +117,12 @@ CodexとClaude Codeの両方に、同じ機能をゼロから実装させるの�
 
 ## 5. 非コード作業の基本フロー
 
-文章・資料・調査では、ChatGPTを中心にします。
+文章・資料・調査では、短い相談にChat、完成した成果物の作成にWorkを使います。
 
-1. **ChatGPT**: 論点整理、構成、調査、初稿
+1. **ChatGPT Chat / Work**: 論点整理、出典確認、構成、初稿
 2. **Gemini / Antigravity**: 必要ならファイル化・大量整形・反復作業
 3. **Claude Opus 5.5**: 重要成果物のみ独立レビュー
-4. **ChatGPT**: 最終版へ統合
+4. **ChatGPT Work**: 最終版へ統合し、事実と出典を確認
 
 ローカルの機密データを含む場合は、前処理をOllama / Qwenで行います。
 
@@ -187,7 +192,9 @@ APIキーを使うCLIは補助ツールです。日常の開発フローは、Ch
 モデル名・提供状況は頻繁に変わるため、更新時は公式情報を確認します。
 
 - OpenAI GPT-6 Sol / Luna: https://openai.com/index/introducing-gpt-6-sol-and-luna/
-- Anthropic Claude Opus 5.5: https://www.anthropic.com/claude-opus-5-5
+- ChatGPT Work: https://learn.chatgpt.com/docs/get-started-with-work
+- OpenAI モデル選択: https://developers.openai.com/api/docs/guides/model-selection
+- Anthropic Claude Opus 5.5: https://www.anthropic.com/
 - Google Gemini 3.8 Flash: https://ai.google.dev/gemini-api/docs/latest-model
 - Google Antigravity agent: https://ai.google.dev/gemini-api/docs/antigravity-agent
 
