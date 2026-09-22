@@ -12,7 +12,7 @@
 > - Google Antigravity: Gemini 3.8 Flash をPoC、モック、初期実装、大量の反復作業に使用
 > - Ollama / Qwen: 外部へ出したくないデータのローカル加工に使用
 >
-> モデル更新が速いため、**製品名より役割を固定し、モデルは差し替え可能にする**のが基本方針です。
+> モデル更新が速いため、**製品名より役割を固定し、モデルは差し替え可能にする**のが基本方針です。\n>\n> READMEでは、更新負担の大きい静的なアーキテクチャ画像は表示せず、テキストとMermaidで構成を管理します。
 
 ---
 
@@ -128,7 +128,7 @@ CodexとClaude Codeの両方に、同じ機能をゼロから実装させるの�
 - [レシピ 01: 議事録・商談メモの高速処理＆リスク検証](docs/cookbook/01-meeting-minutes.md)
 - [レシピ 02: 新技術・OSSの選定と比較レポート作成](docs/cookbook/02-tech-selection.md)
 - [レシピ 03: 対外発信・プレスリリースの推敲＆リスクチェック](docs/cookbook/03-press-release.md)
-- [レシピ 04: レガシーコードのリファクタリング＆セキュリティ監査](docs/cookbook/04-code-refactor.md)
+- [レシピ 04: コード実装・リファクタリング・独立レビュー](docs/cookbook/04-code-refactor.md)
 
 モデル間の引き継ぎには [Handoff Templates](docs/handoff-templates.md) を使用します。
 
