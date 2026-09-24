@@ -2,7 +2,7 @@
 
 「どのAI / モデルに依頼するか」を即決するためのガイドです。
 
-> **Model snapshot: 2026-09-23**
+> **Model snapshot: 2026-09-24**
 >
 > モデル更新時は、モデル名そのものより「役割」を維持して置き換えます。
 
@@ -16,12 +16,12 @@
 | 技術調査・比較・レポート | ChatGPT Work | ChatGPT Chat（短い比較） |
 | 文章・資料作成 | ChatGPT Work | ChatGPT Chat（短い下書き） |
 | PoC・モック・プロジェクト雛形 | Antigravity / Gemini 3.8 Flash | Claude Sonnet 5 |
-| 初期実装・大量ファイル変更 | Antigravity / Gemini 3.8 Flash | Codex / GPT-6 Sol |
-| 小規模コード修正 | Codex / GPT-6 Luna | Gemini 3.8 Flash |
-| 通常の機能実装 | Codex / GPT-6 Sol | Claude Sonnet 5 |
-| 難しい実装・デバッグ | Codex / GPT-6 Sol | Claude Opus 5.5 |
-| 大規模migration・長期agentic coding | Claude Code / Opus 5.5 または Codex / Sol | 既存の実績と利用枠で選ぶ |
-| コードベース横断レビュー | 実装担当と別のツール | Codex / Sol、Claude Code / Opus 5.5 |
+| 初期実装・大量ファイル変更 | Antigravity / Gemini 3.8 Flash | Codex / GPT-6 Luna (Medium) |
+| 小規模コード修正 | Codex / GPT-6 Luna (Low〜Medium) | Gemini 3.8 Flash |
+| 通常の機能実装 | Codex / GPT-6 Luna (Medium) | Claude Code / Opus 5.5 (Medium) |
+| 難しい実装・デバッグ | Codex / GPT-6 Sol (Medium) | Claude Code / Opus 5.5 (Medium) |
+| 大規模migration・長期agentic coding | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol (Medium) |
+| コードベース横断レビュー | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol (Medium) |
 | レビュー指摘の単純修正 | GPT-6 Luna | Gemini 3.8 Flash |
 | Sol / Opusでも解けない難問 | GPT-6 Astra | Opus 5.5 高effort |
 | 機密ログ・社外秘データの整形 | Ollama / Qwen | - |
@@ -47,9 +47,9 @@ flowchart TD
 
 - **仕様がまだ曖昧** → ChatGPT
 - **設計の不確実性を試作で減らしたい** → Antigravity / Gemini 3.8 Flash
-- **既存コードへ本番品質で変更したい** → GPT-6 Sol
-- **変更が小さい・定型的** → GPT-6 Luna
-- **長く複雑なコードベース全体を扱う** → Opus 5.5
+- **既存コードへ通常の変更を入れたい** → GPT-6 Luna / Medium
+- **Lunaで設計判断・デバッグが不足する** → GPT-6 Sol / Medium
+- **長く複雑なコードベース全体を扱う / 独立レビュー** → Opus 5.5 / Medium
 - **外部視点でレビューしたい** → 実装担当と別ベンダーのモデル
 
 ---
@@ -69,10 +69,12 @@ GPT-6 Astra
 ### Claude Code内
 
 ```text
-Claude Sonnet 5
-  ↓ 長期作業・難バグ・大規模レビュー
-Claude Opus 5.5
+Claude Opus 5.5 / Medium
+  ↓ Mediumで不足する難バグ・大規模設計・重要レビュー
+Claude Opus 5.5 / High
 ```
+
+Sonnet 5は性能エスカレーション先ではなく、主に利用枠を温存したい軽量実装の代替として扱います。
 
 ### ベンダー横断
 
@@ -87,10 +89,10 @@ Claude Opus 5.5
 
 1. **PoCが必要なときだけ試作する**
    - 明確な既存コード修正は、実装担当へ直接渡す。
-2. **Lunaで済む変更をSolに投げない**
-   - typo、README、テスト追加、単純修正はLuna。
-3. **レビューの粒度を指定する**
-   - Claude Codeには「Critical / Majorのみ」など、重要度を限定する。
+2. **CodexはLuna Mediumから始める**
+   - 通常実装もまずLuna。単純作業はLow、Lunaで不足したときだけSol Mediumへ上げる。
+3. **Claude CodeはOpus 5.5 Mediumを標準にする**
+   - Lowは節約用、High以上はMediumで不足する難問だけ。レビューでは「Critical / Majorのみ」など粒度も限定する。
 4. **実装とレビューを別系列モデルにする**
    - Codex → Claude Code、またはClaude Code → Codex。
 5. **同じ実装を複数モデルへゼロから二重発注しない**

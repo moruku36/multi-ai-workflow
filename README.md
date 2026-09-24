@@ -4,11 +4,11 @@
 
 対象はプログラミングだけではありません。技術調査、文章・資料作成、設計、レビュー、定型処理までを、ChatGPT / Codex / Claude Code / Gemini + Antigravity / Ollama で使い分けます。
 
-> **Model snapshot: 2026-09-23**
+> **Model snapshot: 2026-09-24**
 >
-> - ChatGPT Chat: 短い相談・壁打ち・下書き。ChatGPT Work: 調査、資料作成、複数ステップの成果物
-> - Codex: GPT-6 Sol を主力実装、GPT-6 Luna を軽量・高速実装、GPT-6 Astra を最終エスカレーションに使用
-> - Claude Code: Claude Opus 5.5 を難しい実装・独立レビュー、Claude Sonnet 5 を通常実装・代替実装に使用
+> - ChatGPT Chat / Work: 自分の運用では GPT-6 Luna を標準とし、より深い推論が必要なときだけ GPT-6 Sol へ上げる
+> - Codex: GPT-6 Luna を主力実装、GPT-6 Sol を難しい実装へのエスカレーション、GPT-6 Astra を最終手段に使用
+> - Claude Code: Claude Opus 5.5 を主力として使用し、通常は Medium effort。Sonnet 5 は利用枠温存や軽めの代替実装に使用
 > - Google Antigravity: Gemini 3.8 Flash をPoC、実装、複数ファイル変更、反復作業の候補に使用
 > - Ollama / Qwen: 外部へ出したくないデータのローカル加工に使用
 >
@@ -25,10 +25,10 @@
 | **相談・短い下書き** | ChatGPT Chat | 要件の壁打ち、選択肢の整理、短い回答 |
 | **非コード成果物** | ChatGPT Work | 出典付き調査、文書・資料・レポートの作成と確認 |
 | **探索・実装の候補** | Gemini 3.8 Flash + Antigravity | PoC、UI試作、複数ファイル変更、反復作業。完成条件とテストを指定する |
-| **主力実装** | Codex + GPT-6 Sol | 本実装、難しいデバッグ、リファクタリング、設計を伴うコード変更 |
-| **軽量実装** | Codex + GPT-6 Luna | 小規模修正、テスト追加、README修正、定型変更、レビュー指摘の反映 |
-| **独立レビュー / 長期作業** | Claude Code + Opus 5.5 または Codex + Sol | 実装担当と異なる視点でのレビュー、難バグ、大規模migration |
-| **通常のClaude実装** | Claude Code + Sonnet 5 | Codex枠を温存したい通常実装、代替実装、並行検証 |
+| **主力実装** | Codex + GPT-6 Luna (Medium) | 通常の機能実装、複数ファイル変更、テスト、レビュー指摘の反映 |
+| **上位実装 / 難問** | Codex + GPT-6 Sol (Medium) | Lunaで不足する設計判断、難しいデバッグ、複雑なリファクタリング |
+| **主力Claude / 独立レビュー** | Claude Code + Opus 5.5 (Medium) | 難しい実装、長時間作業、コードベース横断レビュー、セカンドオピニオン |
+| **Claudeの節約枠** | Claude Code + Sonnet 5 | Opusの利用枠を温存したい軽めの実装・代替実装 |
 | **最終エスカレーション** | GPT-6 Astra | Sol / Opus 5.5でも解けない高難度問題 |
 | **ローカル機密処理** | Ollama / Qwen | ログ整形、要約、分類、外部送信したくないデータ加工 |
 
@@ -61,8 +61,8 @@ flowchart LR
    - 設計との整合、テスト、差分確認まで依頼する。ツールを渡すだけで品質が上がるとはみなさない。
 3. **重要な変更は独立レビューを検討する**
    - 実装担当と異なるツールを使い、根拠と再現手順を求める。指摘は実装担当が検証する。
-4. **修正は必要以上に上位モデルへ戻さない**
-   - typo、Markdown、単純なレビュー指摘はGPT-6 LunaまたはGemini 3.8 Flashへ戻す。
+4. **CodexはLunaを標準にする**
+   - 通常作業はGPT-6 Luna Mediumから開始し、難しい設計判断・デバッグで不足したときだけSol Mediumへ上げる。
 5. **Astraは最後まで温存する**
    - GPT-6 Sol / Opus 5.5で解けない問題、非常に重要な最終判断のみ。
 
@@ -78,10 +78,10 @@ flowchart LR
 | PoC / モック / 新規プロジェクトの土台 | Gemini 3.8 Flash | Claude Sonnet 5 |
 | 大量の定型修正 | Gemini 3.8 Flash | GPT-6 Luna |
 | 小さなコード修正 | GPT-6 Luna | Gemini 3.8 Flash |
-| 通常の機能実装 | GPT-6 Sol | Claude Sonnet 5 |
-| 難しい機能実装・デバッグ | GPT-6 Sol | Claude Opus 5.5 |
-| 大規模migration / 長時間の自律作業 | Claude Code / Opus 5.5 または Codex / Sol | 実績と利用枠で選ぶ |
-| 独立コードレビュー | 実装担当と別のツール | Claude Code / Opus 5.5、Codex / Sol |
+| 通常の機能実装 | GPT-6 Luna (Medium) | Claude Opus 5.5 (Medium) |
+| 難しい機能実装・デバッグ | GPT-6 Sol (Medium) | Claude Opus 5.5 (Medium) |
+| 大規模migration / 長時間の自律作業 | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol |
+| 独立コードレビュー | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol |
 | 最終的な難問 | GPT-6 Astra | Claude Opus 5.5 |
 | 機密データの整形 | Ollama / Qwen | - |
 
@@ -93,16 +93,27 @@ flowchart LR
 
 ### Codexの利用枠を温存する
 
+- **デフォルトは GPT-6 Luna / Medium**。Lowは単純修正・大量の定型作業でさらに節約したい場合に使う。
+- Lunaで不足したときだけ **GPT-6 Sol / Medium** へ昇格する。
+- Solでも解けない高難度問題だけAstraを検討する。
 - 初期モックや探索的実装は Antigravity + Gemini 3.8 Flash も候補にする。
-- Codexでは **Luna → Sol → Astra** の順にエスカレーション。
-- Lunaで十分な作業をSol/Astraへ投げない。
-- Solで2回程度試して解決しない場合に、Opus 5.5またはAstraへ切り替える。
 
 ### Claude Codeの利用枠を温存する
 
-- 通常実装はSonnet 5でも十分なケースが多い。
-- Opus 5.5は、難しい実装・長時間作業・独立レビューを中心に使う。
+- **デフォルトは Opus 5.5 / Medium**。最近の実運用で品質と安定感が良いため、Claude側の主力とする。
+- Lowは単純作業や利用枠を強く節約したい場合に使う。
+- High以上は難バグ・大規模設計・重要レビューなど、Mediumで不足した場合だけ上げる。
+- Sonnet 5はOpusの利用枠を温存したい軽量実装・代替実装に使う。
 - Codexで既に実装済みなら、Claude側は「重大な問題だけレビュー」とスコープを絞る。
+
+### Effortの標準
+
+| モデル | 標準 | 上げる条件 |
+|---|---|---|
+| GPT-6 Luna | **Medium** | 基本はそのまま。単純作業だけLow |
+| GPT-6 Sol | **Medium** | Lunaで不足した場合にモデルごと昇格 |
+| Claude Opus 5.5 | **Medium** | 難バグ・大規模設計・重要レビューで必要ならHigh |
+| Claude Sonnet 5 | Low〜Medium | 軽量実装・利用枠温存 |
 
 ### 同じ仕事を二重発注しない
 
