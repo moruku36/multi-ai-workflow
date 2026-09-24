@@ -35,9 +35,9 @@
 
 ---
 
-## 2. Antigravity → Codex GPT-6 Sol
+## 2. Antigravity → Codex GPT-6 Luna
 
-初期実装を本番品質へ引き上げるテンプレートです。
+初期実装を本番品質へ引き上げるテンプレートです。まず GPT-6 Luna / Medium で進め、難しい設計判断やデバッグで不足する場合のみ Sol / Medium へ上げます。
 
 ```markdown
 # 目的
@@ -121,8 +121,9 @@ Claude Codeによる独立レビューで以下の指摘がありました。
 ```
 
 **モデル選択:**
-- typo / README / 単純テスト修正 → GPT-6 Luna
-- 実装ロジック / 設計変更 → GPT-6 Sol
+- typo / README / 単純テスト修正 → GPT-6 Luna / Low〜Medium
+- 通常の実装ロジック → GPT-6 Luna / Medium
+- Lunaで不足する難しい設計変更・デバッグ → GPT-6 Sol / Medium
 
 ---
 
@@ -149,7 +150,7 @@ Codexで以下まで作業済みです。ここから継続してください。
 既存方針を維持し、不要な全面書き換えは行わず、テストまで完了してください。
 ```
 
-通常実装はSonnet 5、長期・難作業はOpus 5.5を優先します。
+Claude Codeへ切り替える場合は **Opus 5.5 / Medium を標準**にします。Sonnet 5は、Opusの利用枠を温存したい軽量実装の代替として使います。
 
 ---
 
@@ -157,8 +158,8 @@ Codexで以下まで作業済みです。ここから継続してください。
 
 上記と同じ形式で、Claudeの作業要約をCodexへ渡します。
 
-- 小規模な残作業 → GPT-6 Luna
-- 通常〜高難度の残作業 → GPT-6 Sol
+- 小規模〜通常の残作業 → GPT-6 Luna / Medium
+- Lunaで不足する高難度の残作業 → GPT-6 Sol / Medium
 - Solでも解けない場合のみ → GPT-6 Astra
 
 ---
