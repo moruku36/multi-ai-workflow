@@ -10,8 +10,8 @@
 flowchart LR
     A[要件] --> B[ChatGPT<br/>設計・受入条件]
     B --> C[Antigravity / Gemini 3.8 Flash<br/>PoC・初期実装]
-    C --> D[Codex / GPT-6 Sol<br/>本実装・テスト]
-    D --> E[Claude Code / Opus 5.5<br/>独立レビュー]
+    C --> D[Codex / GPT-6 Luna Medium<br/>本実装・テスト]
+    D --> E[Claude Code / Opus 5.5 Medium<br/>独立レビュー]
     E --> F[Codex / Luna or Sol<br/>指摘修正]
 ```
 
@@ -44,7 +44,7 @@ flowchart LR
 [ChatGPTの仕様]
 ```
 
-## Step 3: Codex GPT-6 Solで本番品質へ
+## Step 3: Codex GPT-6 Luna / Mediumで本番品質へ
 
 ```text
 Antigravityで作成した初期実装をレビューし、本番品質へ仕上げてください。
@@ -59,9 +59,9 @@ Antigravityで作成した初期実装をレビューし、本番品質へ仕上
 を確認し、必要な修正を行ってtest/lint/buildを実行してください。
 ```
 
-小規模・定型修正だけならGPT-6 Lunaを使います。
+通常はGPT-6 Luna / Mediumを使います。単純な変更だけLowへ下げ、Lunaで設計判断やデバッグが不足した場合のみGPT-6 Sol / Mediumへ上げます。
 
-## Step 4: Claude Code Opus 5.5で独立レビュー
+## Step 4: Claude Code Opus 5.5 / Mediumで独立レビュー
 
 ```text
 この変更を独立レビューしてください。
@@ -77,8 +77,8 @@ Critical / Major を優先し、Minor・typo・好みのリファクタリング
 
 ## Step 5: Codexで修正
 
-- 単純な指摘 → GPT-6 Luna
-- ロジック・設計に関わる指摘 → GPT-6 Sol
+- 単純〜通常の指摘 → GPT-6 Luna / Medium（単純作業だけLowも可）
+- Lunaで不足するロジック・設計問題 → GPT-6 Sol / Medium
 - Solでも解けない問題だけ → GPT-6 Astra
 
 レビュー指摘は無条件に採用せず、コード上の根拠を確認してから修正します。
