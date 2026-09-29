@@ -1,16 +1,17 @@
 # Multi-AI Workflow Architecture
 
-複数のAIを「1つの万能モデル」として使うのではなく、**思考・初期実装・本実装・独立レビュー・ローカル処理**に役割分担させるための運用リポジトリです。
+複数のAIを「1つの万能モデル」として使うのではなく、**思考・初期実装・本実装・独立レビュー・マルチモーダル実験**に役割分担させるための運用リポジトリです。
 
-対象はプログラミングだけではありません。技術調査、文章・資料作成、設計、レビュー、定型処理までを、ChatGPT / Codex / Claude Code / Gemini + Antigravity / Ollama で使い分けます。
+対象はプログラミングだけではありません。技術調査、文章・資料作成、設計、レビュー、画像・PDF・動画の理解や生成までを、ChatGPT / Codex / Claude Code / Gemini + Antigravity / Qwen Multimodal Colab で使い分けます。
 
-> **Model snapshot: 2026-09-24**
+> **Model snapshot: 2026-09-29**
 >
 > - ChatGPT Chat / Work: 自分の運用では GPT-6 Luna を標準とし、より深い推論が必要なときだけ GPT-6 Sol へ上げる
 > - Codex: GPT-6 Luna を主力実装、GPT-6 Sol を難しい実装へのエスカレーション、GPT-6 Astra を最終手段に使用
 > - Claude Code: Claude Opus 5.5 を主力として使用し、通常は Medium effort。Sonnet 5 は利用枠温存や軽めの代替実装に使用
 > - Google Antigravity: Gemini 3.8 Flash をPoC、実装、複数ファイル変更、反復作業の候補に使用
-> - Ollama / Qwen: 外部へ出したくないデータのローカル加工に使用
+> - Qwen Multimodal Colab: Google Colab上の個人用マルチモーダル環境。Qwen3.8-27B Q8_K_L + Qwen-Image-2.1で、Chat / Vision / 画像生成・編集 / PDF / 短い動画 / 音声入力 / GitHub読解に使用
+> - Ollama / ローカルLLM: 現在は日常運用していない。旧設定はLegacyとしてのみ保持
 >
 > モデル更新が速いため、**製品名より役割を固定し、モデルは差し替え可能にする**のが基本方針です。利用可能なモデル・利用枠は契約と画面で確認します。
 >
@@ -30,7 +31,7 @@
 | **主力Claude / 独立レビュー** | Claude Code + Opus 5.5 (Medium) | 難しい実装、長時間作業、コードベース横断レビュー、セカンドオピニオン |
 | **Claudeの節約枠** | Claude Code + Sonnet 5 | Opusの利用枠を温存したい軽めの実装・代替実装 |
 | **最終エスカレーション** | GPT-6 Astra | Sol / Opus 5.5でも解けない高難度問題 |
-| **ローカル機密処理** | Ollama / Qwen | ログ整形、要約、分類、外部送信したくないデータ加工 |
+| **個人用マルチモーダル環境** | [Qwen Multimodal Colab](https://github.com/moruku36/qwen-multimodal-colab) | Chat / Vision、画像生成・編集、PDF・短い動画の読解、音声入力、GitHubのRead-only調査 |
 
 ---
 
@@ -50,7 +51,7 @@ flowchart LR
     R --> E
     E --> F["ChatGPT Work / 実装担当<br/>文書化"]
 
-    I["Ollama / Qwen"] -. "機密・ローカル処理" .-> A
+    I["Qwen Multimodal Colab"] -. "画像・PDF・動画・GitHub調査" .-> A
 ```
 
 ### 原則
@@ -83,7 +84,8 @@ flowchart LR
 | 大規模migration / 長時間の自律作業 | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol |
 | 独立コードレビュー | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol |
 | 最終的な難問 | GPT-6 Astra | Claude Opus 5.5 |
-| 機密データの整形 | Ollama / Qwen | - |
+| 画像理解・画像生成/編集・PDF/短動画・音声入力 | Qwen Multimodal Colab | ChatGPT / Gemini（用途に応じて） |
+| GitHubリポジトリのRead-only調査 | Qwen Multimodal Colab | ChatGPT / Codex |
 
 詳細は [Routing Guide](docs/routing-guide.md) を参照してください。
 
@@ -135,7 +137,7 @@ CodexとClaude Codeの両方に、同じ機能をゼロから実装させるの�
 3. **Claude Opus 5.5**: 重要成果物のみ独立レビュー
 4. **ChatGPT Work**: 最終版へ統合し、事実と出典を確認
 
-ローカルの機密データを含む場合は、前処理をOllama / Qwenで行います。
+Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービスを利用し得るため、**ローカルLLMのような機密データ保護境界としては扱いません**。機密情報は所属組織やサービスの利用ルールに従い、投入可否を個別に判断します。
 
 ---
 
@@ -160,7 +162,8 @@ CodexとClaude Codeの両方に、同じ機能をゼロから実装させるの�
 │   ├── handoff-templates.md
 │   └── cookbook/
 ├── configs/
-│   ├── level1-ollama/
+│   ├── qwen-multimodal-colab/     # 現行の個人用Qwenマルチモーダル環境
+│   ├── level1-ollama/             # Legacy: 現在は通常運用していない
 │   ├── level2-antigravity/
 │   ├── level3-chatgpt/
 │   └── level4-claude/
@@ -173,7 +176,7 @@ CodexとClaude Codeの両方に、同じ機能をゼロから実装させるの�
 └── .github/copilot-instructions.md
 ```
 
-> ディレクトリ名には既存互換のため `level1`〜`level4` を残していますが、現在の運用思想は**階層ではなく役割ベース**です。
+> ディレクトリ名には既存互換のため `level1`〜`level4` を残していますが、現在の運用思想は**階層ではなく役割ベース**です。`level1-ollama` はLegacyで、現在の個人用Qwen環境は別リポジトリの `qwen-multimodal-colab` です。
 
 ---
 
@@ -189,7 +192,8 @@ APIキーを使うCLIは補助ツールです。日常の開発フローは、Ch
 
 ### 設定
 
-- **Ollama / Qwen**: `configs/level1-ollama/`
+- **Qwen Multimodal Colab**: `configs/qwen-multimodal-colab/` / https://github.com/moruku36/qwen-multimodal-colab
+- **Legacy Ollama設定**: `configs/level1-ollama/`（現在は通常運用しない）
 - **Gemini + Antigravity**: `configs/level2-antigravity/AGY_RULES.md`
 - **ChatGPT**: `configs/level3-chatgpt/custom_instructions.md`
 - **Claude**: `configs/level4-claude/review_prompt.md`
@@ -208,6 +212,7 @@ APIキーを使うCLIは補助ツールです。日常の開発フローは、Ch
 - Anthropic Claude Opus 5.5: https://www.anthropic.com/
 - Google Gemini 3.8 Flash: https://ai.google.dev/gemini-api/docs/latest-model
 - Google Antigravity agent: https://ai.google.dev/gemini-api/docs/antigravity-agent
+- Qwen Multimodal Colab: https://github.com/moruku36/qwen-multimodal-colab
 
 ---
 
