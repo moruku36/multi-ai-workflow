@@ -61,3 +61,16 @@ flowchart LR
 
 について、根拠のあるMajor以上の懸念だけを挙げてください。
 ```
+
+
+---
+
+## 補助: GitHubリポジトリをQwenで読む
+
+候補OSSのGitHubリポジトリを実装レベルで眺めたい場合は、[Qwen Multimodal Colab](https://github.com/moruku36/qwen-multimodal-colab) のRead-only調査エージェントも使えます。
+
+- GitHub URLを渡して必要なファイルを読ませる
+- 読んだファイル一覧を確認する
+- 変更は行わず、調査結果だけをChatGPT / Codex / Claudeへ引き継ぐ
+
+最終的な採用判断は、公式ドキュメント・リリース情報・ライセンスと突き合わせて行います。

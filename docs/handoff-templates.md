@@ -35,7 +35,36 @@
 
 ---
 
-## 2. Antigravity → Codex GPT-6 Luna
+## 2. Qwen Multimodal Colab → ChatGPT / Codex
+
+Qwen Multimodal Colabで画像・PDF・短動画・GitHubリポジトリを調査した後、その結果を別モデルへ引き継ぐテンプレートです。
+
+```markdown
+# Qwen Multimodal Colabでの調査結果
+
+## 調べた対象
+- 画像 / PDF / 動画 / GitHub URL:
+- 使用した検索・添付:
+
+## 確認できた事実
+- ...
+
+## Qwen側の解釈・提案
+- ...
+
+## 出典・読んだファイル
+- ...
+
+## 次モデルに依頼すること
+- この調査結果を前提に、設計・実装・比較・レビューを続けてください。
+- 事実とQwen側の推測を分けて扱ってください。
+```
+
+Qwen Multimodal ColabのGitHubエージェントはRead-onlyです。コード変更が必要な場合はCodex / Claude Code / Antigravityへ渡します。
+
+---
+
+## 3. Antigravity → Codex GPT-6 Luna
 
 初期実装を本番品質へ引き上げるテンプレートです。まず GPT-6 Luna / Medium で進め、難しい設計判断やデバッグで不足する場合のみ Sol / Medium へ上げます。
 
@@ -66,7 +95,7 @@ Gemini 3.8 Flash / Antigravityで作成した初期実装を、本番投入可�
 
 ---
 
-## 3. Codex → Claude Code Opus 5.5
+## 4. Codex → Claude Code Opus 5.5
 
 独立レビュー用です。細かな好みまで拾わせず、重大な問題へ集中させます。
 
@@ -99,7 +128,7 @@ Gemini 3.8 Flash / Antigravityで作成した初期実装を、本番投入可�
 
 ---
 
-## 4. Claude Code → Codex GPT-6 Luna / Sol
+## 5. Claude Code → Codex GPT-6 Luna / Sol
 
 レビュー指摘を戻すテンプレートです。
 
@@ -127,7 +156,7 @@ Claude Codeによる独立レビューで以下の指摘がありました。
 
 ---
 
-## 5. Codex利用枠到達 → Claude Code
+## 6. Codex利用枠到達 → Claude Code
 
 ```markdown
 Codexで以下まで作業済みです。ここから継続してください。
@@ -154,7 +183,7 @@ Claude Codeへ切り替える場合は **Opus 5.5 / Medium を標準**にしま�
 
 ---
 
-## 6. Claude Code利用枠到達 → Codex
+## 7. Claude Code利用枠到達 → Codex
 
 上記と同じ形式で、Claudeの作業要約をCodexへ渡します。
 
@@ -164,7 +193,7 @@ Claude Codeへ切り替える場合は **Opus 5.5 / Medium を標準**にしま�
 
 ---
 
-## 7. 最小ハンドオフ形式
+## 8. 最小ハンドオフ形式
 
 急いでいる場合は、最低でも次の5点だけ渡します。
 

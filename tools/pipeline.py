@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """
-Multi-AI Workflow Pipeline CLI
+Legacy Multi-AI Workflow Pipeline CLI
+
+このCLIは旧Ollama運用向けのLegacy補助ツールです。
+現在の個人用Qwen環境は次のリポジトリで管理します:
+https://github.com/moruku36/qwen-multimodal-colab
 
 Ollama によるローカル前処理と Claude API による独立レビューを、
-コマンドラインから直結・自動実行する補助ツールです。
+コマンドラインから直結・自動実行します。
 標準ライブラリのみで動作します（追加pip不要）。
 """
 
@@ -82,7 +86,7 @@ def query_claude(prompt: str, text: str, model: str = "claude-opus-5-5") -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Multi-AI Workflow: ローカル加工(Ollama)と独立レビュー(Claude)を繋ぐCLIツール"
+        description="Legacy Multi-AI Workflow: Ollama前処理とClaudeレビューを繋ぐCLIツール"
     )
     parser.add_argument("file", nargs="?", help="入力ファイルパス（省略時は標準入力）")
     parser.add_argument("--mode", choices=["clean", "review", "chain"], default="chain",
