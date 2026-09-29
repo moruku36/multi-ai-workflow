@@ -167,8 +167,8 @@ Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービス�
 │   ├── level2-antigravity/
 │   ├── level3-chatgpt/
 │   └── level4-claude/
-├── tools/
-│   ├── pipeline.py
+├── tools/                        # Legacy補助CLI
+│   ├── pipeline.py               # Legacy: Ollama + Claude
 │   └── README.md
 ├── templates/
 │   └── .env.example
@@ -188,7 +188,7 @@ Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービス�
 cp templates/.env.example .env
 ```
 
-APIキーを使うCLIは補助ツールです。日常の開発フローは、ChatGPT / Antigravity / Codex / Claude Codeの各クライアントを直接利用する運用を前提にしています。
+日常の開発フローは、ChatGPT / Antigravity / Codex / Claude Code / Qwen Multimodal Colab を直接利用する運用を前提にしています。`tools/pipeline.py` は旧Ollama構成向けのLegacy補助CLIです。
 
 ### 設定
 
