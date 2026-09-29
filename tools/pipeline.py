@@ -82,7 +82,7 @@ def query_claude(prompt: str, text: str, model: str = "claude-opus-5-5") -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Multi-AI Workflow: ローカル加工(Ollama)と独立レビュー(Claude)を繋ぐCLIツール"
+        description="Legacy Multi-AI Workflow: Ollama前処理とClaudeレビューを繋ぐCLIツール"
     )
     parser.add_argument("file", nargs="?", help="入力ファイルパス（省略時は標準入力）")
     parser.add_argument("--mode", choices=["clean", "review", "chain"], default="chain",
