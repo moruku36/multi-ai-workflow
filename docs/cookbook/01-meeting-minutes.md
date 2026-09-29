@@ -1,6 +1,6 @@
 # レシピ 01: 議事録・商談メモの高速処理＆リスク検証
 
-機密性を保ちながら、会議メモを短時間で意思決定・TODO・リスクへ変換するレシピです。
+会議メモを短時間で意思決定・TODO・リスクへ変換するレシピです。機密情報を含む場合は、各AIサービスへの投入可否を組織ルールに従って判断します。
 
 ---
 
@@ -8,19 +8,21 @@
 
 ```mermaid
 flowchart LR
-    A[文字起こし] --> B[Ollama / Qwen<br/>必要ならローカル前処理]
+    A[文字起こし / 音声] --> B[ChatGPT または Qwen Multimodal Colab<br/>要点整理]
     B --> C[ChatGPT<br/>決定事項・TODO・未決事項を整理]
     C --> D[Claude Opus 5.5<br/>重要案件のみ独立レビュー]
 ```
 
-機密性が問題にならない場合は、Ollamaを省略してChatGPTから開始できます。
+Qwen Multimodal Colabは音声入力やファイル読解に使えますが、Google Colab等の外部環境で動くため、機密データ用のローカル処理とは扱いません。
 
 ---
 
-## Step 1: Ollama / Qwen（必要な場合のみ）
+## Step 1: ChatGPT / Qwen Multimodal Colab
+
+音声やファイルを含む場合はQwen Multimodal Colab、テキストだけならChatGPTを使えます。
 
 ```text
-以下の会議文字起こしから、個人情報・機密識別子を必要に応じて伏せたうえで、
+以下の会議文字起こしから、
 「決定事項」「未決事項」「TODO」に必要な情報だけを残してください。
 挨拶、相槌、言い淀みは削除してください。
 ```
