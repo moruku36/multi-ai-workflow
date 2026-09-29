@@ -2,7 +2,7 @@
 
 「どのAI / モデルに依頼するか」を即決するためのガイドです。
 
-> **Model snapshot: 2026-09-24**
+> **Model snapshot: 2026-09-29**
 >
 > モデル更新時は、モデル名そのものより「役割」を維持して置き換えます。
 
@@ -24,7 +24,8 @@
 | コードベース横断レビュー | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol (Medium) |
 | レビュー指摘の単純修正 | GPT-6 Luna | Gemini 3.8 Flash |
 | Sol / Opusでも解けない難問 | GPT-6 Astra | Opus 5.5 高effort |
-| 機密ログ・社外秘データの整形 | Ollama / Qwen | - |
+| 画像理解・画像生成/編集・PDF/短動画・音声入力 | Qwen Multimodal Colab | ChatGPT / Gemini |
+| GitHubリポジトリのRead-only調査 | Qwen Multimodal Colab | ChatGPT / Codex |
 
 ---
 
@@ -115,11 +116,21 @@ ChatGPT Chatは短い相談や壁打ち、Workは複数ステップの調査・�
 
 ---
 
-## 6. ローカルモデル
+## 6. Qwen Multimodal Colab
 
-Ollama / Qwenは開発能力競争には参加させず、**ローカルで処理する意味がある仕事**へ限定します。
+現在はローカルLLMを日常利用せず、[Qwen Multimodal Colab](https://github.com/moruku36/qwen-multimodal-colab) を個人用のマルチモーダル環境として使います。
 
-- 機密ログの抽出
-- 社外秘データの分類
-- 大量テキストの前処理
-- 外部AIへ送る前の匿名化・整形
+推奨構成は **Google Colab A100 80GB + Qwen3.8-27B Q8_K_L + Qwen-Image-2.1** です。
+
+向いている用途:
+- Chat / Vision
+- 画像生成・画像編集
+- PDF・短い動画の読解
+- 音声入力・読み上げ
+- Web検索を併用した調査
+- GitHub URLを渡したRead-onlyのリポジトリ調査
+
+注意:
+- Google Colab / Google Drive / 外部検索サービスを利用し得るため、ローカルLLMと同じ機密性は前提にしない。
+- 機密情報や社外秘データは、利用ルールを確認してから投入する。
+- 旧 `configs/level1-ollama/` はLegacyとして残すが、標準ルーティングからは外す。
