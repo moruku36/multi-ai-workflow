@@ -1,52 +1,25 @@
-# Layer 1: Ollama / Qwen (+ Open WebUI)
+# Legacy: Ollama / Qwen (+ Open WebUI)
 
-手元PCのローカル環境で動作する、高速データ加工・定型処理用の構成ファイル群です。  
-機密データや個人情報を外部サーバーに送信することなく、通信費ゼロで安全に処理できます。
+> **この構成は現在の通常運用では使用していません。**
+>
+> 現在の個人用Qwen環境は [qwen-multimodal-colab](https://github.com/moruku36/qwen-multimodal-colab) へ移行しています。
 
----
+このディレクトリは、過去にローカルPC上でOllama / Qwen / Open WebUIを使っていた構成を再現できるよう、**Legacy資料としてのみ保持**しています。
 
-## 1. 構成ファイル
-- **`Modelfile`**: 定型加工に特化したパラメータ（Temperature 0.2等）と、前置きや挨拶を排除してデータ本体のみを出力するシステムプロンプトを定義。
-- **`run.sh`**: Linux/Mac環境でModelfileからカスタムモデル `qwen-processor` を自動作成するシェルスクリプト。
-- **`run.ps1`**: Windows (PowerShell) 環境で `qwen-processor` を自動作成するスクリプト。
-- **`start-webui.bat`**: WindowsでOpen WebUIを起動するバッチファイル。
-- **`launch_silent.vbs`**: Windowsで黒いコマンド画面を出さずにバックグラウンド常駐起動するスクリプト。
+現在の標準ルーティングやREADMEでは、このローカルLLMを前提にしません。
 
----
+## 現行環境との違い
 
-## 2. セットアップ手順
+| 項目 | Legacy Ollama | 現行 Qwen Multimodal Colab |
+|---|---|---|
+| 実行場所 | ローカルPC | Google Colab |
+| 主モデル | Qwen 2.5系 | Qwen3.8-27B Q8_K_L |
+| UI | Open WebUI | Gradio |
+| Vision | 構成依存 | 対応 |
+| 画像生成・編集 | なし | Qwen-Image-2.1 |
+| PDF / 短動画 | なし | 対応 |
+| 音声入力 | なし | 対応 |
+| GitHub調査 | なし | Read-only agent対応 |
+| 機密性 | ローカル完結可能 | Colab / Drive / 外部検索利用を前提に個別判断 |
 
-### Step 1: Ollama でモデルを作成
-
-**Windows (PowerShell) の場合:**
-```powershell
-# ベースモデルを取得 (7b または 14b)
-ollama pull qwen2.5:14b
-
-# スクリプトを実行してカスタムモデルを作成
-.\run.ps1
-```
-
-**Linux / macOS (Bash) の場合:**
-```bash
-chmod +x ./run.sh
-./run.sh
-```
-
----
-
-### Step 2: Open WebUI（ブラウザUI）との連携
-
-ブラウザからチャット形式で利用したい場合は、Open WebUI を導入します。
-
-1. **起動**:
-   ```powershell
-   .\start-webui.bat
-   ```
-2. **ブラウザでアクセス**:
-   `http://localhost:8080` を開きます。
-3. **モデル選択**:
-   画面上部のモデル選択プルダウンで **`qwen-processor`** を選んで利用します。
-
-> **⚠️ Windows 環境での注意点 (IPv6 / IPv4)**:  
-> Windows では `localhost:11434` への通信が拒否される場合があるため、Open WebUI の管理者設定（または環境変数 `OLLAMA_BASE_URL`）に `http://127.0.0.1:11434` を指定してください。
+旧スクリプト（`Modelfile`, `run.sh`, `run.ps1` など）は互換性・履歴のため残しています。
