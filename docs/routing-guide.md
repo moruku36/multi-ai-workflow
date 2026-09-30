@@ -99,7 +99,7 @@ Sonnet 5は性能エスカレーション先ではなく、主に利用枠を温
 5. **同じ実装を複数モデルへゼロから二重発注しない**
    - 比較実験を除き、利用枠の無駄になるため避ける。
 6. **Dotsロールアウト後は残量とリセット時刻もルーティング入力にする（計画）**
-   - CodexBar CLI / Hooksを観測ソースとして使い、通常はタスク適性を優先しつつ、残量30%以下では高ボリューム作業をAntigravityへ寄せ、15%以下ではそのproviderを原則温存する。詳細は [Dots + CodexBar Orchestration Plan](dots-codexbar-orchestration.md)。
+   - CodexBar CLI / Hooksを観測ソースとして使い、残量80%以上では通常のタスク適性を優先、50〜80%ではLuna / Flashなど効率重視、30〜50%では高ボリューム作業をAntigravityへ寄せ、30%未満ではそのproviderを原則温存する。詳細は [Dots + CodexBar Orchestration Plan](dots-codexbar-orchestration.md)。
 
 ---
 
