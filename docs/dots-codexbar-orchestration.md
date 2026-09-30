@@ -66,10 +66,10 @@ These thresholds are starting defaults, not hard product limits.
 
 | Remaining budget | Behavior |
 |---|---|
-| > 50% | Follow normal task-based routing |
-| 30–50% | Prefer Luna / Flash for routine work; reserve Sol / Opus for tasks that benefit materially |
-| 15–30% | Route routine/high-volume work to Antigravity; preserve Codex/Claude for review and difficult work |
-| < 15% | Avoid that provider unless the task explicitly requires it or another provider cannot safely complete it |
+| ≥ 80% | Follow normal task-based routing |
+| 50–80% | Prefer Luna / Flash and other efficient choices for routine work; reserve Sol / Opus for tasks that benefit materially |
+| 30–50% | Route routine/high-volume work to Antigravity; preserve Codex/Claude for review and difficult work |
+| < 30% | Preserve that provider by default; use it only when the task materially benefits from it or an alternate cannot safely complete it |
 | exhausted / unavailable | Route to an eligible alternate and record the reason |
 
 Also consider **time until reset**. A low remaining percentage that resets soon can be used more aggressively than the same percentage with several days remaining.
