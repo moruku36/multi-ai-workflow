@@ -136,3 +136,40 @@ ChatGPT Chatは短い相談や壁打ち、Workは複数ステップの調査・�
 - Google Colab / Google Drive / 外部検索サービスを利用し得るため、ローカルLLMと同じ機密性は前提にしない。
 - 機密情報や社外秘データは、利用ルールを確認してから投入する。
 - 旧 `configs/level1-ollama/` はLegacyとして残すが、標準ルーティングからは外す。
+
+---
+
+## 7. Execution Security
+
+Task Routing（誰に任せるか）の下に、任意のレイヤーとして Execution Security（何を許可するか）を置きます。ここまでの表・エスカレーション・モデル選択は変わりません。OpenShellはモデル階層に入れず、ルーティングの入力にもしません。
+
+```text
+Task Routing        … 誰に任せるか（Codex / Claude Code / ...）
+  ↓
+Execution Security  … 何を許可するか（OpenShell: FS・ネットワークをdefault-deny）
+```
+
+### 使い分け
+
+| レビューの種類 | 実行方法 |
+|---|---|
+| 重要repo / セキュリティ重視のレビュー | [OpenShell Claude Reviewer](https://github.com/moruku36/openshell-claude-reviewer) |
+| 通常の軽いレビュー | 従来の Claude Code |
+
+全てのClaude Code実行にOpenShellを必須とはしません。
+
+### Builder と Reviewer の権限分離
+
+| 役割 | 担当 | repo | GitHub |
+|---|---|---|---|
+| Builder | Codex | READ / WRITE | PR作成などの書き込み可 |
+| Reviewer | Claude Code（OpenShell内） | READ | WRITE DENY（push、PR/Issue書き込み、他ホストへの通信） |
+
+「Reviewerはpushしない」をプロンプトではなくポリシーで強制するため、レビュー対象コードにプロンプトインジェクションが含まれていても、書き込みは実行できません。
+
+### 検証状況
+
+- 検証済み: サンドボックス境界のdenyチェック 13/13
+- **未確認**: 本物のAnthropic APIキーで、実際にAnthropicへ接続する `review.sh` によるレビュー
+
+未確認の部分が確認できたら、この節を更新します。レビュー対象のコードはAnthropic APIへ送信される点は従来のClaude Codeと同じです。

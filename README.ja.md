@@ -124,6 +124,23 @@ flowchart LR
 
 ---
 
+## 4.5 Execution Security（実行セキュリティ）
+
+Task Routing が「**誰に任せるか**」を決めるのに対し、その下に置く任意のレイヤー Execution Security は「**何を許可するか**」を決めます。[OpenShell Claude Reviewer](https://github.com/moruku36/openshell-claude-reviewer) は、Claude Codeレビュアーを NVIDIA OpenShell のサンドボックス内で実行します。OpenShellはモデル階層ではなく、ルーティングやモデル選択は変えません。
+
+| 役割 | 担当 | 権限 |
+|---|---|---|
+| Builder | Codex | 実装。repoへの書き込み、PR作成が可能 |
+| Reviewer | Claude Code（必要に応じてOpenShell内） | repo READのみ。GitHub WRITE（push、PR/Issue書き込み）はDENY |
+
+- 重要repo / セキュリティ重視のレビューだけ OpenShell Claude Reviewer を使う。
+- 通常の軽いレビューは従来の Claude Code のまま。全てのClaude Code実行にOpenShellを必須とはしない。
+- Reviewerの「pushしない」はプロンプトではなくポリシーで強制する。
+
+> **検証状況**: 境界の deny チェックは 13/13 で検証済み。本物のAnthropic APIキーで実際にAnthropicへ接続する `review.sh` によるレビューは**まだ未確認**。詳細は [Routing Guide](docs/routing-guide.md#7-execution-security) を参照。
+
+---
+
 ## 5. 利用枠を守るためのルール
 
 ### Codexの利用枠を温存する
@@ -230,6 +247,7 @@ cp templates/.env.example .env
 - **Gemini + Antigravity**: `configs/level2-antigravity/AGY_RULES.md`
 - **ChatGPT**: `configs/level3-chatgpt/custom_instructions.md`
 - **Claude**: `configs/level4-claude/review_prompt.md`
+- **Execution Security（任意）**: https://github.com/moruku36/openshell-claude-reviewer
 - **タスク振り分け**: `docs/routing-guide.md`
 - **モデル間の引き継ぎ**: `docs/handoff-templates.md`
 
@@ -246,6 +264,7 @@ cp templates/.env.example .env
 - Google Gemini 3.8 Flash: https://ai.google.dev/gemini-api/docs/latest-model
 - Google Antigravity agent: https://ai.google.dev/gemini-api/docs/antigravity-agent
 - Qwen Multimodal Colab: https://github.com/moruku36/qwen-multimodal-colab
+- OpenShell Claude Reviewer: https://github.com/moruku36/openshell-claude-reviewer
 
 ---
 

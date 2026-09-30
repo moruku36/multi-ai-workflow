@@ -5,6 +5,8 @@ Claudeを**別系列のシニアエンジニア / 独立レビュアー**とし�
 > 推奨: Claude Code **Opus 5.5**  
 > 通常実装の代替は Sonnet 5。API利用時のモデルは環境変数 `CLAUDE_MODEL` で上書きできます。
 
+> 重要repo / セキュリティ重視のレビューは、権限をポリシーで制限した [OpenShell Claude Reviewer](https://github.com/moruku36/openshell-claude-reviewer) で実行できます（任意）。通常の軽いレビューは従来のClaude Codeで構いません。
+
 ---
 
 ```text

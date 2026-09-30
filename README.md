@@ -20,6 +20,15 @@ cp templates/.env.example .env
 
 Inspect `configs/`, `templates/`, `tools/`, and the recipes in `docs/` before configuring the workflow.
 
+## Execution Security (optional)
+
+Task Routing decides **who** does the work. Below it sits an optional **Execution Security** layer that decides **what that agent is allowed to do**. [OpenShell Claude Reviewer](https://github.com/moruku36/openshell-claude-reviewer) runs the Claude Code reviewer inside an NVIDIA OpenShell sandbox. OpenShell is not a model tier and does not change routing or model selection.
+
+- **Builder (Codex)** implements and may write to the repository and open PRs.
+- **Reviewer (Claude Code, optionally in OpenShell)** reads the repository only. GitHub writes (push, PR/issue writes) are denied by policy, not by prompt.
+- Use the OpenShell reviewer for important repositories and security-focused reviews. Ordinary light reviews stay on plain Claude Code; OpenShell is not required for every Claude Code run.
+
+Verification status: the sandbox boundary passed 13/13 deny checks. A real review through `review.sh` with an actual Anthropic API key has **not been verified yet**. See the [routing guide](docs/routing-guide.md#7-execution-security) for details.
 
 ## Contents
 
