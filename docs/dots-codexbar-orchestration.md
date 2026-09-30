@@ -99,7 +99,7 @@ Also consider **time until reset**. A low remaining percentage that resets soon 
 
 Do not assume Dots can directly read local CodexBar state or invoke every external coding agent.
 
-When Dots rolls out:
+During rollout validation:
 
 1. Verify whether the Dot can invoke a local/remote bridge, plugin, webhook, or API that can receive CodexBar data.
 2. If direct local access is unavailable, expose a **minimal usage bridge** that publishes only normalized quota/status data.
@@ -125,4 +125,4 @@ A small `usage-router` component should eventually provide:
 - local JSON history for consumption trends and reset-aware routing.
 - optional GitHub status/comment output explaining which agent was selected and why.
 
-The first implementation should be read-only with respect to provider accounts. Automatic task execution can be added only after the available Dots integration mechanisms are verified.
+The first implementation should be read-only with respect to provider accounts. Automatic task execution should be enabled only after Dottie's local-computer access and external-agent execution paths are verified.
