@@ -97,8 +97,8 @@ flowchart LR
    - 通常作業はGPT-6 Luna Mediumから開始し、難しい設計判断・デバッグで不足したときだけSol Mediumへ上げる。
 5. **Astraは最後まで温存する**
    - GPT-6 Sol / Opus 5.5で解けない問題、非常に重要な最終判断のみ。
-6. **Dotsロールアウト後はCodexBarを利用量の観測レイヤーにする（計画）**
-   - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DotsがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
+6. **DottieはCodexBarを利用量の観測レイヤーとして使う（接続検証中）**
+   - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DottieがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
 
 ---
 
