@@ -12,7 +12,7 @@
 
 対象はプログラミングだけではありません。技術調査、文章・資料作成、設計、レビュー、画像・PDF・動画の理解や生成までを、ChatGPT / Codex / Claude Code / Gemini + Antigravity / Qwen Multimodal Colab で使い分けます。
 
-> **Model snapshot: 2026-09-29**
+> **Model snapshot: 2026-09-30**
 >
 > - ChatGPT Chat / Work: 自分の運用では GPT-6 Luna を標準とし、より深い推論が必要なときだけ GPT-6 Sol へ上げる
 > - Codex: GPT-6 Luna を主力実装、GPT-6 Sol を難しい実装へのエスカレーション、GPT-6 Astra を最終手段に使用
@@ -27,7 +27,30 @@
 
 ---
 
-## 1. 現在の役割分担
+## 1. AIチームと呼び方
+
+この構成では、ユーザーをProduct Owner、**ドッティ（Dottie）をPM / AIオーケストレーター**として扱います。実装・調査・レビューを担当するAIは「エンジニアチーム」です。
+
+| 呼び方 | 実体 | チーム内の役割 |
+|---|---|---|
+| **ドッティ** | OpenAI Dots | PM / オーケストレーター。仕事の分解、担当選定、利用枠管理、進捗・レビュー調整 |
+| **チャッピー** | ChatGPT + Codex | アーキテクト / OpenAI側エンジニア。要件・設計・調査・文章・Codex実装 |
+| **クロード** | Claude Code | シニアエンジニア / レビュアー。難しい実装、長時間作業、独立レビュー |
+| **ジェミナイ** | Gemini 3.8 Flash + Antigravity | 高速実装 / PoC担当。初期実装、大量・反復作業 |
+| **クエン** | Qwen Multimodal Colab | マルチモーダル / 調査担当。画像・PDF・動画・音声・Read-only調査 |
+
+詳細は [AI Team: Names, Roles, and Operating Model](docs/ai-team.md) を参照してください。
+
+### Dottieの実行環境
+
+- **Dottie's cloud computer**: 常時稼働するPM本体
+- **Windowsデスクトップ**: 常時起動のローカル基地。ローカル接続後はCodexBarやCLI状態への橋として優先
+- **MacBook Air**: 外出・対話作業用のセカンダリローカル端末
+- ローカルPCがオフラインでも、Dottie自身はクラウド側で継続して動ける構成を目指す
+
+---
+
+## 2. 現在の役割分担
 
 | 役割 | 主担当 | 主な用途 |
 |---|---|---|
@@ -43,7 +66,7 @@
 
 ---
 
-## 2. 基本開発フロー
+## 3. 基本開発フロー
 
 新規プロジェクトや大きめの機能追加では、仕様と受入条件を決め、必要な工程だけ各ツールに依頼します。既存コードの修正はPoCを挟まず実装担当へ渡せます。
 
@@ -74,12 +97,12 @@ flowchart LR
    - 通常作業はGPT-6 Luna Mediumから開始し、難しい設計判断・デバッグで不足したときだけSol Mediumへ上げる。
 5. **Astraは最後まで温存する**
    - GPT-6 Sol / Opus 5.5で解けない問題、非常に重要な最終判断のみ。
-6. **Dotsロールアウト後はCodexBarを利用量の観測レイヤーにする（計画）**
-   - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DotsがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
+6. **DottieはCodexBarを利用量の観測レイヤーとして使う（接続検証中）**
+   - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DottieがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
 
 ---
 
-## 3. タスク別の使い分け
+## 4. タスク別の使い分け
 
 | タスク | 第一候補 | 第二候補 |
 |---|---|---|
@@ -101,7 +124,7 @@ flowchart LR
 
 ---
 
-## 4. 利用枠を守るためのルール
+## 5. 利用枠を守るためのルール
 
 ### Codexの利用枠を温存する
 
@@ -138,7 +161,7 @@ CodexとClaude Codeの両方に、同じ機能をゼロから実装させるの�
 
 ---
 
-## 5. 非コード作業の基本フロー
+## 6. 非コード作業の基本フロー
 
 文章・資料・調査では、短い相談にChat、完成した成果物の作成にWorkを使います。
 
@@ -151,18 +174,18 @@ Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービス�
 
 ---
 
-## 6. 実践レシピ集
+## 7. 実践レシピ集
 
 - [レシピ 01: 議事録・商談メモの高速処理＆リスク検証](docs/cookbook/01-meeting-minutes.md)
 - [レシピ 02: 新技術・OSSの選定と比較レポート作成](docs/cookbook/02-tech-selection.md)
 - [レシピ 03: 対外発信・プレスリリースの推敲＆リスクチェック](docs/cookbook/03-press-release.md)
 - [レシピ 04: コード実装・リファクタリング・独立レビュー](docs/cookbook/04-code-refactor.md)
 
-モデル間の引き継ぎには [Handoff Templates](docs/handoff-templates.md) を使用します。Dotsロールアウト後の自動ルーティング案は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md) を参照してください。
+モデル間の引き継ぎには [Handoff Templates](docs/handoff-templates.md) を使用します。AIチームの呼称・役割は [AI Team](docs/ai-team.md)、Dottieの自動ルーティング案は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md) を参照してください。
 
 ---
 
-## 7. リポジトリ構成
+## 8. リポジトリ構成
 
 ```text
 .
@@ -190,7 +213,7 @@ Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービス�
 
 ---
 
-## 8. クイックスタート
+## 9. クイックスタート
 
 ### 環境変数
 
@@ -212,7 +235,7 @@ cp templates/.env.example .env
 
 ---
 
-## 9. 公式情報
+## 10. 公式情報
 
 モデル名・提供状況は頻繁に変わるため、更新時は公式情報を確認します。
 
@@ -226,6 +249,6 @@ cp templates/.env.example .env
 
 ---
 
-## 10. ライセンス
+## 11. ライセンス
 
 本プロジェクトは [MIT License](LICENSE) のもとで公開されています。

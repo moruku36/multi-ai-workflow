@@ -8,11 +8,11 @@ Operational guidance for assigning research, reasoning, initial implementation, 
 
 Use research and design to establish requirements, assign a bounded implementation task to one tool, run independent review, and verify the result before integration. The repository also covers writing, presentations, research, and multimodal work.
 
-The recorded model snapshot is 2026-09-29. It uses GPT-6 Luna as a standard option, raises effort or model capability when needed, and assigns Claude Code, Gemini/Antigravity, and Qwen Colab according to role and task. These are the owner's dated operating choices.
+The recorded model snapshot is 2026-09-30. It uses GPT-6 Luna as a standard option, raises effort or model capability when needed, and assigns Claude Code, Gemini/Antigravity, and Qwen Colab according to role and task. These are the owner's dated operating choices.
 
 ## Operating rules
 
-Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review. A planned Dots orchestration layer will use CodexBar usage data to make quota-aware routing decisions across Codex, Claude Code, Antigravity, and Qwen Colab after Dots is available and its integration surface is verified.
+Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review. **Dottie** is the PM/orchestrator: Chappy (ChatGPT/Codex), Claude, Gemini/Antigravity, and Qwen are the engineering team. Dottie uses CodexBar usage data as the planned quota-observation layer for routing.
 
 ```bash
 cp templates/.env.example .env
@@ -25,7 +25,7 @@ Inspect `configs/`, `templates/`, `tools/`, and the recipes in `docs/` before co
 
 - [assets/](assets)
 - [configs/](configs)
-- [docs/](docs) — includes the planned [Dots + CodexBar orchestration](docs/dots-codexbar-orchestration.md)
+- [docs/](docs) — includes [AI team roles](docs/ai-team.md) and [Dots + CodexBar orchestration](docs/dots-codexbar-orchestration.md)
 - [templates/](templates)
 - [tools/](tools)
 

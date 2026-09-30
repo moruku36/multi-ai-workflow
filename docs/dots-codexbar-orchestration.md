@@ -1,14 +1,23 @@
 # Dots + CodexBar Orchestration Plan
 
-> Status: **planned**. Enable this workflow after Dots is available on the account and its actual integration surface has been verified.
+> Status: **initial rollout / validation**. Dots is now available on the account. The Dot is named **Dottie（ドッティ）**. Validate local-computer access, CodexBar integration, and external-agent execution before enabling fully automatic routing.
 
-The goal is to use a Dot as the orchestration layer while preserving the existing model policy. Dots should not blindly choose the strongest model. It should consider task complexity, provider quota, reset time, and the role of each tool.
+The goal is to use **Dottie** as the PM/orchestration layer while preserving the existing model policy. The owner is the Product Owner; Chappy, Claude, Gemini, and Qwen are the engineering team. See [AI Team](ai-team.md). Dots should not blindly choose the strongest model. It should consider task complexity, provider quota, reset time, and the role of each tool.
+
+## Runtime topology
+
+Target setup:
+
+- Dottie's cloud computer is the primary always-on PM runtime.
+- The always-on Windows desktop is the preferred local base for CodexBar and local CLI/tool state once local access is enabled.
+- The MacBook Air is a secondary local endpoint for interactive/mobile work.
+- Dottie should not depend on either local machine being online for cloud-side planning and tracking.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    U["User / GitHub task"] --> D["Dot<br/>Orchestrator"]
+    U["User / GitHub task"] --> D["Dottie<br/>PM / Orchestrator"]
     CB["CodexBar CLI / Hooks<br/>usage + reset data"] --> R["Usage Router"]
     R --> D
 
@@ -90,7 +99,7 @@ Also consider **time until reset**. A low remaining percentage that resets soon 
 
 Do not assume Dots can directly read local CodexBar state or invoke every external coding agent.
 
-When Dots rolls out:
+During rollout validation:
 
 1. Verify whether the Dot can invoke a local/remote bridge, plugin, webhook, or API that can receive CodexBar data.
 2. If direct local access is unavailable, expose a **minimal usage bridge** that publishes only normalized quota/status data.
@@ -116,4 +125,4 @@ A small `usage-router` component should eventually provide:
 - local JSON history for consumption trends and reset-aware routing.
 - optional GitHub status/comment output explaining which agent was selected and why.
 
-The first implementation should be read-only with respect to provider accounts. Automatic task execution can be added only after the available Dots integration mechanisms are verified.
+The first implementation should be read-only with respect to provider accounts. Automatic task execution should be enabled only after Dottie's local-computer access and external-agent execution paths are verified.
