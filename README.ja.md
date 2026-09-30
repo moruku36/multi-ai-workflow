@@ -74,6 +74,8 @@ flowchart LR
    - 通常作業はGPT-6 Luna Mediumから開始し、難しい設計判断・デバッグで不足したときだけSol Mediumへ上げる。
 5. **Astraは最後まで温存する**
    - GPT-6 Sol / Opus 5.5で解けない問題、非常に重要な最終判断のみ。
+6. **Dotsロールアウト後はCodexBarを利用量の観測レイヤーにする（計画）**
+   - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DotsがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
 
 ---
 
@@ -156,7 +158,7 @@ Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービス�
 - [レシピ 03: 対外発信・プレスリリースの推敲＆リスクチェック](docs/cookbook/03-press-release.md)
 - [レシピ 04: コード実装・リファクタリング・独立レビュー](docs/cookbook/04-code-refactor.md)
 
-モデル間の引き継ぎには [Handoff Templates](docs/handoff-templates.md) を使用します。
+モデル間の引き継ぎには [Handoff Templates](docs/handoff-templates.md) を使用します。Dotsロールアウト後の自動ルーティング案は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md) を参照してください。
 
 ---
 
