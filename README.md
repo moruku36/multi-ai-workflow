@@ -12,7 +12,7 @@ The recorded model snapshot is 2026-09-29. It uses GPT-6 Luna as a standard opti
 
 ## Operating rules
 
-Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review.
+Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review. A planned Dots orchestration layer will use CodexBar usage data to make quota-aware routing decisions across Codex, Claude Code, Antigravity, and Qwen Colab after Dots is available and its integration surface is verified.
 
 ```bash
 cp templates/.env.example .env
@@ -25,7 +25,7 @@ Inspect `configs/`, `templates/`, `tools/`, and the recipes in `docs/` before co
 
 - [assets/](assets)
 - [configs/](configs)
-- [docs/](docs)
+- [docs/](docs) — includes the planned [Dots + CodexBar orchestration](docs/dots-codexbar-orchestration.md)
 - [templates/](templates)
 - [tools/](tools)
 
