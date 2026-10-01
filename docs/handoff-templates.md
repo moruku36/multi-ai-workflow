@@ -60,17 +60,17 @@ Qwen Multimodal Colabで画像・PDF・短動画・GitHubリポジトリを調�
 - 事実とQwen側の推測を分けて扱ってください。
 ```
 
-Qwen Multimodal ColabのGitHubエージェントはRead-onlyです。コード変更が必要な場合はCodex / Claude Code / Antigravityへ渡します。
+このテンプレートの画像・PDF・動画・音声などのマルチモーダル調査は、Qwen Multimodal Colabで行います。Colabが使えない間は、テキスト作業にローカルQwen 14Bを優先します。ローカル14BとColabは別環境です。ローカル14Bについて、Ollamaがバックエンドであること、マルチモーダル機能、自動呼び出しを仮定しません。Qwen Multimodal ColabのGitHubエージェントは読み取り専用です。コード変更が必要な場合はCodex / Claude Code / Antigravityへ渡します。
 
 ---
 
-## 3. Antigravity → Codex GPT-6 Luna
+## 3. Antigravity → Claude Codeによる仕上げ → Codexの独立レビュー
 
-初期実装を本番品質へ引き上げるテンプレートです。まず GPT-6 Luna / Medium で進め、難しい設計判断やデバッグで不足する場合のみ Sol / Medium へ上げます。
+新規モック / PoC / 大量初期コードを本番品質へ仕上げ、独立レビューする流れです。Geminiの初期実装を引き継ぎ、ゼロから作り直しません。ClaudeはSonnet 5.5を標準にします（現在のMedium effortはユーザー申告）。Opus 5.5は難しい仕事に限ります。Codexで文章やコードを作成する際はGPT-6 Luna / Lowから始めます。必要な場合のみMedium → High → GPT-6.1 Sol / Mediumへ上げ、その都度理由を示し、適切なテストとレビューを続けます。
 
 ```markdown
 # 目的
-Gemini 3.8 Flash / Antigravityで作成した初期実装を、本番投入可能な品質へ仕上げてください。
+Gemini 3.8 Flash / Antigravityで作成した初期実装を、Claudeで本番品質へ仕上げ、その差分をCodexが独立レビューしてください。
 
 ## 現在の状態
 - 実装済み:
@@ -82,7 +82,7 @@ Gemini 3.8 Flash / Antigravityで作成した初期実装を、本番投入可�
 ## 確定仕様
 --- ChatGPTで確定した仕様を貼る ---
 
-## Codexに依頼すること
+## Claudeに依頼すること
 1. 仕様との乖離を確認
 2. アーキテクチャ上の問題を修正
 3. エラー処理・境界値を補強
@@ -90,12 +90,16 @@ Gemini 3.8 Flash / Antigravityで作成した初期実装を、本番投入可�
 5. 不要な複雑性を除去
 6. テスト / lint / buildを実行
 
-変更理由と残課題を最後に要約してください。
+既存の初期実装を継続して使い、別の初期実装を作り直さないでください。変更理由と残課題を最後に要約してください。
+
+## Codexに依頼すること
+- Claudeの差分を独立レビューし、重大な問題と根拠を報告
+- 必要なテストを確認し、修正が必要なら指摘をClaudeへ返す
 ```
 
 ---
 
-## 4. Codex → Claude Code Opus 5.5
+## 4. Codex → Claude Code Sonnet 5.5による独立レビュー
 
 独立レビュー用です。細かな好みまで拾わせず、重大な問題へ集中させます。
 
@@ -149,10 +153,10 @@ Claude Codeによる独立レビューで以下の指摘がありました。
 - 修正後にテストを実行する
 ```
 
-**モデル選択:**
-- typo / README / 単純テスト修正 → GPT-6 Luna / Low〜Medium
-- 通常の実装ロジック → GPT-6 Luna / Medium
-- Lunaで不足する難しい設計変更・デバッグ → GPT-6 Sol / Medium
+**修正モデル選択:**
+- typo / README / 単純テスト修正 → GPT-6 Luna / Low
+- Luna Lowで不足する通常の実装ロジック → Luna / Medium
+- Mediumでも不足 → Luna / High、その後にGPT-6.1 Sol / Medium（各段階の理由を記載）
 
 ---
 
@@ -179,7 +183,7 @@ Codexで以下まで作業済みです。ここから継続してください。
 既存方針を維持し、不要な全面書き換えは行わず、テストまで完了してください。
 ```
 
-Claude Codeへ切り替える場合は **Opus 5.5 / Medium を標準**にします。Sonnet 5は、Opusの利用枠を温存したい軽量実装の代替として使います。
+Claude Codeへ切り替える場合は **Sonnet 5.5を標準**にします（Medium effortは現在のユーザー申告）。Opus 5.5は難しい仕事に限ります。
 
 ---
 
@@ -187,9 +191,9 @@ Claude Codeへ切り替える場合は **Opus 5.5 / Medium を標準**にしま�
 
 上記と同じ形式で、Claudeの作業要約をCodexへ渡します。
 
-- 小規模〜通常の残作業 → GPT-6 Luna / Medium
-- Lunaで不足する高難度の残作業 → GPT-6 Sol / Medium
-- Solでも解けない場合のみ → GPT-6 Astra
+- 小規模〜通常の残作業 → GPT-6 Luna / Lowから
+- 必要な場合だけ → Luna / Medium → Luna / High → GPT-6.1 Sol / Medium（各段階の理由を記載）
+- GPT-6 Astraは温存し、通常は使わない
 
 ---
 

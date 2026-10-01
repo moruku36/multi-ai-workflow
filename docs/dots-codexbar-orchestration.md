@@ -10,7 +10,7 @@ Target setup:
 
 - Dottie's cloud computer is the primary always-on PM runtime.
 - The always-on Windows desktop is the preferred local base for CodexBar and local CLI/tool state once local access is enabled.
-- The MacBook Air is a secondary local endpoint for interactive/mobile work.
+- Windows is the primary local base. Use the Mac only when Windows cannot proceed; coordinate with the owner in advance when they can operate the devices.
 - Dottie should not depend on either local machine being online for cloud-side planning and tracking.
 
 ## Architecture
@@ -22,9 +22,9 @@ flowchart TD
     R --> D
 
     D --> C["Codex<br/>GPT-6 Luna / Sol / Astra"]
-    D --> CL["Claude Code<br/>Opus 5.5"]
+    D --> CL["Claude Code<br/>Sonnet 5.5 / Opus for hard work"]
     D --> A["Antigravity<br/>Gemini 3.8 Flash"]
-    D --> Q["Qwen Multimodal Colab<br/>multimodal / research"]
+    D --> Q["Local Qwen 14B / Qwen Multimodal Colab<br/>text / multimodal research"]
 
     C --> G["GitHub / tests / PR"]
     CL --> G
@@ -58,14 +58,14 @@ The adapter must tolerate missing provider/model windows. Never invent a remaini
 
 ## Routing policy
 
-The current model policy remains unchanged:
+Current task routing follows this policy:
 
-- **Codex GPT-6 Luna / Medium**: normal default implementation.
-- **Codex GPT-6 Sol / Medium**: escalate when Luna is insufficient.
-- **GPT-6 Astra**: final escalation only.
-- **Claude Code Opus 5.5 / Medium**: difficult implementation, long-running work, independent review.
-- **Gemini 3.8 Flash / Antigravity**: PoC, high-volume implementation, repetitive work, and overflow when other quotas should be preserved.
-- **Qwen Multimodal Colab**: image/PDF/video/audio work and read-only research; not the primary code-writing agent.
+- **Codex writing and coding**: start GPT-6 Luna / Low; escalate only as needed through Luna / Medium → Luna / High → GPT-6.1 Sol / Medium. Record the concrete reason, test appropriately, and retain independent review where warranted. GPT-6 Astra is reserved, not routine.
+- **Claude Code**: Sonnet 5.5 is the default (currently Medium effort, owner-reported); escalate to Opus 5.5 only for hard work.
+- **New mocks, PoCs, and bulk initial code**: Gemini 3.8 Flash through Antigravity → Claude refinement to production quality → Codex independent review. Reuse the initial implementation; do not commission duplicates.
+- **Existing repairs**: route to the best-fit tool; honor the user's explicit AI choice.
+- **Windows setup / troubleshooting**: prefer Antigravity when available and quota permits; Dottie verifies outcomes. Security-sensitive or network changes require approval; never bypass EDR.
+- **Qwen**: prefer local Qwen 14B while Colab is unavailable. Local 14B and Qwen Multimodal Colab are distinct; do not assume an Ollama backend, local multimodal capabilities, or automated invocation.
 
 Quota awareness changes **where** a task is sent, not the quality bar or acceptance criteria.
 
@@ -83,6 +83,8 @@ These thresholds are starting defaults, not hard product limits.
 
 Also consider **time until reset**. A low remaining percentage that resets soon can be used more aggressively than the same percentage with several days remaining.
 
+Gemini effort is usually High; when its remaining quota is low, prefer Medium after weighing reset time and task difficulty. Below 50% is a guideline, not a promise of fixed token savings. Below 30%, conserve a provider; when exhausted or unavailable, reroute. Consider each account's windows, reset times, credits, and expiry separately. Antigravity's Gemini pool and Claude/GPT pools are separate from native Claude/Codex accounts, and their balances must never be merged.
+
 ## Selection algorithm
 
 1. Classify the task: research, writing, PoC, routine implementation, difficult implementation, review, or multimodal.
@@ -95,6 +97,8 @@ Also consider **time until reset**. A low remaining percentage that resets soon 
 8. For important changes, send the result to a different provider for independent review.
 9. Record provider/model, reason, quota snapshot, result, and test status.
 
+Use the official consumer route if invoking the Antigravity CLI. Verify the actual capabilities available in the current session: an installed GUI does not establish remote control or CLI authentication.
+
 ## Dots integration boundary
 
 Do not assume Dots can directly read local CodexBar state or invoke every external coding agent.
@@ -103,15 +107,16 @@ During rollout validation:
 
 1. Verify whether the Dot can invoke a local/remote bridge, plugin, webhook, or API that can receive CodexBar data.
 2. If direct local access is unavailable, expose a **minimal usage bridge** that publishes only normalized quota/status data.
-3. Keep provider credentials inside CodexBar/provider CLIs; the Dot should receive usage metadata, not raw tokens/cookies.
+3. Keep provider credentials inside CodexBar/provider CLIs; the Dot should receive quota metadata only, not raw tokens, cookies, credentials, or account content.
 4. Use explicit adapters for task execution (Codex, Claude Code, Antigravity, GitHub) rather than UI automation when possible.
 5. Treat Qwen Colab as a separate remote runtime; hand off research results back to the orchestrator.
 
 ## Safety and privacy
 
 - Never send CodexBar browser cookies, OAuth tokens, CLI credentials, or provider auth files to Dots.
-- Only export provider name, quota windows, percentages, reset timestamps, status, and optional non-sensitive model buckets.
+- Only export provider name, quota windows, percentages, reset timestamps, status, and optional non-sensitive model buckets. Never put private account balances or personal information in this public repository.
 - Keep an audit log of routing decisions.
+- Security-sensitive changes, including network configuration, need approval. Never bypass EDR or treat tool access as blanket authority for security changes.
 - Require confirmation for destructive repository operations unless the execution environment already provides an equivalent approval gate.
 - Fall back to manual routing if usage data is stale or ambiguous.
 
