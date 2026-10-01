@@ -1,6 +1,6 @@
 # AI Team: Names, Roles, and Operating Model
 
-> Snapshot: 2026-09-30
+> Snapshot: 2026-10-01
 
 This document defines the human-friendly names and responsibilities used in this repository. These names should also be used in Dottie's instructions so natural requests such as "クロードにレビューさせて" or "ジェミナイに初期実装を回して" map to the correct tool.
 
@@ -11,9 +11,9 @@ This document defines the human-friendly names and responsibilities used in this
 | **ユーザー / Owner** | Human | Product Owner | Goals, priorities, final decisions, approval of important/destructive actions |
 | **ドッティ / Dottie** | OpenAI Dots | PM / AI Orchestrator | Task decomposition, assignment, quota management, handoffs, progress tracking, review coordination |
 | **チャッピー / Chappy** | ChatGPT + Codex | Architect / OpenAI engineer | Requirements, architecture, research, writing, and Codex implementation |
-| **クロード / Claude** | Claude Code | Senior engineer / reviewer | Difficult implementation, long-running coding, independent review, second opinion |
-| **ジェミナイ / Gemini** | Gemini 3.8 Flash + Antigravity | Fast implementation / prototyping engineer | PoC, mockups, initial implementation, repetitive/high-volume work |
-| **クエン / Qwen** | Qwen Multimodal Colab | Multimodal / research specialist | Vision, image generation/editing, PDF/video/audio work, read-only repository research |
+| **クロード / Claude** | Claude Code | Engineer / reviewer | Production-quality refinement, hard work, independent review, second opinion |
+| **ジェミナイ / Gemini** | Gemini 3.8 Flash + Antigravity | Fast implementation / prototyping engineer | New PoCs, mocks, bulk initial code, repetitive/high-volume work |
+| **クエン / Qwen** | Local Qwen 14B; Qwen Multimodal Colab when available | Local model / multimodal research specialist | Local text work; separate Colab vision, image, PDF/video/audio work and read-only research |
 
 ## Dottie
 
@@ -36,7 +36,7 @@ Target topology:
 
 - **Dottie's cloud computer**: primary always-on PM runtime.
 - **Windows desktop**: always-on local base when local-computer access is enabled. Preferred bridge to CodexBar and local CLI/tool state.
-- **MacBook Air**: secondary local computer for mobile/interactive work when online.
+- **MacBook Air**: secondary local computer only when Windows cannot proceed; coordinate with the owner in advance when they can operate the devices.
 - Dottie must continue to function from its cloud computer when either local computer is offline.
 
 ## Chappy
@@ -50,25 +50,25 @@ It covers two related modes:
 
 Current Codex policy:
 
-- **GPT-6 Luna / Medium**: default.
-- **GPT-6 Sol / Medium**: escalate when Luna is insufficient.
-- **GPT-6 Astra**: final escalation only.
+- Writing and coding start at **GPT-6 Luna / Low**.
+- Escalate only as needed: **Luna / Medium → Luna / High → GPT-6.1 Sol / Medium**. State the concrete reason for each escalation and keep suitable testing and review.
+- **GPT-6 Astra** is reserved, not a normal tier.
 
 Dottie should not select Sol or Astra merely because quota is available. Capability should be increased only when the task benefits materially.
 
 ## Claude
 
-"クロード" means **Claude Code**, with **Claude Opus 5.5 / Medium** as the current default.
+"クロード" means **Claude Code**, with **Claude Sonnet 5.5** as the default (currently Medium effort, as reported by the owner).
 
 Best uses:
 
-- difficult implementation
-- long-running coding work
+- hard work that warrants escalation to Opus 5.5
+- production-quality refinement after Gemini's initial implementation
 - repository-wide reasoning
-- independent review of Codex changes
+- independent review when appropriate
 - second opinion when Chappy/Codex is stuck
 
-Use higher effort only when Medium is insufficient. Sonnet can be used as a quota-saving alternative when appropriate.
+Escalate to **Opus 5.5 only for hard work**. Continue to test changes and use independent review where warranted.
 
 ## Gemini
 
@@ -76,31 +76,32 @@ Use higher effort only when Medium is insufficient. Sonnet can be used as a quot
 
 Best uses:
 
-- PoC and mockups
-- exploratory implementation
-- initial implementation
+- First implementation for new mocks, PoCs, and bulk initial code, through Antigravity
 - repetitive/high-volume edits
-- overflow work when Codex or Claude quota should be preserved
+- exploratory implementation
 
-Gemini has relatively abundant usage capacity in the current setup, so Dottie should prefer it for work where iteration volume matters more than using the strongest reasoning model.
+For new mock/PoC/bulk-initial-code work, follow **Gemini/Antigravity → Claude refinement to production quality → Codex independent review**. Reuse and refine that implementation; do not commission duplicate initial implementations.
+
+Gemini effort is usually High. If its remaining quota is low, prefer Medium after considering the reset time and task difficulty. Below 50% is a guideline, not a guaranteed fixed-token savings threshold.
+
+When task fit allows, Dottie can use Gemini for work where iteration volume matters; apply the quota bands and reset-aware effort guidance below rather than assuming its capacity is unlimited.
 
 ## Qwen
 
-"クエン" means **Qwen Multimodal Colab**.
+"クエン" means **local Qwen 14B** while Colab is unavailable, and **Qwen Multimodal Colab** for the separate multimodal setup when available.
 
 Repository: https://github.com/moruku36/qwen-multimodal-colab
 
-Best uses:
+Local Qwen 14B is for local text work while Colab is unavailable. These multimodal uses refer to **Qwen Multimodal Colab only**:
 
-- image understanding
-- image generation/editing
+- image understanding and image generation/editing
 - PDF and short-video understanding
 - audio input/output experiments
 - web-assisted research
 - read-only GitHub repository investigation
 - independent multimodal experimentation
 
-Qwen is not treated as a local/private LLM security boundary because the environment uses Google Colab and may use Google Drive or external search services.
+Prefer local **Qwen 14B** while Colab is unavailable. Local 14B is distinct from the Qwen Multimodal Colab setup; do not assume Ollama is its backend or that local Qwen provides multimodal features or automated invocation. The Colab environment is not treated as a local/private LLM security boundary because it uses Google Colab and may use Google Drive or external search services.
 
 ## Quota-aware routing
 
@@ -116,7 +117,7 @@ Dottie should consume normalized usage metadata rather than provider credentials
 | **< 30%** | Preserve that provider by default |
 | **exhausted / unavailable** | Use an eligible alternate and record the reason |
 
-Reset time also matters. A low balance that resets soon can be used more aggressively than the same balance with several days remaining.
+Consider each account's quota windows, reset times, credits, and expiry separately. Antigravity's Gemini and Claude/GPT pools are separate from native Claude/Codex accounts; never combine their balances. Use only normalized quota metadata, never auth secrets. Keep private account balances and personal information out of this public repository. Below 30%, conserve that provider; if exhausted or unavailable, reroute. Quota percentages and reset time are guides, not guaranteed token savings.
 
 ## Typical workflows
 
@@ -137,8 +138,8 @@ Owner
 Owner
   -> Dottie
   -> Gemini / Antigravity (PoC / initial build)
-  -> Chappy / Codex (production-quality finish)
-  -> Claude (independent review)
+  -> Claude (production-quality refinement)
+  -> Chappy / Codex (independent review)
   -> Dottie (status / PR summary)
 ```
 
@@ -160,7 +161,7 @@ Dottie should understand these names without asking for clarification when the c
 - **チャッピー** = ChatGPT / OpenAI-side engineer; use ChatGPT or Codex according to the requested work
 - **クロード** = Claude Code
 - **ジェミナイ** = Gemini 3.8 Flash + Antigravity
-- **クエン** = Qwen Multimodal Colab
+- **クエン** = local Qwen 14B while Colab is unavailable; otherwise Qwen Multimodal Colab for multimodal work
 
 Examples:
 

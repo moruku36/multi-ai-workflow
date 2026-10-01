@@ -12,14 +12,15 @@
 
 対象はプログラミングだけではありません。技術調査、文章・資料作成、設計、レビュー、画像・PDF・動画の理解や生成までを、ChatGPT / Codex / Claude Code / Gemini + Antigravity / Qwen Multimodal Colab で使い分けます。
 
-> **Model snapshot: 2026-09-30**
+> **Model snapshot: 2026-10-01**
 >
 > - ChatGPT Chat / Work: 自分の運用では GPT-6 Luna を標準とし、より深い推論が必要なときだけ GPT-6 Sol へ上げる
-> - Codex: GPT-6 Luna を主力実装、GPT-6 Sol を難しい実装へのエスカレーション、GPT-6 Astra を最終手段に使用
-> - Claude Code: Claude Opus 5.5 を主力として使用し、通常は Medium effort。Sonnet 5 は利用枠温存や軽めの代替実装に使用
-> - Google Antigravity: Gemini 3.8 Flash をPoC、実装、複数ファイル変更、反復作業の候補に使用
-> - Qwen Multimodal Colab: Google Colab上の個人用マルチモーダル環境。Qwen3.8-27B Q8_K_L + Qwen-Image-2.1で、Chat / Vision / 画像生成・編集 / PDF / 短い動画 / 音声入力 / GitHub読解に使用
-> - Ollama / ローカルLLM: 現在は日常運用していない。旧設定はLegacyとしてのみ保持
+> - Codexの文章作成・コーディング: GPT-6 Luna / Lowから開始し、必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol / Mediumへ順に上げる。段階ごとに理由を説明し、テストと必要な独立レビューを維持。Astraは通常運用に使わず温存
+> - Claude Code: Sonnet 5.5を標準にする（現在のMedium effortはユーザー申告）。Opus 5.5は難しい仕事に限る
+> - 新規モック / PoC / 大量の初期コード: Antigravity経由のGemini 3.8 Flashで開始し、Claudeで本番品質に仕上げ、Codexが独立レビューする。初期実装を再利用し、重複してゼロから作らせない
+> - Google Antigravity: Gemini 3.8 Flashは通常Highで使う。利用枠が少ない場合は、リセット時刻と作業の難度を見てMediumを優先する。残量50%未満は目安であり、token消費量の削減を保証しない
+> - Qwen: Colabが使えない間はローカルQwen 14Bを優先する。ローカル14BとQwen Multimodal Colabは別環境であり、Ollamaがバックエンドであること、ローカル14Bのマルチモーダル機能、自動呼び出しを仮定しない
+> - 利用枠: 既存の残量帯を使い、残量30%未満ではその提供元を温存し、枯渇・利用不可時は別の提供元へ振り替える。AntigravityのGemini用枠およびClaude/GPT用枠は、Claude/Codexの個別アカウントの枠とは分ける。各アカウントの利用期間、リセット日時、追加クレジット、有効期限を個別に扱い、残量を合算しない
 >
 > モデル更新が速いため、**製品名より役割を固定し、モデルは差し替え可能にする**のが基本方針です。利用可能なモデル・利用枠は契約と画面で確認します。
 >
@@ -35,9 +36,9 @@
 |---|---|---|
 | **ドッティ** | OpenAI Dots | PM / オーケストレーター。仕事の分解、担当選定、利用枠管理、進捗・レビュー調整 |
 | **チャッピー** | ChatGPT + Codex | アーキテクト / OpenAI側エンジニア。要件・設計・調査・文章・Codex実装 |
-| **クロード** | Claude Code | シニアエンジニア / レビュアー。難しい実装、長時間作業、独立レビュー |
-| **ジェミナイ** | Gemini 3.8 Flash + Antigravity | 高速実装 / PoC担当。初期実装、大量・反復作業 |
-| **クエン** | Qwen Multimodal Colab | マルチモーダル / 調査担当。画像・PDF・動画・音声・Read-only調査 |
+| **クロード** | Claude Code | Sonnet 5.5を標準とするエンジニア / レビュアー。Opus 5.5は難しい仕事に限定 |
+| **ジェミナイ** | Gemini 3.8 Flash + Antigravity | 新規モック / PoC / 大量初期実装。Claudeの本番品質への改善へ引き継ぐ |
+| **クエン** | ローカルQwen 14B / Qwen Multimodal Colab | Colabが使えない間はローカル14B。Colab利用時は別環境でマルチモーダル調査 |
 
 詳細は [AI Team: Names, Roles, and Operating Model](docs/ai-team.md) を参照してください。
 
@@ -45,7 +46,7 @@
 
 - **Dottie's cloud computer**: 常時稼働するPM本体
 - **Windowsデスクトップ**: 常時起動のローカル基地。ローカル接続後はCodexBarやCLI状態への橋として優先
-- **MacBook Air**: 外出・対話作業用のセカンダリローカル端末
+- **MacBook Air**: Windowsで作業を進められない場合のみ使う副端末。切り替える前に、所有者が端末を操作できる時間を確認して調整する
 - ローカルPCがオフラインでも、Dottie自身はクラウド側で継続して動ける構成を目指す
 
 ---
@@ -56,12 +57,10 @@
 |---|---|---|
 | **相談・短い下書き** | ChatGPT Chat | 要件の壁打ち、選択肢の整理、短い回答 |
 | **非コード成果物** | ChatGPT Work | 出典付き調査、文書・資料・レポートの作成と確認 |
-| **探索・実装の候補** | Gemini 3.8 Flash + Antigravity | PoC、UI試作、複数ファイル変更、反復作業。完成条件とテストを指定する |
-| **主力実装** | Codex + GPT-6 Luna (Medium) | 通常の機能実装、複数ファイル変更、テスト、レビュー指摘の反映 |
-| **上位実装 / 難問** | Codex + GPT-6 Sol (Medium) | Lunaで不足する設計判断、難しいデバッグ、複雑なリファクタリング |
-| **主力Claude / 独立レビュー** | Claude Code + Opus 5.5 (Medium) | 難しい実装、長時間作業、コードベース横断レビュー、セカンドオピニオン |
-| **Claudeの節約枠** | Claude Code + Sonnet 5 | Opusの利用枠を温存したい軽めの実装・代替実装 |
-| **最終エスカレーション** | GPT-6 Astra | Sol / Opus 5.5でも解けない高難度問題 |
+| **新規モック / PoC / 大量初期コード** | Gemini 3.8 Flash + Antigravity → Claude → Codex | 初期実装 → 本番品質への改善 → 独立レビュー。同じ初期実装を再利用 |
+| **主力実装・文章作成** | Codex + GPT-6 Luna (Lowから) | 必要な場合はLuna Medium → Luna High → GPT-6.1 Sol Medium。理由を説明し、テスト・レビューを維持 |
+| **Claudeの標準** | Claude Code + Sonnet 5.5 | 現在のMedium effortはユーザー申告。Opus 5.5は難しい仕事のみ |
+| **最終エスカレーション** | GPT-6.1 Sol (Medium)まで | Astraは温存し、通常運用には使わない |
 | **個人用マルチモーダル環境** | [Qwen Multimodal Colab](https://github.com/moruku36/qwen-multimodal-colab) | Chat / Vision、画像生成・編集、PDF・短い動画の読解、音声入力、GitHubのRead-only調査 |
 
 ---
@@ -73,9 +72,11 @@
 ```mermaid
 flowchart LR
     A["1. ChatGPT Chat / Work<br/>要件・受入条件"] --> B{"PoCが必要?"}
-    B -->|はい| P["Antigravity / Gemini<br/>試作・検証"]
-    B -->|いいえ| C["Codex / Claude Code / Antigravity<br/>実装・テスト"]
-    P --> C
+    B -->|はい| P["Antigravity / Gemini<br/>初期実装"]
+    B -->|いいえ| C["修正に適した担当<br/>実装・テスト"]
+    P --> H["Claude<br/>本番品質へ改善"]
+    H --> X["Codex<br/>独立レビュー"]
+    X --> E
     C --> D{"独立レビューが必要?"}
     D -->|はい| R["別のツール / モデル<br/>重要な指摘をレビュー"]
     D -->|いいえ| E["担当ツール<br/>検証・完成"]
@@ -93,10 +94,10 @@ flowchart LR
    - 設計との整合、テスト、差分確認まで依頼する。ツールを渡すだけで品質が上がるとはみなさない。
 3. **重要な変更は独立レビューを検討する**
    - 実装担当と異なるツールを使い、根拠と再現手順を求める。指摘は実装担当が検証する。
-4. **CodexはLunaを標準にする**
-   - 通常作業はGPT-6 Luna Mediumから開始し、難しい設計判断・デバッグで不足したときだけSol Mediumへ上げる。
+4. **CodexはLuna Lowから段階的に上げる**
+   - 文章作成・コード作業はLow開始。必要ならLuna Medium → Luna High → GPT-6.1 Sol Medium。エスカレーションの理由を説明し、テストと適切なレビューを続ける。
 5. **Astraは最後まで温存する**
-   - GPT-6 Sol / Opus 5.5で解けない問題、非常に重要な最終判断のみ。
+   - Astraは通常の選択肢ではなく温存する。
 6. **DottieはCodexBarを利用量の観測レイヤーとして使う（接続検証中）**
    - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DottieがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
 
@@ -109,16 +110,16 @@ flowchart LR
 | アイデア整理・要件定義 | ChatGPT Chat / Work | Claude（別の視点が必要な場合） |
 | 技術調査・比較・レポート | ChatGPT Work | ChatGPT Chat（短い比較） |
 | 文章・資料作成 | ChatGPT Work | ChatGPT Chat（短い下書き） |
-| PoC / モック / 新規プロジェクトの土台 | Gemini 3.8 Flash | Claude Sonnet 5 |
-| 大量の定型修正 | Gemini 3.8 Flash | GPT-6 Luna |
-| 小さなコード修正 | GPT-6 Luna | Gemini 3.8 Flash |
-| 通常の機能実装 | GPT-6 Luna (Medium) | Claude Opus 5.5 (Medium) |
-| 難しい機能実装・デバッグ | GPT-6 Sol (Medium) | Claude Opus 5.5 (Medium) |
-| 大規模migration / 長時間の自律作業 | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol |
-| 独立コードレビュー | Claude Code / Opus 5.5 (Medium) | Codex / GPT-6 Sol |
-| 最終的な難問 | GPT-6 Astra | Claude Opus 5.5 |
-| 画像理解・画像生成/編集・PDF/短動画・音声入力 | Qwen Multimodal Colab | ChatGPT / Gemini（用途に応じて） |
-| GitHubリポジトリのRead-only調査 | Qwen Multimodal Colab | ChatGPT / Codex |
+| PoC / モック / 新規プロジェクトの土台・大量初期コード | Gemini + Antigravity → Claude → Codex | 初期実装を再利用。重複実装を依頼しない |
+| 大量の定型修正 | タスクに適した実装担当 | Geminiは通常High、残量が少なければリセット時刻と作業難度を見てMedium |
+| 小さなコード修正・通常の機能実装・文章作成 | GPT-6 Luna (Lowから) | 必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol Medium |
+| 難しい機能実装・デバッグ | Codexを段階的に昇格 / Claude Opus 5.5 | Opusは難しい仕事のみ |
+| 大規模migration / 長時間の自律作業 | Claude Code / Sonnet 5.5 | 特に難しい仕事はOpus 5.5 |
+| 独立コードレビュー | 実装者と別のモデル | Codex / Luna Lowから、またはClaude / Sonnet 5.5 |
+| 最終的な難問 | GPT-6.1 Sol (Medium) | Astraは温存し、通常利用しない |
+| 画像理解・画像生成/編集・PDF/短動画・音声入力 | Qwen Multimodal Colab（利用可能な場合） | ローカルQwen 14Bとは別環境 |
+| Colabが使えない間のローカルテキスト作業 | ローカルQwen 14B | Ollamaがバックエンドであること、14Bのマルチモーダル機能、自動呼び出しを仮定しない |
+| GitHubリポジトリの読み取り専用調査 | ローカルQwen 14B（テキスト）/ Colab（利用可能な場合） | ChatGPT / Codex |
 
 詳細は [Routing Guide](docs/routing-guide.md) を参照してください。
 
@@ -145,46 +146,48 @@ Task Routing が「**誰に任せるか**」を決めるのに対し、その下
 
 ### Codexの利用枠を温存する
 
-- **デフォルトは GPT-6 Luna / Medium**。Lowは単純修正・大量の定型作業でさらに節約したい場合に使う。
-- Lunaで不足したときだけ **GPT-6 Sol / Medium** へ昇格する。
-- Solでも解けない高難度問題だけAstraを検討する。
-- 初期モックや探索的実装は Antigravity + Gemini 3.8 Flash も候補にする。
+- **文章作成・コーディングは GPT-6 Luna / Lowから開始**。必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol / Mediumへ順に昇格し、段階ごとの理由を明示する。テストと適切なレビューを維持する。
+- GPT-6 Astraは温存し、通常の段階として使わない。
+- 新規モック / PoC / 大量初期コードはAntigravity + Gemini 3.8 Flashで開始し、Claudeで本番品質へ改善してからCodexが独立レビューする。
 
 ### Claude Codeの利用枠を温存する
 
-- **デフォルトは Opus 5.5 / Medium**。最近の実運用で品質と安定感が良いため、Claude側の主力とする。
-- Lowは単純作業や利用枠を強く節約したい場合に使う。
-- High以上は難バグ・大規模設計・重要レビューなど、Mediumで不足した場合だけ上げる。
-- Sonnet 5はOpusの利用枠を温存したい軽量実装・代替実装に使う。
+- **デフォルトは Sonnet 5.5**（現在のMedium effortはユーザー申告）。
+- Opus 5.5は難しい仕事に限る。
 - Codexで既に実装済みなら、Claude側は「重大な問題だけレビュー」とスコープを絞る。
 
 ### Effortの標準
 
 | モデル | 標準 | 上げる条件 |
 |---|---|---|
-| GPT-6 Luna | **Medium** | 基本はそのまま。単純作業だけLow |
-| GPT-6 Sol | **Medium** | Lunaで不足した場合にモデルごと昇格 |
-| Claude Opus 5.5 | **Medium** | 難バグ・大規模設計・重要レビューで必要ならHigh |
-| Claude Sonnet 5 | Low〜Medium | 軽量実装・利用枠温存 |
+| GPT-6 Luna | **Lowから開始** | 必要な場合だけMedium → High、続いてGPT-6.1 Sol / Medium。理由を説明しテストとレビューを維持 |
+| Claude Sonnet 5.5 | **標準**（Medium effortはユーザー申告） | Opus 5.5は難しい仕事のみ |
+| Gemini 3.8 Flash | **通常High** | 残量が少ない場合はリセット時刻と作業難度を考慮してMediumを優先。残量50%未満は目安で、token消費量の削減を保証しない |
 
 ### 同じ仕事を二重発注しない
 
-CodexとClaude Codeの両方に、同じ機能をゼロから実装させるのは原則避けます。
+同じ機能の初期実装を複数モデルへゼロから重複発注しません。PoC系ではGeminiの成果をClaudeが改善し、Codexが独立レビューします。既存修正は適性に合わせて担当を選び、ユーザーが指定したAIを優先します。
 
-- Builder: Codex → Reviewer: Claude Code
 - Builder: Claude Code → Reviewer: Codex
+- Builder: Codex → Reviewer: Claude Code（PoC系以外で適切な場合）
 
 という**クロスレビュー**を基本にします。
 
 ---
 
+各アカウントの利用枠、リセット日時、クレジット、有効期限は個別に確認します。AntigravityのGemini用枠とClaude/GPT用枠は、Claude/Codexの個別アカウントの枠と分け、残量を合算しません。残量30%未満はその提供元を温存し、枯渇・利用不可時は別の提供元へ振り替えます。公開リポジトリには、利用枠の状態など必要最小限の情報だけを記録し、非公開のアカウント残量・個人情報・認証情報は記載しません。
+
+### Windows環境のトラブル対応
+
+Windowsを主拠点にし、Windowsで作業を進められない場合だけMacへ切り替えます。切り替える前に、所有者が端末を操作できる時間を確認して調整します。環境トラブルや設定では、Antigravityが利用可能で利用枠に余裕があれば優先し、Dottieが結果を検証します。GUIをインストール済みでも、遠隔操作やCLI認証が可能とは限らないため、実際の機能を確認します。Antigravity CLIを使う場合は、一般利用者向けの公式手段を優先します。セキュリティやネットワーク設定に関わる変更には事前承認が必要で、EDRを迂回しません。
+
 ## 6. 非コード作業の基本フロー
 
-文章・資料・調査では、短い相談にChat、完成した成果物の作成にWorkを使います。
+文章・資料・調査では、短い相談にChat、完成した成果物の作成にWorkを使います。Codexで文章やコードを書く場合はGPT-6 Luna Lowから開始し、必要な段階だけ上げます。
 
 1. **ChatGPT Chat / Work**: 論点整理、出典確認、構成、初稿
 2. **Gemini / Antigravity**: 必要ならファイル化・大量整形・反復作業
-3. **Claude Opus 5.5**: 重要成果物のみ独立レビュー
+3. **Claude Sonnet 5.5**: 重要成果物のみ独立レビュー（難しい仕事に限りOpus 5.5）
 4. **ChatGPT Work**: 最終版へ統合し、事実と出典を確認
 
 Qwen Multimodal ColabはGoogle Colab / Google Drive / 外部検索サービスを利用し得るため、**ローカルLLMのような機密データ保護境界としては扱いません**。機密情報は所属組織やサービスの利用ルールに従い、投入可否を個別に判断します。

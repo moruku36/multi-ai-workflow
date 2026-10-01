@@ -8,11 +8,11 @@ Operational guidance for assigning research, reasoning, initial implementation, 
 
 Use research and design to establish requirements, assign a bounded implementation task to one tool, run independent review, and verify the result before integration. The repository also covers writing, presentations, research, and multimodal work.
 
-The recorded model snapshot is 2026-09-30. It uses GPT-6 Luna as a standard option, raises effort or model capability when needed, and assigns Claude Code, Gemini/Antigravity, and Qwen Colab according to role and task. These are the owner's dated operating choices.
+The recorded model snapshot is 2026-10-01. Codex writing and coding start at GPT-6 Luna / Low and escalate through Luna Medium, Luna High, then GPT-6.1 Sol / Medium only when needed; explain why each escalation is warranted and retain appropriate testing and independent review. Astra is reserved, not a routine tier. Claude defaults to Sonnet 5.5 (currently Medium effort, as reported by the owner); use Opus 5.5 only for hard work. For new mocks, PoCs, and bulk initial code, use Gemini 3.8 Flash through Antigravity first, Claude for production-quality refinement, and Codex for independent review. Keep existing repairs with the best-fit tool, follow the user's explicit choice, and avoid duplicate initial implementations.
 
 ## Operating rules
 
-Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review. **Dottie** is the PM/orchestrator: Chappy (ChatGPT/Codex), Claude, Gemini/Antigravity, and Qwen are the engineering team. Dottie uses CodexBar usage data as the planned quota-observation layer for routing.
+Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review. **Dottie** is the PM/orchestrator: Chappy (ChatGPT/Codex), Claude, Gemini/Antigravity, and Qwen are the engineering team. Windows is the primary local base; use the Mac only when Windows cannot proceed and coordinate availability first. Antigravity's Gemini and Claude/GPT quota pools are separate from native Claude/Codex accounts; never merge their balances. Route using only quota metadata, never credentials or private account balances in this public repository. Confirm capabilities in use: an installed GUI does not prove remote control or CLI authentication. Security-sensitive changes need approval; never bypass EDR.
 
 ```bash
 cp templates/.env.example .env
