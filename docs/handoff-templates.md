@@ -4,6 +4,23 @@
 
 ---
 
+## 共通の証跡欄（すべての引き継ぎに付ける）
+
+モデル比較前に同じ入力・プロンプト・受入条件・評価基準を固定し、成果物manifestを作ります。詳細と最小項目は [2026-10-02運用決定](operating-decisions-2026-10-02.ja.md) を参照してください。
+
+```text
+入力revision / path / hash、prompt / rubric revision:
+指定モデル / effort:
+観測した実行時モデル / effort: 証跡がなければUNKNOWN
+accepted（受理）/ executed（実行）/ verified（検証）: 各状態と証跡参照
+出力path / hash、レビュー指摘、検証結果、未解決事項:
+再取得元 / revision / hash:
+```
+
+キュー受領票だけでは完了にしません。結果を読み、受入条件を検証します。秘密情報・健康情報・企業メール・非公開メモは渡しません。
+
+---
+
 ## 1. ChatGPT → Antigravity / Gemini 3.8 Flash
 
 設計を固めたあと、PoC・モック・初期実装を大量に進めるためのテンプレートです。
@@ -193,7 +210,7 @@ Claude Codeへ切り替える場合は **Sonnet 5.5を標準**にします（Med
 
 - 小規模〜通常の残作業 → GPT-6 Luna / Lowから
 - 必要な場合だけ → Luna / Medium → Luna / High → GPT-6.1 Sol / Medium（各段階の理由を記載）
-- GPT-6 Astraは温存し、通常は使わない
+- GPT-6 Astraは通常コーディングでは温存。蒸留・Factoryの初期調査・論文解釈は明示許可の例外で、Solで十分ならSol
 
 ---
 

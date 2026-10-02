@@ -2,11 +2,13 @@
 
 「どのAI / モデルに依頼するか」を即決するためのガイドです。Dottie（ドッティ）がPMとして使う場合も、このルールを基準にします。呼称とチーム内役割は [AI Team](ai-team.md) を参照してください。
 
-> **Model snapshot: 2026-10-01**
+> **Operating snapshot: 2026-10-02（モデル名は所有者申告）**
 >
 > モデル更新時は、モデル名そのものより「役割」を維持して置き換えます。
 
 ---
+
+今回の変更・検証境界は [2026-10-02運用決定](operating-decisions-2026-10-02.ja.md) を参照してください。
 
 ## 1. 現在の標準ルーティング
 
@@ -17,13 +19,15 @@
 | 文章・資料作成 | ChatGPT Work | ChatGPT Chat（短い下書き） |
 | PoC・モック・新規プロジェクト雛形 | Gemini 3.8 Flash / Antigravity → Claudeで仕上げ → Codexが独立レビュー | 指定AIがあればそれを優先 |
 | 初期実装・大量ファイル変更 | Gemini 3.8 Flash / Antigravity → Claudeで仕上げ → Codexが独立レビュー | 既存作業の修正は適した担当へ |
-| 小規模コード修正 | Codex / GPT-6 Luna (Lowから) | Gemini 3.8 Flash |
-| 通常の機能実装・文章作成 | Codex / GPT-6 Luna (Lowから) | Claude Code / Sonnet 5.5 (Medium effort) |
-| 難しい実装・デバッグ | Codexを段階的に昇格。Claude Opus 5.5は難しい作業に限る | ユーザー指定のAI |
+| コーディング・デプロイの標準担当 | Claude Code / Sonnet 5.5 | Chappyが設計・独立レビュー。デプロイは適用される承認後 |
+| Codexへ割り当てた小規模コード修正 | Codex / GPT-6 Luna (Lowから) | Gemini 3.8 Flash |
+| Codexへ割り当てた機能実装・文章作成 | Codex / GPT-6 Luna (Lowから) | Claude Code / Sonnet 5.5 (Medium effort) |
+| 難しい実装・デバッグ | Claude / Sonnetを標準とし、難しい作業のみOpusを検討 | Codexへ割り当てた場合は下記の順で昇格。ユーザー指定を優先 |
 | 大規模migration・長時間agentic coding | Claude Code / Sonnet 5.5 | Codex / GPT-6 Luna (Lowから。必要な場合のみ段階的に昇格) |
-| コードベース横断レビュー | Claude Code / Sonnet 5.5。難しい作業のみOpusへ昇格 | Codex / GPT-6.1 Sol |
-| レビュー指摘の単純修正 | GPT-6 Luna | Gemini 3.8 Flash |
-| Solでも解けない難問 | GPT-6 Astra (reserved, not routine) | Claude Opus 5.5 |
+| コードベース横断レビュー | Claude実装ならChappy / Codex、Codex実装ならClaude / Sonnet | 実装担当と別系列でレビュー。Codex作業はLuna Lowから必要な場合だけ昇格 |
+| レビュー指摘の単純修正 | 実装担当が指摘を検証して修正 | Codexへ割り当てた場合はLuna Lowから |
+| 蒸留・Factoryの初期調査・論文解釈 | Astraを明示許可 | Solで十分ならSol。全タスクAstraにはしない |
+| Solでも解けない難問 | 必要性を個別判断してAstraを検討（温存対象・通常経路外） | 既存の許可範囲を維持。自動昇格せず、Claude Opus 5.5も検討 |
 | 画像理解・画像生成/編集・PDF/短動画・音声入力 | Qwen Multimodal Colab（利用可能な場合） | 用途に合う別の担当 |
 | GitHubリポジトリの読み取り専用調査 | ローカルQwen 14B（テキスト）/ Colab（マルチモーダル、利用可能な場合） | ChatGPT / Codex |
 
@@ -50,8 +54,9 @@ flowchart TD
 
 - **仕様がまだ曖昧** → ChatGPT
 - **設計の不確実性を試作で減らしたい** → Antigravity / Gemini 3.8 Flash
-- **既存コードへ通常の変更・文章作成をしたい** → GPT-6 Luna / Low
-- **Luna Lowで不足する** → GPT-6 Luna / Medium、必要ならHigh、その後にGPT-6.1 Sol / Medium
+- **通常のコーディング・デプロイ** → Claude / Sonnet。デプロイは適用される承認後
+- **Codexへ割り当てた既存コード変更・文章作成** → GPT-6 Luna / Low
+- **Codex作業でLuna Lowでは不足する** → GPT-6 Luna / Medium、必要ならHigh、その後にGPT-6.1 Sol / Medium
 - **新規モック / PoC / 大量初期コード** → Gemini / Antigravity、Claudeで仕上げ、Codexで独立レビュー
 - **難しい仕事** → Claude Opus 5.5を検討
 - **外部視点でレビューしたい** → 実装担当と別ベンダーのモデル
@@ -60,7 +65,7 @@ flowchart TD
 
 ## 3. エスカレーション
 
-### Codex内
+### Codexへ割り当てた通常作業の昇格
 
 ```text
 GPT-6 Luna / Low
@@ -70,11 +75,14 @@ GPT-6 Luna / Medium
 GPT-6 Luna / High
   ↓ Highでも不足する具体的理由がある
 GPT-6.1 Sol / Medium
-  ↓ 解けない難問で、必要性を個別判断
-GPT-6 Astra
 ```
 
-各段階でエスカレーション理由を記録し、テストと適切な独立レビューを維持します。Astraは通常の選択肢ではありません。
+各段階でエスカレーション理由を記録し、テストと適切な独立レビューを維持します。この順序はCodexへ割り当てた通常作業に適用し、Claude / Sonnetの標準実装担当を置き換えません。
+
+### Astraの個別例外（通常昇格と分離）
+
+- **難問:** Solでも解けない場合は、既存の許可範囲を維持し、必要性を個別判断してAstraを検討します。通常昇格の自動的な次段階ではありません。
+- **蒸留・Factoryの初期調査・論文解釈:** 所有者がAstraを明示許可しています。Solで十分ならSolを使い、全タスクをAstraへ統一しません。
 
 ### Claude Code内
 
@@ -90,7 +98,7 @@ Sonnet 5.5が標準です。Opus 5.5は難しい仕事に限ります。
 
 - Codexで詰まった → Claude Codeへセカンドオピニオン
 - Claude Codeで詰まった → Codexへセカンドオピニオン
-- どちらも詰まった → GPT-6 Astra
+- どちらも詰まった → 根拠と残る難問を整理し、上記の個別例外としてAstraの必要性を判断。自動昇格しない
 - 単純な物量不足 → Antigravity / Gemini 3.8 Flashへ戻す
 
 ---
@@ -108,7 +116,7 @@ Sonnet 5.5が標準です。Opus 5.5は難しい仕事に限ります。
 5. **同じ実装を複数モデルへゼロから二重発注しない**
    - 比較実験を除き、利用枠の無駄になるため避ける。
 6. **Dottieは残量とリセット時刻もルーティング入力にする**
-   - Geminiは通常High effortで使う。残量が少ない場合は、リセット時刻と作業難度を見てMediumを優先する。残量50%未満は目安であり、token消費量の削減を保証しない。残量30%未満ではその提供元を温存し、枯渇・利用不可時は別の提供元へ振り替える。AntigravityのGemini用枠とClaude/GPT用枠は、Claude/Codexの個別アカウントの枠と分け、残量を合算しない。各アカウントの利用枠、リセット日時、追加クレジット、有効期限を個別に管理する。詳細は [Dots + CodexBar Orchestration Plan](dots-codexbar-orchestration.md)。
+   - 既存方針はGeminiを通常High effortで使う。現在の所有者の希望はMediumであり、差異を明示してタスクごとに指定する。残量が少ない場合は、リセット時刻と作業難度を見てMediumを優先する。残量50%未満は目安であり、token消費量の削減を保証しない。残量30%未満ではその提供元を温存し、枯渇・利用不可時は別の提供元へ振り替える。AntigravityのGemini用枠とClaude/GPT用枠は、Claude/Codexの個別アカウントの枠と分け、残量を合算しない。各アカウントの利用枠、リセット日時、追加クレジット、有効期限を個別に管理する。詳細は [Dots + CodexBar Orchestration Plan](dots-codexbar-orchestration.md)。
 7. **Windowsをローカル主拠点にする**
    - Macへの切り替えはWindowsで作業を進められない場合に限り、所有者が端末を操作できる時間を事前に確認して調整する。環境トラブルや設定では、Antigravityが利用可能で利用枠に余裕があれば優先し、Dottieが結果を検証する。セキュリティやネットワーク設定に関わる変更には事前承認が必要で、EDRを迂回しない。GUIを導入済みでも遠隔操作やCLI認証が可能とは限らないため、実際の機能を確認する。Antigravity CLIを使う場合は、一般利用者向けの公式手段を優先する。
 

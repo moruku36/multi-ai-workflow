@@ -4,7 +4,9 @@
 
 > 現在の標準モデル: **Gemini 3.8 Flash**
 >
-> GoogleのAntigravity agentでもGemini 3.8 Flashが標準モデルです。
+> モデル名は所有者申告のスナップショットです。既存effort方針は通常High、現在の希望はMediumであり、差異を明示してタスクごとに指定します。
+>
+> 検証境界と比較manifestは [2026-10-02運用決定](../../docs/operating-decisions-2026-10-02.ja.md) を参照してください。
 
 ---
 
@@ -31,7 +33,7 @@
 - 既存要件と矛盾する仕様変更
 - 高リスクな本番移行判断
 
-これらはChatGPTで再設計するか、Codex GPT-6 Sol / Claude Code Opus 5.5へエスカレーションします。
+これらはChatGPTで再設計するか、Chappyによる設計・レビュー、Claude Sonnetによる実装へ引き継ぎ、必要な場合だけエスカレーションします。
 
 ---
 
@@ -51,7 +53,7 @@
 
 4. **70〜80%まで作って次工程へ渡す**
    - 最終的な設計監査や難しいリファクタリングまで抱え込まない。
-   - 本番品質への仕上げはCodex GPT-6 Solを基本とする。
+   - 本番品質への仕上げはClaude Sonnetを標準とし、Chappy / Codexが独立レビューする。同じ初期実装を再利用する。
 
 5. **変更内容を引き継げる形で残す**
    - 実装済み
@@ -65,18 +67,21 @@
 
 ## Codex / Claude Codeへの引き継ぎ基準
 
-### Codex GPT-6 Solへ
+### Claude Code / Sonnetへ（実装・仕上げ）
 
 - 初期実装が完成した
 - 仕様整合性を詰めたい
 - 本番品質へ仕上げたい
 - 難しいバグが残った
-
-### Claude Code Opus 5.5へ
-
 - 長時間のコードベース横断作業が必要
 - 大規模migration
-- Codex実装を独立レビューしたい
-- Solで原因が特定できない
+
+### Chappy / Codexへ（設計・独立レビュー）
+
+- 仕様・アーキテクチャ上の判断が必要
+- Claudeの実装を独立レビューしたい
+- 実装担当だけでは原因が特定できない
+
+Codex作業はLuna Lowから必要な場合だけ昇格し、Claude Opusは難しい仕事に限る。
 
 引き継ぎテンプレートは `docs/handoff-templates.md` を参照してください。
