@@ -12,13 +12,13 @@
 
 対象はプログラミングだけではありません。技術調査、文章・資料作成、設計、レビュー、画像・PDF・動画の理解や生成までを、ChatGPT / Codex / Claude Code / Gemini + Antigravity / Qwen Multimodal Colab で使い分けます。
 
-> **Model snapshot: 2026-10-01**
+> **Operating snapshot: 2026-10-02（モデル名は所有者申告）**
 >
 > - ChatGPT Chat / Work: 自分の運用では GPT-6 Luna を標準とし、より深い推論が必要なときだけ GPT-6 Sol へ上げる
-> - Codexの文章作成・コーディング: GPT-6 Luna / Lowから開始し、必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol / Mediumへ順に上げる。段階ごとに理由を説明し、テストと必要な独立レビューを維持。Astraは通常運用に使わず温存
+> - Codexの文章作成・コーディング: GPT-6 Luna / Lowから開始し、必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol / Mediumへ順に上げる。段階ごとに理由を説明し、テストと必要な独立レビューを維持。Astraは通常コーディングでは温存。蒸留・Factoryの初期調査・論文解釈は明示的に許可され、Solで十分ならSolを使う
 > - Claude Code: Sonnet 5.5を標準にする（現在のMedium effortはユーザー申告）。Opus 5.5は難しい仕事に限る
 > - 新規モック / PoC / 大量の初期コード: Antigravity経由のGemini 3.8 Flashで開始し、Claudeで本番品質に仕上げ、Codexが独立レビューする。初期実装を再利用し、重複してゼロから作らせない
-> - Google Antigravity: Gemini 3.8 Flashは通常Highで使う。利用枠が少ない場合は、リセット時刻と作業の難度を見てMediumを優先する。残量50%未満は目安であり、token消費量の削減を保証しない
+> - Google Antigravity: 既存方針はGemini 3.8 Flashを通常Highで使う。現在の所有者の希望はMediumであり、この差異を明記してタスクごとに指定する。利用枠が少ない場合は、リセット時刻と作業の難度を見てMediumを優先する。残量50%未満は目安であり、token消費量の削減を保証しない
 > - Qwen: Colabが使えない間はローカルQwen 14Bを優先する。ローカル14BとQwen Multimodal Colabは別環境であり、Ollamaがバックエンドであること、ローカル14Bのマルチモーダル機能、自動呼び出しを仮定しない
 > - 利用枠: 既存の残量帯を使い、残量30%未満ではその提供元を温存し、枯渇・利用不可時は別の提供元へ振り替える。AntigravityのGemini用枠およびClaude/GPT用枠は、Claude/Codexの個別アカウントの枠とは分ける。各アカウントの利用期間、リセット日時、追加クレジット、有効期限を個別に扱い、残量を合算しない
 >
@@ -35,10 +35,12 @@
 | 呼び方 | 実体 | チーム内の役割 |
 |---|---|---|
 | **ドッティ** | OpenAI Dots | PM / オーケストレーター。仕事の分解、担当選定、利用枠管理、進捗・レビュー調整 |
-| **チャッピー** | ChatGPT + Codex | アーキテクト / OpenAI側エンジニア。要件・設計・調査・文章・Codex実装 |
-| **クロード** | Claude Code | Sonnet 5.5を標準とするエンジニア / レビュアー。Opus 5.5は難しい仕事に限定 |
+| **チャッピー** | ChatGPT + Codex | アーキテクト / 独立レビュアー。要件・設計・調査・文章・明示的に割り当てたCodex作業 |
+| **クロード** | Claude Code | Sonnet 5.5を標準とするコーディング・デプロイ担当 / レビュアー。Opus 5.5は難しい仕事に限定 |
 | **ジェミナイ** | Gemini 3.8 Flash + Antigravity | 新規モック / PoC / 大量初期実装。Claudeの本番品質への改善へ引き継ぐ |
 | **クエン** | ローカルQwen 14B / Qwen Multimodal Colab | Colabが使えない間はローカル14B。Colab利用時は別環境でマルチモーダル調査 |
+
+今回の証跡・モデル比較・Factory方針は日英の [2026-10-02運用決定](docs/operating-decisions-2026-10-02.ja.md) を参照してください。2026-10-02時点の報告では、Windows wrapper（task7）は試作実装・オフライン14テスト成功まで完了し、wrapper経由の実接続は未検証です。Antigravity wrapperは呼び出し単位のツール範囲制御の対応検証待ちで保留中であり、製品一般の制限ではありません。CLIテスト成功だけではクラウド送信や自動統合を証明しません。既存の難問向けAstra利用は従来の許可範囲で個別判断し、通常のCodex昇格とは分離します。
 
 詳細は [AI Team: Names, Roles, and Operating Model](docs/ai-team.md) を参照してください。
 
@@ -58,9 +60,10 @@
 | **相談・短い下書き** | ChatGPT Chat | 要件の壁打ち、選択肢の整理、短い回答 |
 | **非コード成果物** | ChatGPT Work | 出典付き調査、文書・資料・レポートの作成と確認 |
 | **新規モック / PoC / 大量初期コード** | Gemini 3.8 Flash + Antigravity → Claude → Codex | 初期実装 → 本番品質への改善 → 独立レビュー。同じ初期実装を再利用 |
-| **主力実装・文章作成** | Codex + GPT-6 Luna (Lowから) | 必要な場合はLuna Medium → Luna High → GPT-6.1 Sol Medium。理由を説明し、テスト・レビューを維持 |
+| **コーディング・デプロイの標準担当** | Claude Code / Sonnet 5.5 | デプロイは適用される承認後。Chappyが設計・独立レビュー |
+| **Codexへ割り当てた実装・文章作成** | Codex + GPT-6 Luna (Lowから) | 必要な場合はLuna Medium → Luna High → GPT-6.1 Sol Medium。理由を説明し、テスト・レビューを維持 |
 | **Claudeの標準** | Claude Code + Sonnet 5.5 | 現在のMedium effortはユーザー申告。Opus 5.5は難しい仕事のみ |
-| **最終エスカレーション** | GPT-6.1 Sol (Medium)まで | Astraは温存し、通常運用には使わない |
+| **Codex通常作業の昇格** | GPT-6.1 Sol (Medium)まで | Astraは通常昇格の外で温存。既存の難問利用は個別判断し、蒸留・Factory調査は上記例外 |
 | **個人用マルチモーダル環境** | [Qwen Multimodal Colab](https://github.com/moruku36/qwen-multimodal-colab) | Chat / Vision、画像生成・編集、PDF・短い動画の読解、音声入力、GitHubのRead-only調査 |
 
 ---
@@ -96,8 +99,8 @@ flowchart LR
    - 実装担当と異なるツールを使い、根拠と再現手順を求める。指摘は実装担当が検証する。
 4. **CodexはLuna Lowから段階的に上げる**
    - 文章作成・コード作業はLow開始。必要ならLuna Medium → Luna High → GPT-6.1 Sol Medium。エスカレーションの理由を説明し、テストと適切なレビューを続ける。
-5. **Astraは最後まで温存する**
-   - Astraは通常の選択肢ではなく温存する。
+5. **Astraの用途を限定する**
+   - 通常コーディングでは温存。蒸留・Factoryの初期調査・論文解釈は明示許可の例外で、Solで十分ならSolを使う。
 6. **DottieはCodexBarを利用量の観測レイヤーとして使う（接続検証中）**
    - CodexBarのCLI/Hookから利用率・リセット時刻・provider statusだけを正規化し、DottieがCodex / Claude Code / Antigravity / Qwen Colabをquota-awareに振り分ける。認証トークンやCookieはDotsへ渡さない。詳細は [Dots + CodexBar Orchestration Plan](docs/dots-codexbar-orchestration.md)。
 
@@ -111,12 +114,13 @@ flowchart LR
 | 技術調査・比較・レポート | ChatGPT Work | ChatGPT Chat（短い比較） |
 | 文章・資料作成 | ChatGPT Work | ChatGPT Chat（短い下書き） |
 | PoC / モック / 新規プロジェクトの土台・大量初期コード | Gemini + Antigravity → Claude → Codex | 初期実装を再利用。重複実装を依頼しない |
-| 大量の定型修正 | タスクに適した実装担当 | Geminiは通常High、残量が少なければリセット時刻と作業難度を見てMedium |
-| 小さなコード修正・通常の機能実装・文章作成 | GPT-6 Luna (Lowから) | 必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol Medium |
+| 大量の定型修正 | タスクに適した実装担当 | 既存方針はHigh、現在の希望はMedium。タスク指定と実行時の観測値を分ける |
+| 通常のコーディング・デプロイ | Claude Code / Sonnet 5.5 | Chappyが設計・独立レビュー。デプロイは適用される承認後 |
+| Codexへ割り当てたコード修正・機能実装・文章作成 | GPT-6 Luna (Lowから) | 必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol Medium |
 | 難しい機能実装・デバッグ | Codexを段階的に昇格 / Claude Opus 5.5 | Opusは難しい仕事のみ |
 | 大規模migration / 長時間の自律作業 | Claude Code / Sonnet 5.5 | 特に難しい仕事はOpus 5.5 |
 | 独立コードレビュー | 実装者と別のモデル | Codex / Luna Lowから、またはClaude / Sonnet 5.5 |
-| 最終的な難問 | GPT-6.1 Sol (Medium) | Astraは温存し、通常利用しない |
+| 最終的な難問 | Solで不足する根拠を確認 | 既存の許可範囲でAstraを個別判断。自動昇格しない。蒸留・Factory調査は上記例外 |
 | 画像理解・画像生成/編集・PDF/短動画・音声入力 | Qwen Multimodal Colab（利用可能な場合） | ローカルQwen 14Bとは別環境 |
 | Colabが使えない間のローカルテキスト作業 | ローカルQwen 14B | Ollamaがバックエンドであること、14Bのマルチモーダル機能、自動呼び出しを仮定しない |
 | GitHubリポジトリの読み取り専用調査 | ローカルQwen 14B（テキスト）/ Colab（利用可能な場合） | ChatGPT / Codex |
@@ -147,7 +151,7 @@ Task Routing が「**誰に任せるか**」を決めるのに対し、その下
 ### Codexの利用枠を温存する
 
 - **文章作成・コーディングは GPT-6 Luna / Lowから開始**。必要な場合だけLuna Medium → Luna High → GPT-6.1 Sol / Mediumへ順に昇格し、段階ごとの理由を明示する。テストと適切なレビューを維持する。
-- GPT-6 Astraは温存し、通常の段階として使わない。
+- GPT-6 Astraは通常コーディングの段階として使わない。蒸留・Factoryの初期調査・論文解釈は例外として許可済み。
 - 新規モック / PoC / 大量初期コードはAntigravity + Gemini 3.8 Flashで開始し、Claudeで本番品質へ改善してからCodexが独立レビューする。
 
 ### Claude Codeの利用枠を温存する
@@ -162,7 +166,7 @@ Task Routing が「**誰に任せるか**」を決めるのに対し、その下
 |---|---|---|
 | GPT-6 Luna | **Lowから開始** | 必要な場合だけMedium → High、続いてGPT-6.1 Sol / Medium。理由を説明しテストとレビューを維持 |
 | Claude Sonnet 5.5 | **標準**（Medium effortはユーザー申告） | Opus 5.5は難しい仕事のみ |
-| Gemini 3.8 Flash | **通常High** | 残量が少ない場合はリセット時刻と作業難度を考慮してMediumを優先。残量50%未満は目安で、token消費量の削減を保証しない |
+| Gemini 3.8 Flash | **既存方針High / 現在の希望Medium** | 残量が少ない場合はリセット時刻と作業難度を考慮してMediumを優先。残量50%未満は目安で、token消費量の削減を保証しない |
 
 ### 同じ仕事を二重発注しない
 

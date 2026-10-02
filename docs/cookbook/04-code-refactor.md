@@ -1,6 +1,6 @@
 # レシピ 04: コード実装・リファクタリング・独立レビュー
 
-現在の標準開発フローを、そのまま使える形にしたレシピです。
+現在の標準開発フローを、そのまま使える形にしたレシピです。DottieがPM、Chappyが設計・独立レビュー、ClaudeがSonnetで実装・承認済みデプロイを担当します。PoCは必要な場合だけ行います。証跡とモデル比較は [2026-10-02運用決定](../operating-decisions-2026-10-02.ja.md) に従います。
 
 ---
 
@@ -9,10 +9,12 @@
 ```mermaid
 flowchart LR
     A[要件] --> B[ChatGPT<br/>設計・受入条件]
-    B --> C[Antigravity / Gemini 3.8 Flash<br/>PoC・初期実装]
-    C --> D[Codex / GPT-6 Luna Medium<br/>本実装・テスト]
-    D --> E[Claude Code / Opus 5.5 Medium<br/>独立レビュー]
-    E --> F[Codex / Luna or Sol<br/>指摘修正]
+    B --> Q{PoCが必要?}
+    Q -->|はい| C[Antigravity / Gemini 3.8 Flash<br/>PoC・初期実装]
+    Q -->|いいえ| D
+    C --> D[Claude Code / Sonnet<br/>本実装・テスト]
+    D --> E[Chappy / Codex<br/>独立レビュー]
+    E --> F[Claude<br/>検証済み指摘の修正]
 ```
 
 ---
@@ -44,7 +46,7 @@ flowchart LR
 [ChatGPTの仕様]
 ```
 
-## Step 3: Codex GPT-6 Luna / Mediumで本番品質へ
+## Step 3: Claude Code / Sonnetで本番品質へ
 
 ```text
 Antigravityで作成した初期実装をレビューし、本番品質へ仕上げてください。
@@ -59,9 +61,9 @@ Antigravityで作成した初期実装をレビューし、本番品質へ仕上
 を確認し、必要な修正を行ってtest/lint/buildを実行してください。
 ```
 
-通常はGPT-6 Luna / Mediumを使います。単純な変更だけLowへ下げ、Lunaで設計判断やデバッグが不足した場合のみGPT-6 Sol / Mediumへ上げます。
+ClaudeはSonnetを標準とし、Opusは難しい仕事に限ります。同じ初期実装を再利用します。
 
-## Step 4: Claude Code Opus 5.5 / Mediumで独立レビュー
+## Step 4: Chappy / Codexで独立レビュー
 
 ```text
 この変更を独立レビューしてください。
@@ -75,10 +77,10 @@ Critical / Major を優先し、Minor・typo・好みのリファクタリング
 を付けてください。問題がなければ無理に指摘を作らないでください。
 ```
 
-## Step 5: Codexで修正
+## Step 5: Claudeで修正・検証
 
-- 単純〜通常の指摘 → GPT-6 Luna / Medium（単純作業だけLowも可）
-- Lunaで不足するロジック・設計問題 → GPT-6 Sol / Medium
-- Solでも解けない問題だけ → GPT-6 Astra
+Claudeへ根拠付き指摘を返して修正・検証します。デプロイは適用される承認後に行います。
+
+Codexへ明示的に割り当てた文章・コード作業はLuna Lowから必要な場合だけMedium → High → GPT-6.1 Sol Mediumへ上げ、理由を記録します。Astraは通常コーディングでは温存し、蒸留・Factoryの初期調査・論文解釈は明示許可の例外とします。Solで十分ならSolを使います。
 
 レビュー指摘は無条件に採用せず、コード上の根拠を確認してから修正します。

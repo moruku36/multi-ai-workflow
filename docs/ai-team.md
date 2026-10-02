@@ -1,6 +1,6 @@
 # AI Team: Names, Roles, and Operating Model
 
-> Snapshot: 2026-10-01
+> Operating snapshot: 2026-10-02; model labels are owner-reported
 
 This document defines the human-friendly names and responsibilities used in this repository. These names should also be used in Dottie's instructions so natural requests such as "クロードにレビューさせて" or "ジェミナイに初期実装を回して" map to the correct tool.
 
@@ -10,10 +10,12 @@ This document defines the human-friendly names and responsibilities used in this
 |---|---|---|---|
 | **ユーザー / Owner** | Human | Product Owner | Goals, priorities, final decisions, approval of important/destructive actions |
 | **ドッティ / Dottie** | OpenAI Dots | PM / AI Orchestrator | Task decomposition, assignment, quota management, handoffs, progress tracking, review coordination |
-| **チャッピー / Chappy** | ChatGPT + Codex | Architect / OpenAI engineer | Requirements, architecture, research, writing, and Codex implementation |
-| **クロード / Claude** | Claude Code | Engineer / reviewer | Production-quality refinement, hard work, independent review, second opinion |
+| **チャッピー / Chappy** | ChatGPT + Codex | Architect / independent reviewer | Requirements, architecture, review, research, writing, and explicitly assigned Codex work |
+| **クロード / Claude** | Claude Code | Default coding / deployment engineer; reviewer | Sonnet coding, production refinement and authorized deployment; independent review when another tool builds |
 | **ジェミナイ / Gemini** | Gemini 3.8 Flash + Antigravity | Fast implementation / prototyping engineer | New PoCs, mocks, bulk initial code, repetitive/high-volume work |
 | **クエン / Qwen** | Local Qwen 14B; Qwen Multimodal Colab when available | Local model / multimodal research specialist | Local text work; separate Colab vision, image, PDF/video/audio work and read-only research |
+
+See the bilingual [2026-10-02 operating decisions](operating-decisions-2026-10-02.md) for comparison manifests, requested versus observed runtime, and CLI verification boundaries.
 
 ## Dottie
 
@@ -52,9 +54,9 @@ Current Codex policy:
 
 - Writing and coding start at **GPT-6 Luna / Low**.
 - Escalate only as needed: **Luna / Medium → Luna / High → GPT-6.1 Sol / Medium**. State the concrete reason for each escalation and keep suitable testing and review.
-- **GPT-6 Astra** is reserved, not a normal tier.
+- **GPT-6 Astra** is not a normal coding tier. The owner expressly permits initial research and paper interpretation for distillation and Factory; use Sol when sufficient.
 
-Dottie should not select Sol or Astra merely because quota is available. Capability should be increased only when the task benefits materially.
+Dottie should not select Sol or Astra merely because quota is available. Capability should be increased only when the task benefits materially; the approved research exception does not make Astra universal.
 
 ## Claude
 
@@ -62,6 +64,7 @@ Dottie should not select Sol or Astra merely because quota is available. Capabil
 
 Best uses:
 
+- default coding and deployment work (deployment requires applicable authorization)
 - hard work that warrants escalation to Opus 5.5
 - production-quality refinement after Gemini's initial implementation
 - repository-wide reasoning
@@ -82,7 +85,7 @@ Best uses:
 
 For new mock/PoC/bulk-initial-code work, follow **Gemini/Antigravity → Claude refinement to production quality → Codex independent review**. Reuse and refine that implementation; do not commission duplicate initial implementations.
 
-Gemini effort is usually High. If its remaining quota is low, prefer Medium after considering the reset time and task difficulty. Below 50% is a guideline, not a guaranteed fixed-token savings threshold.
+The prior Gemini effort policy is usually High; the owner currently prefers Medium. Record this discrepancy and the task-specific request rather than silently changing every task. If its remaining quota is low, prefer Medium after considering the reset time and task difficulty. Below 50% is a guideline, not a guaranteed fixed-token savings threshold.
 
 When task fit allows, Dottie can use Gemini for work where iteration volume matters; apply the quota bands and reset-aware effort guidance below rather than assuming its capacity is unlimited.
 
@@ -126,9 +129,10 @@ Consider each account's quota windows, reset times, credits, and expiry separate
 ```text
 Owner
   -> Dottie (plan / route)
-  -> Chappy / Codex Luna (implementation)
-  -> Claude (independent review when important)
-  -> Chappy / Codex (fix verified findings)
+  -> Chappy (architecture / acceptance criteria)
+  -> Claude / Sonnet (implementation / tests)
+  -> Chappy / Codex (independent review when important)
+  -> Claude (fix verified findings / authorized deployment)
   -> Dottie (status / PR summary)
 ```
 
