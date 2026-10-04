@@ -1,20 +1,22 @@
-# 個人文脈・ペルソナDB入力シート (Context Profile)
+# Context Profile Template
 
-ChatGPTの「メモリ機能（長期記憶）」やカスタムプロジェクトに覚えさせておくための、自分の前提条件・価値観のテンプレートです。
-（※個人情報が含まれるため、Gitにはコミットしないよう `.gitignore` で保護対象になっています）
+This is a blank, optional template for a private ChatGPT project. Fill it only with information the user intentionally chooses to provide. Keep personal or confidential values out of this public repository and never copy completed private profiles here.
 
----
+## Role and goals
 
-### 基本属性・役割
-- **専門分野 / 職種**: [例: フルスタックエンジニア, プロダクトマネージャー等]
-- **現在の主要プロジェクト**: [例: 自社SaaSのマイクロサービス化, 個人アプリ開発等]
-- **好む技術スタック**: [例: TypeScript, Go, Python, React, Next.js, GCP等]
+- Role / industry: [optional]
+- Current project: [optional]
+- Preferred tools or stack: [optional]
 
-### 意思決定の価値観・哲学
-- **設計思想**: [例: YAGNIの徹底, 過剰な抽象化を嫌う, 可読性と保守性を最優先する]
-- **コード品質基準**: [例: テストカバレッジよりも境界値の明確さ, 型安全性の担保]
-- **コミュニケーションの好み**: [例: 率直なフィードバック歓迎, 選択肢のメリット/デメリットの定量的提示]
+## Working preferences
 
-### 長期目標・プロジェクト経緯
-- **半年以内の目標**: [例: 新サービスのMVPリリース, 開発生産性2倍向上]
-- **過去に決定・固定したルール**: [例: 認証にはAuth0を採用する, ORMはPrismaで統一]
+- Design principles: [optional]
+- Code and review expectations: [optional]
+- Communication preferences: [optional]
+
+## Constraints
+
+- Near-term goals: [optional]
+- Known decisions that should be respected: [optional]
+
+Do not include credentials, login destinations, account balances, private conversation history, or personal/family details unless there is a clear private use and the user chooses to store them in a private system.

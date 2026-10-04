@@ -2,44 +2,80 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-Operational guidance for assigning research, reasoning, initial implementation, production implementation, independent review, and multimodal experiments across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen Colab.
+Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
-## Workflow
+## Current operating snapshot — 2026-10-05
 
-Use research and design to establish requirements, assign a bounded implementation task to one tool, run independent review, and verify the result before integration. The repository also covers writing, presentations, research, and multimodal work.
+- The human is Product Owner. **Dottie** handles PM work: task specification, environment/provider selection, progress, and acceptance. **Chappy** handles architecture and review. **Claude Code** is the usual coding/deployment engineer; **Gemini/Antigravity** is an option for PoCs and mocks; **Qwen** supports local text and multimodal research.
+- Windows is the always-on local base, with Mac as a secondary helper.
+- Choose the tool and model by task difficulty, required quality, eligible environment, fresh quota observations, consumption pace/reset window, and cost. Do not use a fixed Antigravity-Claude-first route. Honor an explicit task-level choice without turning it into a global default.
+- Claude Code usually uses Sonnet 5.5; use Opus 5.5 for harder work. Its quota is separate from Claude inside Antigravity.
+- Codex escalation is **Luna / Low → Luna / Medium → Luna / High → GPT-6.1 Sol / Low → Medium → High** when needed. Do not use ExtraHigh. Astra is reserved for individually justified advanced academic/technical analysis; it is not a routine coding tier. These labels describe the owner's usage and do not assert a CLI model ID or runtime availability.
+- CodexBar quota images are checked manually. Automated quota retrieval and fully automatic routing are not verified. Treat missing or stale observations as unknown and do not route on them as if current.
 
-The operating snapshot is 2026-10-02; model labels remain owner-reported. Codex writing and coding start at GPT-6 Luna / Low and escalate through Luna Medium, Luna High, then GPT-6.1 Sol / Medium only when needed; explain why each escalation is warranted and retain appropriate testing and independent review. Astra is not a routine coding tier; initial research and paper interpretation for distillation and Factory are expressly permitted, using Sol when sufficient. Claude is the default coding/deployment engineer; Chappy is the architect/reviewer. Claude defaults to Sonnet 5.5 (currently Medium effort, as reported by the owner); use Opus 5.5 only for hard work. For new mocks, PoCs, and bulk initial code, use Gemini 3.8 Flash through Antigravity first, Claude for production-quality refinement, and Codex for independent review. Keep existing repairs with the best-fit tool, follow the user's explicit choice, and avoid duplicate initial implementations.
+See the [current operating decisions](docs/operating-decisions-2026-10-05.md) and [routing guide](docs/routing-guide.md).
 
-The [2026-10-02 operating decisions](docs/operating-decisions-2026-10-02.md) record the Gemini Medium preference versus the prior High policy, frozen comparison inputs/rubrics, artifact manifests, and separate accepted/executed/verified evidence. Windows CLI smoke tests do not prove cloud-session execution or fully automatic integration. As reported on 2026-10-02, the Windows wrapper (task7) prototype is implemented with 14 offline tests passed; live execution through the wrapper is untested. The Antigravity wrapper is blocked pending verification of supported per-invocation tool-scope controls, a dated status rather than a general product limit. Factory’s manifest/review/reacquire direction is approved but unproven. Optional Astra use for difficult tasks remains individually judged within existing authorization, separate from ordinary Codex escalation.
+## Roles and workflow boundaries
 
-## Operating rules
+| Layer | Responsibility | Status |
+|---|---|---|
+| Dottie | PM: task scope, provider/environment selection, progress and acceptance | Human-directed PM role; do not imply complete autonomous dispatch |
+| AI Engineering Factory | Reusable minimal handoff, artifacts, and evidence layer | Minimal handoff verified in Factory PR #29; it is not a second autonomous orchestrator |
+| AIteamBridge | Capacity observations, routing, and transport implementation project | Local/offline stage; live quota retrieval and autonomous dispatch unverified |
 
-Keep tasks bounded, avoid assigning the same implementation twice, preserve usage budgets, and separate implementation from independent review. **Dottie** is the PM/orchestrator: Chappy (ChatGPT/Codex), Claude, Gemini/Antigravity, and Qwen are the engineering team. Windows is the primary local base; use the Mac only when Windows cannot proceed and coordinate availability first. Antigravity's Gemini and Claude/GPT quota pools are separate from native Claude/Codex accounts; never merge their balances. Route using only quota metadata, never credentials or private account balances in this public repository. Confirm capabilities in use: an installed GUI does not prove remote control or CLI authentication. Security-sensitive changes need approval; never bypass EDR.
+These layers complement one another; they are not three overlapping, fully automated command centers. For Factory's verified minimal handoff, see [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29) (merged at `4fb014a`). Bridge details can change with its repository, so keep public claims limited to dated verification and generic boundaries.
+
+```mermaid
+flowchart LR
+    U["Product Owner"] --> D["Dottie<br/>PM / acceptance"]
+    D --> A["One selected engineer<br/>Claude Code / Codex / Antigravity / Qwen"]
+    A --> F["Factory<br/>handoff + artifacts + evidence"]
+    F --> D
+    B["AIteamBridge<br/>local capacity/router/transport work"] -. "not live autonomous dispatch" .-> D
+```
+
+## Quota-aware selection
+
+- Treat session and weekly quota windows as different measurements. Used/remaining values must name their window and observation time.
+- No activity for five hours does not establish a 100% quota reset. Keep old, missing, or stale observations `unknown` and fail closed to a manual choice.
+- Antigravity Gemini, Antigravity Claude/GPT, and native Claude/Codex subscriptions are separate pools. API charges are not subscription quota. Never publish balances, quota screenshots, credentials, or account-specific spending.
+- Weigh complexity, quality, environment constraints, freshness, consumption rate, reset timing, and cost. Fixed thresholds alone are insufficient.
+
+## Implementation and verification status
+
+Keep **verified/merged**, **local/offline**, **runtime pending**, and **proposal** distinct in English and Japanese. A user approval, execution-environment authorization, a passing local test, and a production/runtime change are separate stages. Do not repeatedly retry rejected approvals or use another route to bypass them; preserve the work and stop for the correct approval path.
+
+- The Factory minimal-handoff direction is verified by PR #29 and includes Ubuntu/Windows quality gates and an offline, container-boundary verification. This does not establish live automation.
+- AIteamBridge capacity/router work has been reported at 246 local/offline tests; it is uncommitted/unpublished, and live autonomous quota retrieval/dispatch is unverified. Recheck the source repository before changing this dated evidence.
+- A user-provided Antigravity Web Remote Control session showed a desktop connection, Gemini 3.8 Flash High selection, and a read-only DateMemory request displayed as Working. This confirms web-route request acceptance only; implementation, tests, completion, and automation remain unverified. The local Windows CLI is separate and remains unverified after access denied.
+- CodexBar quota-image review is manual. No claim of automatic reading or complete quota-aware routing.
+
+## Qwen and on-demand GPU status
+
+- Windows text through Open WebUI/Ollama has received a user-operated response check. On Mac, Open WebUI 0.11.4 with a small local Qwen2.5 3B has returned local responses and web-search results; this is not automated orchestration.
+- The separate fixed-Q8 Colab chat notebook preserves the original multimodal setup. Qwen Multimodal Colab PR #35 reports 287 CPU CI tests and a successful GPU inference run; do not conflate those results or present CPU CI as GPU inference.
+- The RunPod operations PR #1 is documentation-only. The latest chat candidate has Linux CPU validation; CUDA, model download, and inference remain unverified.
+- The proposed flow is WebUI → OpenAI-compatible API → on-demand RunPod Qwen. OpenAI-compatible describes an API shape and does not mean paid OpenAI. Starting a Pod, connecting over HTTP, and automatic termination remain design goals until verified.
+- Stopping a Pod and destroying it are different. Persistent storage may continue to incur charges after a Pod stops, while deletion may lose data. Keep this general and do not publish account balances or exact costs.
+
+## Privacy and security
+
+This is a public repository. Do not include private conversations, personal or family details, credentials, login destinations, quota images, exact account balances, or logs containing them. Describe only general operating constraints. Do not add services, incur charges, generate API keys, change application execution configuration, or bypass security controls as part of documentation work.
+
+## Repository map
+
+- `README.md` / `README.ja.md`: English and Japanese overview
+- `docs/operating-decisions-2026-10-05.md`: dated status, evidence, and privacy boundaries in both languages
+- `docs/routing-guide.md`: tool selection and escalation guidance
+- `docs/ai-team.md`: team roles
+- `docs/dots-codexbar-orchestration.md`: PM/observation boundaries
+- `docs/handoff-templates.md`: reusable handoffs
+- `configs/`: tool-specific guidance
+
+## Quick start
 
 ```bash
 cp templates/.env.example .env
 ```
 
-Inspect `configs/`, `templates/`, `tools/`, and the recipes in `docs/` before configuring the workflow.
-
-## Execution Security (optional)
-
-Task Routing decides **who** does the work. Below it sits an optional **Execution Security** layer that decides **what that agent is allowed to do**. [OpenShell Claude Reviewer](https://github.com/moruku36/openshell-claude-reviewer) runs the Claude Code reviewer inside an NVIDIA OpenShell sandbox. OpenShell is not a model tier and does not change routing or model selection.
-
-- **Builder (Codex)** implements and may write to the repository and open PRs.
-- **Reviewer (Claude Code, optionally in OpenShell)** reads the repository only. GitHub writes (push, PR/issue writes) are denied by policy, not by prompt.
-- Use the OpenShell reviewer for important repositories and security-focused reviews. Ordinary light reviews stay on plain Claude Code; OpenShell is not required for every Claude Code run.
-
-Verification status: the sandbox boundary passed 13/13 deny checks. A real review through `review.sh` with an actual Anthropic API key has **not been verified yet**. See the [routing guide](docs/routing-guide.md#7-execution-security) for details.
-
-## Contents
-
-- [assets/](assets)
-- [configs/](configs)
-- [docs/](docs) — includes [AI team roles](docs/ai-team.md) and [Dots + CodexBar orchestration](docs/dots-codexbar-orchestration.md)
-- [templates/](templates)
-- [tools/](tools)
-
-## Detailed documentation
-
-The [Japanese guide](README.ja.md) retains the complete original setup instructions, configuration, examples, project status, and limitations. Supporting documents keep their existing language.
+The environment template is optional for the direct client workflow; do not put credentials in public documentation.

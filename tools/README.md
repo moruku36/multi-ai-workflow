@@ -1,29 +1,27 @@
-# Tools: Legacy Ollama + Claude review CLI
+# Tools: Legacy Ollama + Claude Review CLI
 
-> **Legacy:** 現在の標準ワークフローでは、このOllama前処理パイプラインは通常利用していません。
->
-> 個人用のQwen環境は [qwen-multimodal-colab](https://github.com/moruku36/qwen-multimodal-colab) へ移行しています。このCLIは過去のローカルOllama構成を再利用したい場合の参考として残しています。
+> **Legacy:** the Ollama→Claude API pipeline is not a normal path in the current workflow. This page documents retained code, not an active orchestration service.
 
-`pipeline.py` は、Ollamaによるローカル前処理とClaude APIによる独立レビューを直結する旧補助CLIです。
+`pipeline.py` can draft with local Ollama and send a review request through the Claude API. It is retained for legacy/reference use.
 
-## 現在の推奨
+## Current routing context
 
-- 画像・PDF・短動画・音声・Qwenチャット → **Qwen Multimodal Colab**
-- コード実装 → **Codex / Claude Code / Antigravity**
-- 独立レビュー → **Claude Code Opus 5.5 / Codex**
-- `pipeline.py` → Legacy互換用途のみ
+- For code changes, select an appropriate Codex, Claude Code, or Antigravity route per the [routing guide](../docs/routing-guide.md).
+- For local text, Windows Open WebUI/Ollama has had a user-operated response check; a Mac local setup has also returned responses. These checks do not establish automatic orchestration.
+- Dottie, Factory, and AIteamBridge have different PM, handoff/evidence, and local capacity/router/transport responsibilities. Bridge live quota retrieval and autonomous dispatch remain unverified.
+- Independent review uses a tool different from the builder when warranted. Claude Code commonly uses Sonnet 5.5; Opus 5.5 is for hard work.
 
-## Legacy CLI
+## Legacy CLI modes
 
-1. `chain`: Ollamaで整形後、Claudeでレビュー
-2. `clean`: Ollamaのみでローカル整形
-3. `review`: Claude APIのみでレビュー
+1. `chain`: draft locally with Ollama, then request a Claude API review.
+2. `clean`: draft locally with Ollama only.
+3. `review`: request Claude API review only.
 
-Claudeの既定モデルは `claude-opus-5-5` です。
+The historical review model configured by this legacy script may not match current product availability or operating choices. Verify before use; do not infer a subscription entitlement from API configuration.
 
 ```bash
 export ANTHROPIC_API_KEY="your-api-key"
 python tools/pipeline.py proposal.md --mode review -o review_report.md
 ```
 
-Ollamaを再利用する場合のみ、旧 `configs/level1-ollama/` を参照してください。
+Only use the Ollama setup when intentionally using this legacy path; see [`configs/level1-ollama/`](../configs/level1-ollama/).
