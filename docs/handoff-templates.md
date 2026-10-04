@@ -1,229 +1,118 @@
-# モデル間コンテキスト引き継ぎテンプレート
+# Reusable Handoff Templates
 
-モデルを切り替える際は、会話を丸ごと貼るより、**決定事項・未解決事項・期待する成果物**を短く渡します。
+[English](handoff-templates.md) | [日本語](handoff-templates.ja.md)
 
----
+Use a short, bounded handoff when work crosses tools. Dottie coordinates PM, task scope, provider/environment selection, progress, and acceptance. Factory is the thin reusable handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport project; live quota retrieval and automatic dispatch remain unverified.
 
-## 共通の証跡欄（すべての引き継ぎに付ける）
+## Evidence manifest
 
-モデル比較前に同じ入力・プロンプト・受入条件・評価基準を固定し、成果物manifestを作ります。詳細と最小項目は [2026-10-02運用決定](operating-decisions-2026-10-02.ja.md) を参照してください。
+For model comparisons or multi-stage work, freeze input artifacts, prompt, acceptance criteria, rubric, constraints, and evaluation procedure before execution.
 
 ```text
-入力revision / path / hash、prompt / rubric revision:
-指定モデル / effort:
-観測した実行時モデル / effort: 証跡がなければUNKNOWN
-accepted（受理）/ executed（実行）/ verified（検証）: 各状態と証跡参照
-出力path / hash、レビュー指摘、検証結果、未解決事項:
-再取得元 / revision / hash:
+task_id:
+input revision / paths / hashes:
+prompt / rubric / acceptance criteria:
+provider / route / environment:
+requested model / effort:
+observed runtime model / effort: UNKNOWN unless evidenced
+accepted / executed / verified: separate state and evidence reference for each
+output paths / hashes:
+review findings / test results / unresolved items:
+reacquire source / revision / hash:
 ```
 
-キュー受領票だけでは完了にしません。結果を読み、受入条件を検証します。秘密情報・健康情報・企業メール・非公開メモは渡しません。
+A request shown as accepted or Working is not proof of completed work. Read the result and verify acceptance criteria. A local/offline test does not prove a live provider path or production change.
 
----
-
-## 1. ChatGPT → Antigravity / Gemini 3.8 Flash
-
-設計を固めたあと、PoC・モック・初期実装を大量に進めるためのテンプレートです。
+## 1. Product Owner / Dottie to an implementation tool
 
 ```markdown
-# タスク
-以下の仕様に基づいて、まず動くMVPを実装してください。
+# Goal
+[Desired outcome]
 
-## 確定済み仕様
-- 目的:
-- 必須要件:
-- 非機能要件:
-- 受入条件:
-- 使用技術:
+## Scope and constraints
+- In scope:
+- Out of scope:
+- Environment / provider constraints:
 
-## 作業範囲
-- プロジェクト雛形・ディレクトリ作成
-- 主要機能の初期実装
-- 最低限のテスト
-- READMEの初稿
-- ビルド / テスト実行
+## Acceptance criteria
+- [Observable result]
 
-## ルール
-- 仕様にない大規模な設計変更はしない
-- 不明点は合理的な仮定で進め、仮定を最後に列挙する
-- 動作確認まで行う
-- 本番品質への最終仕上げは次工程で行うため、過剰設計しない
+## Requested model/effort (if any)
+[Task-specific choice; do not generalize it]
+
+## Report back
+- Changed files / artifacts:
+- Checks run and results:
+- Accepted / executed / verified status:
+- Unknowns and blockers:
 ```
 
----
-
-## 2. Qwen Multimodal Colab → ChatGPT / Codex
-
-Qwen Multimodal Colabで画像・PDF・短動画・GitHubリポジトリを調査した後、その結果を別モデルへ引き継ぐテンプレートです。
+## 2. Qwen research handoff
 
 ```markdown
-# Qwen Multimodal Colabでの調査結果
+# Research question
+[Question]
 
-## 調べた対象
-- 画像 / PDF / 動画 / GitHub URL:
-- 使用した検索・添付:
+## Inputs and permitted sources
+- Files / URLs:
+- Read-only or other boundary:
 
-## 確認できた事実
-- ...
+## Findings
+- Finding with source/page/region:
+- Confidence or ambiguity:
 
-## Qwen側の解釈・提案
-- ...
-
-## 出典・読んだファイル
-- ...
-
-## 次モデルに依頼すること
-- この調査結果を前提に、設計・実装・比較・レビューを続けてください。
-- 事実とQwen側の推測を分けて扱ってください。
+## Handoff
+- Evidence/artifact references:
+- Questions for the next tool:
+- Do not infer implementation, runtime success, or permission from research output.
 ```
 
-このテンプレートの画像・PDF・動画・音声などのマルチモーダル調査は、Qwen Multimodal Colabで行います。Colabが使えない間は、テキスト作業にローカルQwen 14Bを優先します。ローカル14BとColabは別環境です。ローカル14Bについて、Ollamaがバックエンドであること、マルチモーダル機能、自動呼び出しを仮定しません。Qwen Multimodal ColabのGitHubエージェントは読み取り専用です。コード変更が必要な場合はCodex / Claude Code / Antigravityへ渡します。
+## 3. Optional PoC to production refinement
 
----
-
-## 3. Antigravity → Claude Codeによる仕上げ → Codexの独立レビュー
-
-新規モック / PoC / 大量初期コードを本番品質へ仕上げ、独立レビューする流れです。Geminiの初期実装を引き継ぎ、ゼロから作り直しません。ClaudeはSonnet 5.5を標準にします（現在のMedium effortはユーザー申告）。Opus 5.5は難しい仕事に限ります。Codexで文章やコードを作成する際はGPT-6 Luna / Lowから始めます。必要な場合のみMedium → High → GPT-6.1 Sol / Mediumへ上げ、その都度理由を示し、適切なテストとレビューを続けます。
+Only use this route when a PoC reduces meaningful uncertainty. Preserve the existing artifact; avoid duplicate initial implementations.
 
 ```markdown
-# 目的
-Gemini 3.8 Flash / Antigravityで作成した初期実装を、Claudeで本番品質へ仕上げ、その差分をCodexが独立レビューしてください。
+# Goal and acceptance criteria
+[Bounded target]
 
-## 現在の状態
-- 実装済み:
-- テスト済み:
-- 未実装:
-- 既知の問題:
-- Geminiが置いた仮定:
+## Existing artifact and verification
+- Revision / files:
+- Tests already run:
+- Known gaps:
 
-## 確定仕様
---- ChatGPTで確定した仕様を貼る ---
-
-## Claudeに依頼すること
-1. 仕様との乖離を確認
-2. アーキテクチャ上の問題を修正
-3. エラー処理・境界値を補強
-4. テストを追加・改善
-5. 不要な複雑性を除去
-6. テスト / lint / buildを実行
-
-既存の初期実装を継続して使い、別の初期実装を作り直さないでください。変更理由と残課題を最後に要約してください。
-
-## Codexに依頼すること
-- Claudeの差分を独立レビューし、重大な問題と根拠を報告
-- 必要なテストを確認し、修正が必要なら指摘をClaudeへ返す
+## Refinement request
+- Preserve working behavior and architecture unless evidence supports a change.
+- Report edits, checks, unresolved issues, and any required approval.
 ```
 
----
-
-## 4. Codex → Claude Code Sonnet 5.5による独立レビュー
-
-独立レビュー用です。細かな好みまで拾わせず、重大な問題へ集中させます。
+## 4. Independent review
 
 ```markdown
-# 独立レビュー依頼
+# Review request
+Review the supplied revision independently. Do not implement changes.
 
-以下の変更を、実装者とは独立したシニアエンジニアとしてレビューしてください。
+## Scope
+[Files / change / risk areas]
 
-## レビュー対象
-- 要件逸脱
-- 明確なバグ
-- セキュリティ問題
-- データ破損・互換性問題
-- 重大な性能問題
-- テスト不足
-- 保守を困難にする設計問題
-
-## 出力ルール
-- Critical / Major を優先
-- Minor、typo、単なる好みのリファクタリングは原則不要
-- 各指摘に「根拠」「影響」「最小修正案」を付ける
-- 問題がなければ無理に指摘を作らない
-
-## 変更概要
---- Codexの作業要約 / diff概要 ---
-
-## 受入条件
---- 受入条件を貼る ---
+## Output
+- Critical/Major findings with file/line, evidence, impact, and reproduction/check:
+- Unverified assumptions:
+- Important test gaps:
+- If none, state that and list remaining runtime limitations.
 ```
 
----
-
-## 5. Claude Code → Codex GPT-6 Luna / Sol
-
-レビュー指摘を戻すテンプレートです。
+## 5. Apply verified review findings
 
 ```markdown
-# レビュー指摘の修正
+Apply only these confirmed findings:
+[Finding IDs and evidence]
 
-Claude Codeによる独立レビューで以下の指摘がありました。
-妥当性を確認したうえで、必要なものだけ修正してください。
-
-## 指摘
---- Claudeのレビュー結果 ---
-
-## ルール
-- 指摘を無条件に採用しない
-- 再現・コード確認できた問題だけ修正する
-- 単純修正は最小差分で行う
-- 設計変更が必要なら理由を説明する
-- 修正後にテストを実行する
+Keep changes minimal. Run relevant checks. Report changed files, test results, and remaining unknowns.
 ```
 
-**修正モデル選択:**
-- typo / README / 単純テスト修正 → GPT-6 Luna / Low
-- Luna Lowで不足する通常の実装ロジック → Luna / Medium
-- Mediumでも不足 → Luna / High、その後にGPT-6.1 Sol / Medium（各段階の理由を記載）
-
----
-
-## 6. Codex利用枠到達 → Claude Code
+## 6. Stop and preserve on authorization failure
 
 ```markdown
-Codexで以下まで作業済みです。ここから継続してください。
-
-## 完了
-- ...
-
-## 未完了
-- ...
-
-## 現在のブランチ / コミット
-- ...
-
-## 既知の失敗
-- ...
-
-## 次に行うべきこと
-- ...
-
-既存方針を維持し、不要な全面書き換えは行わず、テストまで完了してください。
+The required action was rejected at [authorization stage]. Do not retry repeatedly or use an alternate route to bypass it.
+Preserve current work and report the exact action, target, rejection reason, saved artifacts, and authorized next step.
 ```
-
-Claude Codeへ切り替える場合は **Sonnet 5.5を標準**にします（Medium effortは現在のユーザー申告）。Opus 5.5は難しい仕事に限ります。
-
----
-
-## 7. Claude Code利用枠到達 → Codex
-
-上記と同じ形式で、Claudeの作業要約をCodexへ渡します。
-
-- 小規模〜通常の残作業 → GPT-6 Luna / Lowから
-- 必要な場合だけ → Luna / Medium → Luna / High → GPT-6.1 Sol / Medium（各段階の理由を記載）
-- GPT-6 Astraは通常コーディングでは温存。蒸留・Factoryの初期調査・論文解釈は明示許可の例外で、Solで十分ならSol
-
----
-
-## 8. 最小ハンドオフ形式
-
-急いでいる場合は、最低でも次の5点だけ渡します。
-
-```text
-目的:
-確定仕様:
-完了済み:
-未完了:
-次モデルに期待すること:
-```
-
-会話ログ全体を渡すより、この形式の方がコンテキスト消費を抑えやすく、作業の迷走も防げます。

@@ -1,25 +1,25 @@
 # Legacy: Ollama / Qwen (+ Open WebUI)
 
-> **この構成は現在の通常運用では使用していません。**
->
-> 現在の個人用Qwen環境は [qwen-multimodal-colab](https://github.com/moruku36/qwen-multimodal-colab) へ移行しています。
+[English](README.md) | [日本語](README.ja.md)
 
-このディレクトリは、過去にローカルPC上でOllama / Qwen / Open WebUIを使っていた構成を再現できるよう、**Legacy資料としてのみ保持**しています。
+This directory retains an older local setup. It is not an automatic orchestration stack.
 
-現在の標準ルーティングやREADMEでは、このローカルLLMを前提にしません。
+## Current local observations
 
-## 現行環境との違い
+- Windows text through Open WebUI/Ollama has received a user-operated response check.
+- Mac Open WebUI 0.11.4 with a small local Qwen2.5 3B has returned local responses and web-search results.
+- These checks do not mean every script here is currently in use, that local quota routing exists, or that requests are automatically orchestrated.
+- The separate fixed-Q8 Colab chat notebook preserves the original multimodal setup. See [Qwen Multimodal Colab](https://github.com/moruku36/qwen-multimodal-colab); do not infer that local Qwen has those Colab features.
 
-| 項目 | Legacy Ollama | 現行 Qwen Multimodal Colab |
+Scripts such as `Modelfile`, `run.sh`, `run.ps1`, and `start-webui.bat` remain for legacy/reference use. Check the actual files and local environment before relying on them.
+
+## Environment distinction
+
+| Property | Local Open WebUI/Ollama | Qwen Multimodal Colab |
 |---|---|---|
-| 実行場所 | ローカルPC | Google Colab |
-| 主モデル | Qwen 2.5系 | Qwen3.8-27B Q8_K_L |
-| UI | Open WebUI | Gradio |
-| Vision | 構成依存 | 対応 |
-| 画像生成・編集 | なし | Qwen-Image-2.1 |
-| PDF / 短動画 | なし | 対応 |
-| 音声入力 | なし | 対応 |
-| GitHub調査 | なし | Read-only agent対応 |
-| 機密性 | ローカル完結可能 | Colab / Drive / 外部検索利用を前提に個別判断 |
+| Runtime | Windows or Mac local environment | Google Colab notebook |
+| Verified here | User-operated text response; Mac local 3B response and web-search result | PR #35 reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run |
+| Multimodal capabilities | Do not infer from Colab | Notebook-specific image/PDF/audio/video capabilities |
+| Automation | Not established | Not implied by notebook verification |
 
-旧スクリプト（`Modelfile`, `run.sh`, `run.ps1` など）は互換性・履歴のため残しています。
+See the [current routing guide](../../docs/routing-guide.md) and [operating record](../../docs/operating-decisions-2026-10-05.md).

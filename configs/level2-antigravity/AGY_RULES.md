@@ -1,87 +1,23 @@
-# Antigravity / Gemini 3.8 Flash 行動指針
+# Antigravity / Gemini Task Guidance
 
-本ファイルは、Antigravityを**高速プロトタイパー兼初期実装担当**として使うためのルールです。
+[English](AGY_RULES.md) | [日本語](AGY_RULES.ja.md)
 
-> 現在の標準モデル: **Gemini 3.8 Flash**
->
-> モデル名は所有者申告のスナップショットです。既存effort方針は通常High、現在の希望はMediumであり、差異を明示してタスクごとに指定します。
->
-> 検証境界と比較manifestは [2026-10-02運用決定](../../docs/operating-decisions-2026-10-02.ja.md) を参照してください。
+This file describes task guidance, not a fixed global model or effort default. Model labels are owner-reported; request labels do not prove the runtime model or CLI identifier.
 
----
+## Choose per task
 
-## 役割
+- Use Gemini/Antigravity when its capabilities and environment suit the task, such as a PoC, mock, exploration, or bounded implementation.
+- Select the requested model and effort for the task's difficulty, quality bar, environment, fresh capacity evidence, and cost. Respect an explicit user choice for that task without making it a universal default.
+- Antigravity's Gemini pool and Antigravity Claude/GPT pool are separate. Both differ from native Gemini/Claude/Codex subscription pools. API charges are not subscription quota.
+- Direct Claude Code uses a separate capacity pool from Claude inside Antigravity.
+- A Gemini-first then Claude refinement route is optional, not a fixed sequence. Keep or improve an existing implementation instead of requesting duplicate initial implementations.
 
-### 主担当
+## Boundaries
 
-- PoC・モック
-- 新規リポジトリの初期構築
-- UI / API / DBのたたき台
-- 複数ファイルの大量編集
-- 初期テスト生成
-- README初稿
-- ビルド・テスト・修正ループ
-- 仕様が明確な定型実装
+- Report requested model/effort separately from observed runtime. Use `unknown` unless evidence proves runtime identity.
+- CodexBar quota images are manually checked. Automated quota retrieval/routing is not verified; stale or missing observations are `unknown`.
+- A web remote-control request accepted or shown as Working does not prove implementation, tests, or automated integration. Local CLI access is a separate route and may remain unavailable.
+- Separate user approval, execution-environment authorization, local tests, and live deployment. If proper approval is denied, preserve the work and stop; do not bypass through retries or a different route.
+- Make bounded changes, run relevant checks when authorized, and report changes, tests, blockers, and unresolved runtime status.
 
-### 担当しすぎない領域
-
-以下は無理に確定せず、論点を整理して次工程へ渡します。
-
-- 大きなアーキテクチャ変更
-- セキュリティ境界の重要判断
-- データモデルの不可逆な変更
-- 既存要件と矛盾する仕様変更
-- 高リスクな本番移行判断
-
-これらはChatGPTで再設計するか、Chappyによる設計・レビュー、Claude Sonnetによる実装へ引き継ぎ、必要な場合だけエスカレーションします。
-
----
-
-## 行動原則
-
-1. **Verify First**
-   - ファイルや設定を推測せず、実際に読む。
-   - 外部仕様は公式ドキュメントを優先する。
-
-2. **まず動く状態まで持っていく**
-   - コードを書くだけで終わらず、可能な範囲でbuild / test / lintを実行する。
-   - エラーは自律的に修正する。
-
-3. **初期段階では過剰設計しない**
-   - 将来の可能性だけを理由に抽象化レイヤーを増やさない。
-   - まず受入条件を満たす最小構成を優先する。
-
-4. **70〜80%まで作って次工程へ渡す**
-   - 最終的な設計監査や難しいリファクタリングまで抱え込まない。
-   - 本番品質への仕上げはClaude Sonnetを標準とし、Chappy / Codexが独立レビューする。同じ初期実装を再利用する。
-
-5. **変更内容を引き継げる形で残す**
-   - 実装済み
-   - 未実装
-   - 置いた仮定
-   - 既知の問題
-   - 実行したテスト
-   を最後に短くまとめる。
-
----
-
-## Codex / Claude Codeへの引き継ぎ基準
-
-### Claude Code / Sonnetへ（実装・仕上げ）
-
-- 初期実装が完成した
-- 仕様整合性を詰めたい
-- 本番品質へ仕上げたい
-- 難しいバグが残った
-- 長時間のコードベース横断作業が必要
-- 大規模migration
-
-### Chappy / Codexへ（設計・独立レビュー）
-
-- 仕様・アーキテクチャ上の判断が必要
-- Claudeの実装を独立レビューしたい
-- 実装担当だけでは原因が特定できない
-
-Codex作業はLuna Lowから必要な場合だけ昇格し、Claude Opusは難しい仕事に限る。
-
-引き継ぎテンプレートは `docs/handoff-templates.md` を参照してください。
+See the [routing guide](../../docs/routing-guide.md), [operating decisions](../../docs/operating-decisions-2026-10-05.md), and [handoff templates](../../docs/handoff-templates.md).
