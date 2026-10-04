@@ -2,6 +2,8 @@
 
 [English](routing-guide.md) | [日本語](routing-guide.ja.md)
 
+Windows is the always-on local base and first choice. If it cannot proceed, consult the user before switching to Mac; Mac is a helper environment.
+
 Choose an eligible tool for the task; do not follow a fixed model ladder when the task, environment, quota evidence, quality needs, or cost point elsewhere. Model labels are owner-reported operating names, not API IDs or proof of runtime selection.
 
 ## Current snapshot — 2026-10-05
@@ -73,7 +75,7 @@ Dottie specifies and coordinates. The Factory provides a thin reusable handoff/a
 
 - Windows Open WebUI/Ollama text responses have been checked through user operation.
 - Mac Open WebUI 0.11.4 with local Qwen2.5 3B returned local responses and web-search results; that does not establish automated orchestration.
-- The fixed-Q8 Colab chat notebook preserves its original multimodal setup. PR #35 reports 287 CPU CI tests and a GPU inference success; keep those distinct.
+- The fixed-Q8 Colab chat notebook preserves its original multimodal setup. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run. A100 quality, speed, VRAM, and compute use remain deferred.
 - RunPod operations PR #1 is documentation-only. The current chat candidate passed Linux CPU validation; CUDA, model download, and inference remain runtime-pending.
 - WebUI → OpenAI-compatible API → on-demand RunPod Qwen is a target design. API compatibility does not imply paid OpenAI. Automatic startup, HTTP connection, and termination are not verified.
 - Pod stop and Pod deletion differ: persistent storage may continue to incur charges while stopped, and deletion can remove data.

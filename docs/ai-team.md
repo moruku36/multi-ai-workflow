@@ -1,5 +1,7 @@
 # AI Team: Names, Roles, and Operating Model
 
+[English](ai-team.md) | [日本語](ai-team.ja.md)
+
 > Operating snapshot: 2026-10-05; model names are owner-reported labels
 
 ## Team
@@ -23,8 +25,8 @@ Dottie is the PM, not a claim that all task execution is automatic. Dottie clari
 
 ### Runtime topology
 
-- Windows is the always-on local base.
-- Mac is a secondary helper environment.
+- Windows is the always-on local base and first choice. Consult the user before switching to Mac if Windows cannot proceed.
+- Mac is a helper environment.
 - Manual CodexBar image review is in use. Automated quota retrieval and fully automatic routing are not verified.
 
 ## Chappy and Codex
@@ -50,7 +52,8 @@ Gemini/Antigravity is one suitable option for PoCs, mocks, or implementation; it
 
 - Windows Open WebUI/Ollama text responses have been checked through user operation.
 - Mac Open WebUI 0.11.4 with local Qwen2.5 3B returned local responses and web-search results. This is not automated orchestration.
-- The fixed-Q8 Colab chat notebook preserves the original multimodal setup. PR #35 reports 287 CPU CI tests and a successful GPU inference run; keep them separate.
+- The fixed-Q8 Colab chat notebook preserves the original multimodal setup. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run. A100 quality, speed, VRAM, and compute use remain deferred.
+- One supervised Antigravity web session showed a task request and response; the retrieved result reported 324 unit checks and 25 mock browser checks. This single result does not prove CLI operation, general automatic routing, or independent test reproduction.
 - RunPod Operations PR #1 is documentation-only. The current chat candidate is Linux CPU-validated; CUDA, model download, and inference remain pending.
 - WebUI → OpenAI-compatible API → on-demand RunPod Qwen is a target design, not verified runtime behavior. OpenAI-compatible is not paid OpenAI. Stop and deletion differ; persistent storage may incur charges after stop and deletion may lose data.
 

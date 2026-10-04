@@ -7,7 +7,7 @@ ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装
 ## Current Snapshot - 2026-10-05
 
 - 人がProduct Ownerです。**Dottie**はタスク仕様、provider／環境選択、進捗、受入を担うPMです。**Chappy**はアーキテクト／レビュアー、**Claude Code**は通常の実装・デプロイ担当、**Gemini/Antigravity**はPoCやモックの候補、**Qwen**はローカル文章処理とマルチモーダル調査に使います。
-- Windowsを常時稼働のローカル基地とし、Macを補助環境として使います。
+- Windowsを常時稼働のローカル基地かつ第一選択とします。Windowsで進められない場合、Macへ切り替える前にユーザーへ相談します。
 - タスク難度、必要品質、利用可能な環境、新鮮なquota観測、消費ペース／リセット時間、費用を考慮して選択します。AntigravityからClaudeへ固定的に優先する経路はありません。タスク単位の明示指定は尊重しますが、全体の固定defaultにはしません。
 - Claude Codeは通常Sonnet 5.5、難しい作業ではOpus 5.5を使います。Claude CodeとAntigravity内Claudeのquota poolは別です。
 - Codexは必要に応じて **Luna / Low → Luna / Medium → Luna / High → GPT-6.1 Sol / Low → Medium → High** の順で上げます。ExtraHighは使いません。Astraは個別に必要性を判断した高度な学術・技術検討に限り、通常のコーディングtierにはしません。これらは本人の運用表記であり、CLIのmodel IDや実行可能性を断定しません。
@@ -47,13 +47,13 @@ flowchart LR
 
 - Factoryのminimal-handoffはPR #29で検証済みです。Ubuntu/Windows品質ゲートと、offlineのcontainer-boundary検証を含みます。ライブ自動化を意味しません。
 - AIteamBridgeのcapacity/router作業はlocal/offlineで246 testsと報告されています。未commit／未publishであり、ライブの自律quota取得／dispatchは未検証です。この日付付き根拠を更新する際は対象repoを再確認してください。
-- 本人提供のAntigravity Web Remote Controlではdesktop接続、Gemini 3.8 Flash Highの選択、DateMemoryの読み取り調査依頼後のWorking表示を確認しました。Web経路での依頼受付のみを示し、実装、テスト、完了、自動連携は未検証です。接続先情報は公開しません。WindowsローカルCLIは別経路で、Access denied後の利用は未確認です。
+- 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得した結果にはunit check 324件とmock browser check 25件が報告されていました。この単一結果はCLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
 - CodexBar quota画像の確認は手動です。自動読み取りやquota対応routing全体の自動化を主張しません。
 
 ## QwenとオンデマンドGPUの状態
 
-- WindowsのOpen WebUI/Ollama経由の文章処理は、本人操作で応答を確認しています。MacではOpen WebUI 0.11.4と小型のローカルQwen2.5 3Bで、ローカル応答とWeb検索結果を確認しています。自動orchestrationではありません。
-- 固定Q8のColabチャットnotebookは元のマルチモーダル構成を保ちます。Qwen Multimodal Colab PR #35はCPU CI 287 testsとGPU inference成功を報告しています。両者を混同せず、CPU CIをGPU inferenceとして説明しません。
+- WindowsのOpen WebUI/Ollama経由の文章応答は本人操作で確認済みです。MacではOpen WebUI 0.11.4とローカルQwen2.5 3Bでローカル応答とWeb検索結果を確認しました。自動orchestrationを意味しません。
+- 固定Q8のColabチャットnotebookは元のマルチモーダル構成を保ちます。Qwen Multimodal Colab [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)はCPU CI 287件（2件skip）を報告しています。Colab/GPU inferenceとモデルdownloadは実行されていません。A100での品質・速度・VRAM・計算使用量は延期中です。
 - RunPod運用PR #1は文書のみです。最新チャット候補はLinux CPU検証済みですが、CUDA、モデルdownload、inferenceは未検証です。
 - 目標設計はWebUI → OpenAI-compatible API → オンデマンドRunPod Qwenです。OpenAI-compatibleはAPI形式の互換性を示し、有料OpenAI利用を意味しません。Pod起動、HTTP接続、自動終了は検証済みとなるまで目標設計です。
 - Podの停止と破棄は別です。停止後も永続storageに料金がかかる場合があり、削除ではデータを失うことがあります。一般的な説明にとどめ、正確な金額や残高は公開しません。

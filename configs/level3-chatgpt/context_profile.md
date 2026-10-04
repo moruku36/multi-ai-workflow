@@ -1,5 +1,7 @@
 # Context Profile Template
 
+[English](context_profile.md) | [日本語](context_profile.ja.md)
+
 This is a blank, optional template for a private ChatGPT project. Fill it only with information the user intentionally chooses to provide. Keep personal or confidential values out of this public repository and never copy completed private profiles here.
 
 ## Role and goals

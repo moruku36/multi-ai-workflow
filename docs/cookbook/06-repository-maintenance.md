@@ -1,5 +1,7 @@
 # Cookbook 06: Repository Maintenance
 
+[English](06-repository-maintenance.md) | [日本語](06-repository-maintenance.ja.md)
+
 The public repository contains only reusable operating guidance and evidence state, not private work context. When current user-authorized work leads to a documentation update, describe it generally and keep implementation, local verification, and runtime status separate.
 
 ## Before editing
@@ -10,6 +12,8 @@ The public repository contains only reusable operating guidance and evidence sta
 4. Identify English/Japanese pairs and check their links.
 
 ## While editing
+
+- For GitHub code changes, update affected README, usage, and design documentation, including existing English/Japanese counterparts. Keep the two languages aligned.
 
 - Use the task-based selection rules in the [routing guide](../routing-guide.md).
 - Label owner-reported model names as such; never invent CLI IDs or runtime availability.

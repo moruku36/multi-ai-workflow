@@ -7,7 +7,7 @@ Public, evidence-aware guidance for coordinating research, implementation, revie
 ## Current operating snapshot — 2026-10-05
 
 - The human is Product Owner. **Dottie** handles PM work: task specification, environment/provider selection, progress, and acceptance. **Chappy** handles architecture and review. **Claude Code** is the usual coding/deployment engineer; **Gemini/Antigravity** is an option for PoCs and mocks; **Qwen** supports local text and multimodal research.
-- Windows is the always-on local base, with Mac as a secondary helper.
+- Windows is the always-on local base and first choice. If work cannot proceed there, consult the user before switching to Mac; Mac is a helper environment.
 - Choose the tool and model by task difficulty, required quality, eligible environment, fresh quota observations, consumption pace/reset window, and cost. Do not use a fixed Antigravity-Claude-first route. Honor an explicit task-level choice without turning it into a global default.
 - Claude Code usually uses Sonnet 5.5; use Opus 5.5 for harder work. Its quota is separate from Claude inside Antigravity.
 - Codex escalation is **Luna / Low → Luna / Medium → Luna / High → GPT-6.1 Sol / Low → Medium → High** when needed. Do not use ExtraHigh. Astra is reserved for individually justified advanced academic/technical analysis; it is not a routine coding tier. These labels describe the owner's usage and do not assert a CLI model ID or runtime availability.
@@ -47,13 +47,13 @@ Keep **verified/merged**, **local/offline**, **runtime pending**, and **proposal
 
 - The Factory minimal-handoff direction is verified by PR #29 and includes Ubuntu/Windows quality gates and an offline, container-boundary verification. This does not establish live automation.
 - AIteamBridge capacity/router work has been reported at 246 local/offline tests; it is uncommitted/unpublished, and live autonomous quota retrieval/dispatch is unverified. Recheck the source repository before changing this dated evidence.
-- A user-provided Antigravity Web Remote Control session showed a desktop connection, Gemini 3.8 Flash High selection, and a read-only DateMemory request displayed as Working. This confirms web-route request acceptance only; implementation, tests, completion, and automation remain unverified. The local Windows CLI is separate and remains unverified after access denied.
+- In one supervised Antigravity web session, a task request and response were observed; the retrieved result reported 324 unit checks and 25 mock browser checks. This is a single web-task result, not proof of CLI operation, general automated routing, or independently reproduced tests. Local Windows CLI status remains unverified.
 - CodexBar quota-image review is manual. No claim of automatic reading or complete quota-aware routing.
 
 ## Qwen and on-demand GPU status
 
 - Windows text through Open WebUI/Ollama has received a user-operated response check. On Mac, Open WebUI 0.11.4 with a small local Qwen2.5 3B has returned local responses and web-search results; this is not automated orchestration.
-- The separate fixed-Q8 Colab chat notebook preserves the original multimodal setup. Qwen Multimodal Colab PR #35 reports 287 CPU CI tests and a successful GPU inference run; do not conflate those results or present CPU CI as GPU inference.
+- The separate fixed-Q8 Colab chat notebook preserves the original multimodal setup. Qwen Multimodal Colab PR #35 reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run. A100 quality, speed, VRAM, and compute use remain deferred. See [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35).
 - The RunPod operations PR #1 is documentation-only. The latest chat candidate has Linux CPU validation; CUDA, model download, and inference remain unverified.
 - The proposed flow is WebUI → OpenAI-compatible API → on-demand RunPod Qwen. OpenAI-compatible describes an API shape and does not mean paid OpenAI. Starting a Pod, connecting over HTTP, and automatic termination remain design goals until verified.
 - Stopping a Pod and destroying it are different. Persistent storage may continue to incur charges after a Pod stops, while deletion may lose data. Keep this general and do not publish account balances or exact costs.

@@ -6,6 +6,8 @@ This public record summarizes operating guidance and evidence boundaries. Model 
 
 ## Roles and routing
 
+Windows is the always-on local base and first choice. Consult the user before switching to Mac if Windows cannot proceed.
+
 | Role | Responsibility |
 |---|---|
 | Product Owner | Goals, priorities, acceptance, and decisions |
@@ -32,10 +34,10 @@ Codex is used when it fits the task or the owner assigns it. Its effort sequence
 - **Dottie** performs PM work. **AI Engineering Factory** supplies a thin reusable handoff/artifact/evidence layer. Its minimal handoff was verified in [Factory PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, including Ubuntu/Windows quality gates and offline container-boundary verification.
 - **AIteamBridge** is a separate capacity/router/transport implementation project. Reported state: local/offline, 246 tests, uncommitted/unpublished; live autonomous quota retrieval and dispatch are unverified. Recheck the Bridge repository before revising this dated observation.
 - These three roles are complementary; do not portray them as duplicate fully automatic orchestrators.
-- A user-provided Antigravity Web Remote Control session showed a desktop connection, Gemini 3.8 Flash High selection, and a read-only DateMemory request displayed as Working. This confirms request acceptance through the web route only; implementation, tests, completion, and automation remain unverified. Do not include connection URLs, instance IDs, hostnames, or other private connection details.
+- One supervised Antigravity web session showed a task request and response; the retrieved result reported 324 unit checks and 25 mock browser checks. This single result does not prove CLI operation, general automatic routing, or independent test reproduction.
 - Windows local CLI received an access-denied response; its root cause is unknown and its use remains unverified. The local CLI and web route are different paths.
 - Windows Open WebUI/Ollama text responses were checked by user operation. Mac Open WebUI 0.11.4 plus local Qwen2.5 3B returned local responses and web-search results. These are not automated orchestration.
-- The fixed-Q8 Colab chat notebook preserves the original multimodal setup. [Qwen Multimodal Colab PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI tests and a successful GPU inference run; keep the evidence types distinct.
+- The fixed-Q8 Colab chat notebook preserves the original multimodal setup. [Qwen Multimodal Colab PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI tests (2 skipped). No Colab/GPU inference or model download was run; A100 quality, speed, VRAM, and compute use remain deferred.
 - [Qwen RunPod Operations PR #1](https://github.com/moruku36/qwen-runpod-operations/pull/1) is documentation-only. The latest chat candidate has Linux CPU validation; CUDA, model download, and inference are runtime-pending.
 - WebUI → OpenAI-compatible API → on-demand RunPod Qwen is a target design. Starting a Pod, HTTP connection, and automatic termination are unverified. OpenAI-compatible describes an API shape, not paid OpenAI usage. Stopping a Pod differs from deleting it; persistent storage may incur charges after stop, and deletion may lose data.
 
@@ -49,6 +51,8 @@ Use these states consistently in both languages:
 - **proposal**: a target design or future work, not implemented behavior.
 
 User approval, execution-environment authorization, local test success, and deployment/runtime reflection are separate stages. On a rejected approval, retain the work and stop at the proper path. Do not spam re-approval or route around rejection.
+
+For GitHub code changes, update the affected README, usage, and design documentation, including existing English/Japanese counterparts. Keep both languages aligned on evidence and implementation status.
 
 ## Public documentation boundary
 

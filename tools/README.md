@@ -1,5 +1,7 @@
 # Tools: Legacy Ollama + Claude Review CLI
 
+[English](README.md) | [日本語](README.ja.md)
+
 > **Legacy:** the Ollama→Claude API pipeline is not a normal path in the current workflow. This page documents retained code, not an active orchestration service.
 
 `pipeline.py` can draft with local Ollama and send a review request through the Claude API. It is retained for legacy/reference use.

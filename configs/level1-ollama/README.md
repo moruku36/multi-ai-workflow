@@ -1,5 +1,7 @@
 # Legacy: Ollama / Qwen (+ Open WebUI)
 
+[English](README.md) | [日本語](README.ja.md)
+
 This directory retains an older local setup. It is not an automatic orchestration stack.
 
 ## Current local observations
@@ -16,7 +18,7 @@ Scripts such as `Modelfile`, `run.sh`, `run.ps1`, and `start-webui.bat` remain f
 | Property | Local Open WebUI/Ollama | Qwen Multimodal Colab |
 |---|---|---|
 | Runtime | Windows or Mac local environment | Google Colab notebook |
-| Verified here | User-operated text response; Mac local 3B response and web-search result | PR #35 reports 287 CPU CI tests and separate successful GPU inference |
+| Verified here | User-operated text response; Mac local 3B response and web-search result | PR #35 reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run |
 | Multimodal capabilities | Do not infer from Colab | Notebook-specific image/PDF/audio/video capabilities |
 | Automation | Not established | Not implied by notebook verification |
 

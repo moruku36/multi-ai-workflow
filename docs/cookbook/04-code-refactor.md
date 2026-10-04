@@ -1,5 +1,7 @@
 # Cookbook 04: Code Refactoring and Independent Review
 
+[English](04-code-refactor.md) | [日本語](04-code-refactor.ja.md)
+
 Use a direct implementation route for clear changes. Add a PoC only when it reduces meaningful uncertainty. Choose the tool per task using the [routing guide](../routing-guide.md); Claude Code usually uses Sonnet 5.5, with Opus 5.5 for hard work. A different tool may independently review important changes.
 
 ## Workflow

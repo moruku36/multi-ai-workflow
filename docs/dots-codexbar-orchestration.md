@@ -1,13 +1,15 @@
 # Dottie, CodexBar, and Handoff Boundaries
 
+[English](dots-codexbar-orchestration.md) | [日本語](dots-codexbar-orchestration.ja.md)
+
 > Status snapshot: 2026-10-05. Manual quota review is in use; live quota ingestion and fully automatic dispatch are unverified.
 
 This document separates PM coordination from capacity tooling and reusable engineering handoffs. Dottie is the PM. Factory provides a minimal handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport implementation project. They are complementary components, not competing claims of a complete autonomous orchestrator.
 
 ## Runtime topology
 
-- Windows is the always-on local base.
-- Mac is a secondary helper environment.
+- Windows is the always-on local base and first choice. Consult the user before switching to Mac if Windows cannot proceed.
+- Mac is a helper environment.
 - Dottie owns task scope, provider/environment selection, progress, acceptance, and review coordination.
 - One selected engineer performs the bounded task; Factory can preserve handoff and evidence for reuse.
 
@@ -33,7 +35,7 @@ flowchart TD
 
 - Factory's minimal handoff is verified in [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, including Ubuntu/Windows quality gates and offline container-boundary verification.
 - Bridge capacity/router work is reported at 246 local/offline tests, uncommitted and unpublished. Live quota retrieval and autonomous dispatch are unverified; recheck that repository before treating the count or state as current.
-- A user-provided Antigravity Web Remote Control session showed the desktop connection and Gemini 3.8 Flash High selection. A read-only request about DateMemory was sent and displayed as Working. This verifies request acceptance through that web route only; it does not prove implementation, tests, completion, or automatic integration. Do not include connection URLs, instance IDs, hostnames, or other private connection details.
+- One supervised Antigravity web session showed a task request and response; the retrieved result reported 324 unit checks and 25 mock browser checks. This single result does not prove CLI operation, general automatic routing, or independent test reproduction.
 - Local Windows CLI received an access-denied response and remains unverified. The web route and local CLI are different routes.
 - User approval, execution-environment authorization, local test results, and live environment reflection are separate stages. Preserve work and stop when the proper approval is denied; do not retry in a loop or bypass it via another route.
 

@@ -73,7 +73,7 @@ Dottieが仕様化と調整を行い、Factoryが薄い再利用可能なhandoff
 
 - WindowsのOpen WebUI/Ollamaの文章応答は本人操作で確認済みです。
 - MacのOpen WebUI 0.11.4とローカルQwen2.5 3Bでローカル応答とWeb検索結果が返りました。自動orchestrationを意味しません。
-- 固定Q8のColabチャットnotebookは元のマルチモーダル構成を保持します。PR #35はCPU CI 287 testsとGPU inference成功を報告しています。それぞれ別の根拠として扱います。
+- 固定Q8のColabチャットnotebookは元のマルチモーダル構成を保持します。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)はCPU CI 287件（2件skip）を報告しています。Colab/GPU inferenceとモデルdownloadは実行されていません。A100の品質・速度・VRAM・計算使用量は延期中です。
 - RunPod運用PR #1は文書のみです。現行チャット候補はLinux CPU検証済みですが、CUDA、モデルdownload、inferenceはruntime pendingです。
 - WebUI → OpenAI-compatible API → オンデマンドRunPod Qwenは目標設計です。API互換性は有料OpenAI利用を意味しません。自動起動、HTTP接続、自動終了は未検証です。
 - Podの停止と削除は異なります。停止中も永続storageに料金がかかる場合があり、削除するとデータを失う可能性があります。
@@ -82,6 +82,6 @@ Dottieが仕様化と調整を行い、Factoryが薄い再利用可能なhandoff
 
 ユーザー承認、実行環境の権限承認、ローカルテスト成功、稼働環境への反映は別の段階です。正規の承認が拒否されたら作業を保存して止まります。拒否を迂回するために再申請を連打したり別経路に切り替えたりしません。
 
-状態は **verified/merged**、**local/offline**、**runtime pending**、**proposal** と正確に報告します。offlineテスト成功はライブ送信、deploy済み変更、自動統合の証拠にはなりません。Antigravity Web Remote Controlでは依頼受付とWorking表示が確認されていますが、実装・テスト・自動連携は未検証です。Windows CLIはAccess denied後の利用が未確認で、Web経路とは別です。
+- 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得結果にはunit check 324件とmock browser check 25件が報告されました。これは単一結果であり、CLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
 
 日付付きの根拠と公開範囲は[運用判断記録](operating-decisions-2026-10-05.ja.md)を参照してください。

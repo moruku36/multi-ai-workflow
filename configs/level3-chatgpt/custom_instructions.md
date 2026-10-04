@@ -1,5 +1,7 @@
 # ChatGPT Custom Instructions
 
+[English](custom_instructions.md) | [日本語](custom_instructions.ja.md)
+
 Use ChatGPT Chat for short discussion and drafts; use ChatGPT Work for multi-step research and deliverables; use Codex for repository changes when it fits the task or is explicitly assigned. Dottie is the PM/orchestrator role, the human is Product Owner, and Chappy is architect/reviewer.
 
 The current operating snapshot is [recorded here](../../docs/operating-decisions-2026-10-05.md). Model names in that record are owner-reported labels, not API IDs or proof of runtime selection.

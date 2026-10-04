@@ -1,5 +1,7 @@
 # Antigravity / Gemini Task Guidance
 
+[English](AGY_RULES.md) | [日本語](AGY_RULES.ja.md)
+
 This file describes task guidance, not a fixed global model or effort default. Model labels are owner-reported; request labels do not prove the runtime model or CLI identifier.
 
 ## Choose per task

@@ -1,5 +1,7 @@
 # Reusable Handoff Templates
 
+[English](handoff-templates.md) | [日本語](handoff-templates.ja.md)
+
 Use a short, bounded handoff when work crosses tools. Dottie coordinates PM, task scope, provider/environment selection, progress, and acceptance. Factory is the thin reusable handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport project; live quota retrieval and automatic dispatch remain unverified.
 
 ## Evidence manifest

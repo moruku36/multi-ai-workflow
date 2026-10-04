@@ -1,5 +1,7 @@
 # Claude Code Independent Review Prompt
 
+[English](review_prompt.md) | [日本語](review_prompt.ja.md)
+
 Use Claude Code as an independent reviewer when appropriate. Claude Code usually uses Sonnet 5.5; use Opus 5.5 for hard work. Model labels are owner-reported and do not establish runtime identity or API IDs. Direct Claude Code and Claude inside Antigravity have separate capacity pools.
 
 For important repositories or security-focused review, the optional [OpenShell Claude Reviewer](https://github.com/moruku36/openshell-claude-reviewer) may provide a sandboxed route. It is not mandatory for all reviews.

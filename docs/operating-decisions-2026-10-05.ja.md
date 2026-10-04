@@ -32,10 +32,10 @@ Codexはタスクに適合する場合、または本人が割り当てた場合
 - **Dottie**はPM業務を行います。**AI Engineering Factory**は薄い再利用handoff／artifact／evidence層です。minimal handoffは[Factory PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）で検証済みで、Ubuntu/Windows品質ゲートとofflineのcontainer-boundary検証を含みます。
 - **AIteamBridge**は別個のcapacity/router/transport実装プロジェクトです。報告されている状態はlocal/offline、246 tests、未commit／未publishで、ライブ自律quota取得／dispatchは未検証です。この日付付き状況を変更する際はBridge repoを再確認します。
 - これらは補完する役割です。重複する完全自動orchestratorとして説明しません。
-- 本人提供のAntigravity Web Remote Controlではdesktop接続、Gemini 3.8 Flash Highの選択、DateMemoryの読み取り調査依頼後のWorking表示を確認しました。Web経路での依頼受付のみを示し、実装、テスト、完了、自動連携は未検証です。接続URL、instance ID、hostnameなどは公開しません。
+- 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得した結果にはunit check 324件とmock browser check 25件が報告されていました。この単一結果はCLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
 - WindowsローカルCLIはAccess deniedとなり、根本原因は不明、利用も未確認です。Web経路とローカルCLI経路は別です。
-- Windows Open WebUI/Ollamaの文章応答は本人操作で確認済みです。MacのOpen WebUI 0.11.4とローカルQwen2.5 3Bではローカル応答とWeb検索結果が返りました。自動orchestrationの根拠ではありません。
-- 固定Q8のColabチャットnotebookは元のマルチモーダル構成を保持します。[Qwen Multimodal Colab PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)はCPU CI 287 testsとGPU inference成功を報告しています。根拠の種類を分けます。
+- Windowsを常時稼働のローカル基地かつ第一選択とします。Windowsで進められない場合はMacへ切り替える前にユーザーへ相談します。
+- 固定Q8のColabチャットnotebookは元のマルチモーダル構成を保持します。[Qwen Multimodal Colab PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)はCPU CI 287件（2件skip）を報告しています。Colab/GPU inferenceとモデルdownloadは実行されていません。A100での品質・速度・VRAM・計算使用量は延期中です。
 - [Qwen RunPod Operations PR #1](https://github.com/moruku36/qwen-runpod-operations/pull/1)は文書のみです。最新チャット候補はLinux CPU検証済みで、CUDA、モデルdownload、inferenceはruntime pendingです。
 - WebUI → OpenAI-compatible API → オンデマンドRunPod Qwenは目標設計です。Pod起動、HTTP接続、自動終了は未検証です。OpenAI-compatibleはAPI形式を示し、有料OpenAI利用を意味しません。Pod停止と削除は別で、停止後も永続storageに費用がかかる場合があり、削除するとデータを失う可能性があります。
 
