@@ -13,3 +13,28 @@
 5. 変更点、テスト結果、未確認事項を報告する。
 
 コード変更時は影響するREADME、使い方、設計文書と既存の日英対応ページを更新します。ローカルテストはlive稼働やdeployを証明しません。ユーザー承認、実行環境の権限、テスト成功、稼働環境反映を別の段階として記録します。
+
+## 変更内容を定義する
+
+実装前に次を合意します。
+
+```text
+Goal:
+Scope / non-goals:
+Constraints / environment:
+Acceptance criteria:
+Required checks:
+Requested tool/model/effort (task-specific, if any):
+```
+
+## 実装と検証の報告
+
+選ばれた担当には実ファイルを確認して、範囲を限った変更と関連する確認を依頼します。少なくとも変更ファイルと挙動、実施した確認と結果、未解決の前提やruntime pending、必要な承認段階を報告します。
+
+Codexを指定したコーディングでは必要に応じてLuna Low → Luna Medium → Luna High → Sol Low → Sol Medium → Sol Highと段階的に上げます。ExtraHighは使いません。Astraは個別に正当化した高度な学術・技術分析向けで、通常のコーディングには使いません。
+
+## 独立レビュー
+
+変更の重要度に応じて実装担当とは異なるtoolにレビューを依頼します。重大度、file/line、根拠、影響、再現・検証方法を示す実行可能な指摘を求めます。指摘を適用する前に実装担当が根拠を確認します。
+
+ユーザー承認、実行環境の権限、ローカルテスト、live runtime/deployを区別します。必要な承認が拒否されたら作業を保持して停止し、再試行を繰り返したり別経路で迂回したりしません。

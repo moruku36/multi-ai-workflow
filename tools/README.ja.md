@@ -22,3 +22,10 @@
 歴史的なモデル設定が現在の製品提供状況や運用判断に合うとは限りません。利用前に確認し、API設定からsubscription利用権を推定しないでください。APIキーを作成・課金して使うことは今回の文書更新範囲に含みません。
 
 Ollamaの旧式構成は[設定フォルダ](../configs/level1-ollama/README.ja.md)を参照してください。
+
+このlegacy scriptで指定された過去のreview modelは、現在の提供状況や運用判断に合わない場合があります。利用前に確認し、API設定からsubscriptionの利用資格を推定しないでください。次は既存CLIの例であり、API keyの発行や課金を今回要求するものではありません。
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key"
+python tools/pipeline.py proposal.md --mode review -o review_report.md
+```

@@ -13,6 +13,8 @@
 
 `Modelfile`、`run.sh`、`run.ps1`、`start-webui.bat`は旧式／参考用です。利用前に実ファイルと環境を確認してください。
 
+## 実行環境の区別
+
 | 項目 | ローカルOpen WebUI/Ollama | Qwen Multimodal Colab |
 |---|---|---|
 | 実行環境 | WindowsまたはMac | Google Colab notebook |
@@ -20,3 +22,5 @@
 | 自動化 | 未確認 | notebook検証から自動化を推定しない |
 
 [Routing Guide](../../docs/routing-guide.ja.md)と[運用判断記録](../../docs/operating-decisions-2026-10-05.ja.md)を参照してください。
+
+Colab notebook固有の画像、PDF、audio、video機能はローカル環境へあるものと推定しません。PR #35で確認されたのはCPU CI 287件（2件skip）であり、GPU inferenceもモデルdownloadも実行されていません。notebookの検証から自動化を推定しません。

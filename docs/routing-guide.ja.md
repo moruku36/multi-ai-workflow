@@ -2,6 +2,8 @@
 
 [English](routing-guide.md) | [Japanese](routing-guide.ja.md)
 
+Windowsを常時稼働のローカル基地かつ第一選択とします。Windowsで進められない場合は、Macへ切り替える前にユーザーへ相談します。Macは補助環境です。
+
 Task fit、environment、quota evidence、quality、costに沿って利用可能なtoolを選びます。タスクに合わない固定model sequenceは使いません。model labelは本人の運用表記で、API IDや実行時modelの確認ではありません。
 
 ## Current Snapshot - 2026-10-05

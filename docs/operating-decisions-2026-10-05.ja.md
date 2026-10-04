@@ -2,6 +2,8 @@
 
 [English](operating-decisions-2026-10-05.md) | [Japanese](operating-decisions-2026-10-05.ja.md)
 
+GitHubでコードを変更した場合は、影響するREADME、利用方法、設計文書と既存の日英対応ページを更新します。両言語で根拠、検証済み範囲、未確認事項をそろえます。
+
 Public operating guidanceとevidence boundaryを記録します。model labelは本人の運用上の表記であり、API ID、正確な実行時model、特定CLIでの利用可能性を保証しません。非公開のaccount情報、会話、logは記載しません。
 
 ## 役割とrouting

@@ -24,3 +24,7 @@ Factoryのminimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-
 監督付きAntigravity Webセッション1件で依頼と応答を確認し、結果にはunit check 324件とmock browser check 25件が報告されました。これはWebでの単発タスク観測です。CLI稼働、一般的な自動routing、テストの独立再現を示しません。個別の会話、接続先、識別子、logは公開しません。
 
 正規の承認、実行環境の権限、ローカルテスト、live環境への反映を別々に記録します。承認拒否時は保存して止め、再承認を繰り返したり他経路で迂回したりしません。
+
+## 個人情報と今後の作業
+
+providerのcredential、cookie、account内容をrouterへ渡しません。正確な残高・課金値、quota画像、私的会話、接続先の識別情報、logを公開しません。今後quota/routerを開発する場合は古い値や`unknown`でfail-closedとし、logは秘匿情報を除いた根拠だけにします。provider経路、権限、結果の読み戻し、受け入れ確認が揃う前に自動実行中と主張しません。
