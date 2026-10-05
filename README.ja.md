@@ -71,6 +71,7 @@ flowchart LR
 - `docs/dots-codexbar-orchestration.md`: PMと観測の境界
 - `docs/handoff-templates.md`: 再利用handoff
 - `configs/`: ツール別ガイダンス
+- [`configs/openwebui-local-memory-0.11.4/`](configs/openwebui-local-memory-0.11.4/README.ja.md) ([English](configs/openwebui-local-memory-0.11.4/README.md)): バージョン限定のローカル専用Open WebUI Memory運用手順。読み取り専用のconfig検査ツールとバックアップツール付き。検証はオフラインmockのみで、ライブ挙動は未検証
 
 ## クイックスタート
 

@@ -71,6 +71,7 @@ This is a public repository. Do not include private conversations, personal or f
 - `docs/dots-codexbar-orchestration.md`: PM/observation boundaries
 - `docs/handoff-templates.md`: reusable handoffs
 - `configs/`: tool-specific guidance
+- [`configs/openwebui-local-memory-0.11.4/`](configs/openwebui-local-memory-0.11.4/README.md) ([日本語](configs/openwebui-local-memory-0.11.4/README.ja.md)): version-scoped, local-only Open WebUI Memory runbook with a read-only config inspector and backup tool; offline mock checks only, live behavior unverified
 
 ## Quick start
 
