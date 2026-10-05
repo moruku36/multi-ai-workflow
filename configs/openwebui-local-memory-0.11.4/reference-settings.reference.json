@@ -1,0 +1,29 @@
+{
+  "_NOT_IMPORTABLE": "Reference only. This is NOT an Open WebUI config export and must never be imported or applied. It records what the runbook expects to find; set things by hand in the admin UI and verify with inspect_config.py. Contains no endpoints, credentials, accounts, or paths.",
+  "_applies_to": "Open WebUI 0.11.4 only (source-read; live behaviour unverified)",
+  "_persisted_vs_effective": "inspect_config.py reads persisted config rows only. Effective runtime settings can differ when environment variables override them or when a key has no row; confirm in the live admin UI.",
+  "expected": {
+    "memories.enable": {"value": true, "why": "standard per-user Memory is on"},
+    "memories.system_context.enable": {"value": true, "why": "default; injects the user's memories into the prompt of whichever model the chat uses"},
+    "memories.background_review.enable": {"value": false, "why": "when true the server asks an LLM to add/replace/remove memories after every N turns with no user confirmation; must stay off"},
+    "rag.embedding_engine": {"value": "", "why": "empty string = built-in in-process sentence-transformers; no configured embedding endpoint is called (this does not prove network silence: model download/load or hub traffic is not excluded; keep a live egress check)"},
+    "rag.embedding_model": {"value": "sentence-transformers/all-MiniLM-L6-v2", "why": "retain the existing MiniLM; do not change the embedding model (changing it would require re-embedding every memory)"},
+    "rag.ollama.base_url / rag.openai.api_base_url / rag.azure_openai.base_url / ollama.base_urls / openai.api_base_urls": {"value": "informational (URL only)", "why": "may be stored as JSON objects (or arrays of objects) that also hold credential fields; the inspector projects only the nested url inside SQLite and never selects the object. Under strict local-only an Ollama embedding URL must be loopback; a private-network address fails and a container host alias is reported UNVERIFIED"},
+    "rag.relevance_threshold": {"value": "informational", "why": "0 means the nearest memories are injected regardless of similarity; a small positive value reduces unrelated injection (not changed by this repo)"},
+    "chat.tool_permissions.enable": {"value": "informational", "why": "NOT relied on: approval mode is a client-supplied per-chat parameter and does not guard memory writes made by background review"},
+    "task.model.default / task.model.external": {"value": "live-verify", "why": "auxiliary tasks (titles, tags, queries) follow these; confirm they resolve to a local model before using private text"}
+  },
+  "per_model_settings_not_in_the_config_table": {
+    "every model, local or external: Builtin Tools > Memory": {"value": "OFF", "why": "default is ON; ON exposes add/update/replace/delete memory tools to the model with no enforced confirmation, so any model could initiate a write"},
+    "dedicated local memory model only: Capabilities > Memory": {"value": "ON", "why": "lets the standard Memory context reach this local model only"},
+    "any external/remote model: Capabilities > Memory": {"value": "OFF", "why": "memory text is placed in the prompt sent to the selected model's endpoint"},
+    "these live in model records, which inspect_config.py deliberately never reads": {"value": "check in the admin UI", "why": "live verification gate"}
+  },
+  "live_gates": [
+    "exact Settings UI placement of Memory controls, including whether a per-entry delete action exists (the delete API is source-read; the UI control is unverified)",
+    "outbound connections of the Open WebUI process, including MiniLM download/load or hub traffic",
+    "effective settings when environment variables override persisted rows",
+    "whether any host alias or private-network embedding URL really points at this machine"
+  ],
+  "forbidden_to_store_or_read_here": ["API keys", "tokens", "passwords", "endpoint userinfo", "memory text", "chat text"]
+}
