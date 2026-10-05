@@ -11,11 +11,13 @@ Private review draft. Pinned to Open WebUI 0.11.4. Not installed anywhere.
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import re
 import threading
 import time
 import unicodedata
 from typing import Any, Awaitable, Callable, Optional
+from urllib.parse import urlsplit
 
 PINNED_OPEN_WEBUI_VERSION = "0.11.4"
 MAX_MEMORY_CHARS = 300
@@ -28,6 +30,7 @@ DUPLICATE_MESSAGE = (
     "Not saved by this call: the same memory was already attempted recently. "
     "Check Open WebUI Memory settings before retrying."
 )
+ALLOWED_MODEL_ID = "huihui_ai/qwen3-abliterated:8b"
 
 # Process-local dedupe state only. Keys are (user id, SHA-256 of normalized text);
 # no plaintext is kept. Lost on restart and not shared across worker processes.
@@ -113,6 +116,55 @@ def _memory_id(memory: Any) -> Any:
     return getattr(memory, "id", None)
 
 
+def _loopback_url(value: Any) -> bool:
+    """Accept only unambiguous HTTP(S) loopback URLs; do not resolve hostnames."""
+    if not isinstance(value, str) or not value or value != value.strip():
+        return False
+    try:
+        parts = urlsplit(value)
+        host = parts.hostname
+        # Reject credentials, path/query/fragment and malformed ports.
+        _ = parts.port
+        if parts.scheme not in {"http", "https"} or not host or parts.username or parts.password:
+            return False
+        if parts.path not in {"", "/"} or parts.query or parts.fragment:
+            return False
+        if host.lower() == "localhost" or host.lower().endswith(".localhost"):
+            return True
+        return ipaddress.ip_address(host).is_loopback
+    except (ValueError, TypeError):
+        return False
+
+
+def route_is_allowed(model: Any, request: Any, base_urls: Any) -> bool:
+    """Fail closed unless trusted Open WebUI request state proves the local Ollama route."""
+    if not isinstance(model, dict) or model.get("id") != ALLOWED_MODEL_ID:
+        return False
+    app = getattr(request, "app", None)
+    state = getattr(app, "state", None)
+    models = getattr(state, "MODELS", None)
+    ollama_models = getattr(state, "OLLAMA_MODELS", None)
+    openai_models = getattr(state, "OPENAI_MODELS", None)
+    if not isinstance(models, dict) or ALLOWED_MODEL_ID not in models:
+        return False
+    if not isinstance(ollama_models, dict) or ALLOWED_MODEL_ID not in ollama_models:
+        return False
+    if isinstance(openai_models, dict) and ALLOWED_MODEL_ID in openai_models:
+        return False
+    route = ollama_models[ALLOWED_MODEL_ID]
+    indices = route.get("urls") if isinstance(route, dict) else None
+    if not isinstance(indices, list) or not indices or not isinstance(base_urls, list):
+        return False
+    for index in indices:
+        if isinstance(index, bool) or not isinstance(index, int) or index < 0 or index >= len(base_urls):
+            return False
+        entry = base_urls[index]
+        url = entry.get("url") if isinstance(entry, dict) else entry
+        if not _loopback_url(url):
+            return False
+    return True
+
+
 async def propose_and_save(
     candidate: Any,
     *,
@@ -181,6 +233,7 @@ class Tools:
         __request__: Any = None,
         __user__: Optional[dict] = None,
         __event_call__: Optional[EventCall] = None,
+        __model__: Any = None,
     ) -> str:
         """
         Propose ONE short, single-line memory about the user. The user sees a
@@ -189,6 +242,16 @@ class Tools:
 
         :param memory_text: One concise fact to remember (max 300 characters).
         """
+        # Only server-injected model/request state and the configured Ollama URL
+        # determine eligibility. Tool arguments and prompt claims are ignored.
+        try:
+            from open_webui.config import Config
+
+            base_urls = await Config.get("ollama.base_urls")
+        except Exception:
+            return "Not saved. Memory is available only for the verified local Qwen route."
+        if not route_is_allowed(__model__, __request__, base_urls):
+            return "Not saved. Memory is available only for the verified local Qwen route."
         return await propose_and_save(
             memory_text,
             request=__request__,

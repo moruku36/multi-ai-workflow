@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import ipaddress
 import json
+import math
 import re
 import sqlite3
 import sys
@@ -277,7 +278,7 @@ def render_value(kind: str, parsed: object) -> dict:
         ok = isinstance(parsed, int) and not isinstance(parsed, bool)
         return {"value": parsed} if ok else {"value": REDACTED, "invalid": True}
     if kind == "float":
-        ok = isinstance(parsed, (int, float)) and not isinstance(parsed, bool)
+        ok = isinstance(parsed, (int, float)) and not isinstance(parsed, bool) and math.isfinite(parsed)
         return {"value": parsed} if ok else {"value": REDACTED, "invalid": True}
     if kind in {"engine", "model"}:
         if not isinstance(parsed, str):
@@ -312,9 +313,19 @@ def build_report(stored: dict[str, str | None], endpoints: dict[str, object] | N
         if key not in stored:
             settings[key] = {"persisted": False, "default_if_absent": default if default is not None else "(none)"}
             continue
-        try:
-            parsed = json.loads(stored[key])
-        except (TypeError, ValueError):
+        raw = stored[key]
+        # SQLite's JSON/NUMERIC affinity can return native int/float values
+        # directly. Text values remain JSON encoded by Open WebUI.
+        if isinstance(raw, (bool, int, float)) or raw is None:
+            parsed = raw
+        elif isinstance(raw, str):
+            try:
+                parsed = json.loads(raw)
+            except (TypeError, ValueError):
+                parsed = UNSUPPORTED
+        else:
+            parsed = UNSUPPORTED
+        if parsed is UNSUPPORTED:
             settings[key] = {"persisted": True, "value": REDACTED, "invalid": True}
             continue
         settings[key] = {"persisted": True, **render_value(kind, parsed)}

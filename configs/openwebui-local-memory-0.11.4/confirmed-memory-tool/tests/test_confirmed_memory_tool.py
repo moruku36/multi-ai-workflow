@@ -2,6 +2,7 @@
 
 import asyncio
 import sys
+import types
 import unittest
 from pathlib import Path
 
@@ -37,7 +38,29 @@ class FakeDialog:
 
 
 USER = {"id": "synthetic-user-1", "name": "Synthetic"}
-REQ = object()
+class State:
+    MODELS = {cmt.ALLOWED_MODEL_ID: {"id": cmt.ALLOWED_MODEL_ID}}
+    OLLAMA_MODELS = {cmt.ALLOWED_MODEL_ID: {"urls": [0]}}
+    OPENAI_MODELS = {}
+
+
+class Request:
+    app = types.SimpleNamespace(state=State())
+
+
+REQ = Request()
+MODEL = {"id": cmt.ALLOWED_MODEL_ID}
+
+
+async def _base_urls(key):
+    assert key == "ollama.base_urls"
+    return [{"url": "http://127.0.0.1:11434"}]
+
+
+config_module = types.ModuleType("open_webui.config")
+config_module.Config = types.SimpleNamespace(get=_base_urls)
+sys.modules["open_webui"] = types.ModuleType("open_webui")
+sys.modules["open_webui.config"] = config_module
 
 
 class IsolatedCase(unittest.TestCase):
@@ -49,11 +72,12 @@ def run(coro):
     return asyncio.run(coro)
 
 
-def call(text="Synthetic likes tea.", *, dialog, writer, request=REQ, user=USER):
+def call(text="Synthetic likes tea.", *, dialog, writer, request=REQ, user=USER, model=MODEL):
     tool = cmt.Tools(writer=writer)
     return run(
         tool.save_confirmed_memory(
-            text, __request__=request, __user__=user, __event_call__=dialog
+            text, __request__=request, __user__=user, __event_call__=dialog,
+            __model__=model,
         )
     )
 
@@ -151,8 +175,47 @@ class ConfirmationTests(IsolatedCase):
 
         params = set(inspect.signature(cmt.Tools.save_confirmed_memory).parameters)
         self.assertEqual(
-            params, {"self", "memory_text", "__request__", "__user__", "__event_call__"}
+            params, {"self", "memory_text", "__request__", "__user__", "__event_call__", "__model__"}
         )
+
+
+class RouteGuardTests(IsolatedCase):
+    def test_allows_only_exact_model_on_loopback_ollama_provider(self):
+        self.assertTrue(cmt.route_is_allowed(MODEL, REQ, [{"url": "http://127.0.0.1:11434"}]))
+        self.assertTrue(cmt.route_is_allowed(MODEL, REQ, [{"url": "http://localhost:11434"}]))
+
+    def test_denies_unknown_external_missing_and_malformed_routes(self):
+        cases = [
+            ({"id": "other-model"}, REQ, [{"url": "http://127.0.0.1"}]),
+            (MODEL, object(), [{"url": "http://127.0.0.1"}]),
+            (MODEL, REQ, [{"url": "https://remote.example"}]),
+            (MODEL, REQ, [{"url": "http://user@127.0.0.1"}]),
+            (MODEL, REQ, [{"url": "http://127.0.0.1/path"}]),
+            (MODEL, REQ, []),
+            (MODEL, REQ, None),
+        ]
+        for model, request, urls in cases:
+            with self.subTest(urls=urls):
+                self.assertFalse(cmt.route_is_allowed(model, request, urls))
+
+    def test_provider_conflict_and_invalid_index_deny(self):
+        original = State.OPENAI_MODELS
+        try:
+            State.OPENAI_MODELS = {cmt.ALLOWED_MODEL_ID: {}}
+            self.assertFalse(cmt.route_is_allowed(MODEL, REQ, [{"url": "http://127.0.0.1"}]))
+            State.OPENAI_MODELS = {}
+            State.OLLAMA_MODELS = {cmt.ALLOWED_MODEL_ID: {"urls": [4]}}
+            self.assertFalse(cmt.route_is_allowed(MODEL, REQ, [{"url": "http://127.0.0.1"}]))
+        finally:
+            State.OPENAI_MODELS = original
+            State.OLLAMA_MODELS = {cmt.ALLOWED_MODEL_ID: {"urls": [0]}}
+
+    def test_route_rejection_happens_before_dialog_or_writer(self):
+        dialog, writer = FakeDialog(True), FakeWriter()
+        out = call(dialog=dialog, writer=writer, model={"id": "remote"})
+        self.assertIn("verified local Qwen route", out)
+        self.assertEqual(dialog.events, [])
+        self.assertEqual(writer.calls, [])
 
 
 class WriterOutcomeTests(IsolatedCase):
@@ -230,7 +293,7 @@ class DedupeTests(IsolatedCase):
 
         async def main():
             tool = cmt.Tools(writer=writer)
-            kw = dict(__request__=REQ, __user__=USER, __event_call__=slow_dialog)
+            kw = dict(__request__=REQ, __user__=USER, __event_call__=slow_dialog, __model__=MODEL)
             first = asyncio.ensure_future(tool.save_confirmed_memory("Synthetic fact.", **kw))
             await asyncio.sleep(0)
             second = await tool.save_confirmed_memory("  synthetic   FACT. ", **kw)

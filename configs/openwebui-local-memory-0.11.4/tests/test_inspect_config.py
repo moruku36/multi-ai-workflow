@@ -165,6 +165,32 @@ class InspectConfigTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertNoCanaries(out + err)
 
+    def test_sqlite_native_numeric_config_values_are_validated(self):
+        cfg = {
+            "memories.review_interval_turns": 12,
+            "memories.user_char_limit": 2100,
+            "memories.context_char_limit": 1700,
+            "rag.relevance_threshold": 0.25,
+        }
+        path = self.db(config=cfg)
+        code, out, err = run_cli("--db", str(path))
+        self.assertEqual(code, 0, out + err)
+        report = json.loads(run_cli("--db", str(path), "--json")[1])
+        self.assertEqual(report["settings"]["memories.review_interval_turns"]["value"], 12)
+        self.assertEqual(report["settings"]["rag.relevance_threshold"]["value"], 0.25)
+
+    def test_native_numeric_wrong_types_and_bool_as_int_fail_closed(self):
+        cfg = {
+            "memories.review_interval_turns": True,
+            "memories.user_char_limit": "oops",
+            "rag.relevance_threshold": "NaN",
+        }
+        path = self.db(config=cfg)
+        code, out, err = run_cli("--db", str(path))
+        self.assertEqual(code, 3, out + err)
+        self.assertNoCanaries(out + err)
+        self.assertIn("<INVALID>", out)
+
     def test_absent_keys_report_defaults(self):
         path = self.dir / "min.db"
         conn = sqlite3.connect(path)

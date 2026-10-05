@@ -3,6 +3,18 @@
 A minimal native Open WebUI custom Tool with one operation, `save_confirmed_memory`.
 **Not installed. Installation instructions are intentionally withheld**; the feature stays uninstalled until the parent reviews it.
 
+## Local Qwen route guard
+
+The save path fails closed unless server-injected `__model__` identifies exactly
+`huihui_ai/qwen3-abliterated:8b`, that ID is present in Open WebUI's active Ollama
+model map and absent from its OpenAI model map, and all configured Ollama URL
+indices for that model point to syntactically valid loopback URLs. Prompt claims
+and tool arguments cannot choose the route. Missing, malformed, external, or
+conflicting state rejects before the confirmation dialog and writer. This guards
+only this tool; it does not prove that built-in Memory context is hidden from
+external models. Verify those model capability settings separately before any
+live installation.
+
 ## Post-confirmation failures can have an uncertain outcome
 
 The Open WebUI 0.11.4 standard `add_memory` route calls `Memories.insert_new_memory` (which commits
@@ -18,8 +30,8 @@ trying again. This draft remains uninstalled until parent review.
 
 ## Compatibility
 
-Pinned to **Open WebUI 0.11.4** only. It relies on the injected `__request__`, `__user__`
-and `__event_call__`, and on `open_webui.routers.memories.add_memory(request, AddMemoryForm, user)`.
+Pinned to **Open WebUI 0.11.4** only. It relies on injected `__request__`, `__user__`,
+`__event_call__`, and server-injected `__model__`, plus `open_webui.routers.memories.add_memory(request, AddMemoryForm, user)`.
 Re-verify against the source before using any other version.
 
 ## Behaviour
