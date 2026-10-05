@@ -16,8 +16,8 @@
 ## 合成テスト
 
 ```sh
-python -m unittest discover -s confirmed-memory-tool/tests -v
-python -m unittest discover -s context-guard/tests -v
+python -m unittest discover -s configs/openwebui-local-memory-0.11.4/confirmed-memory-tool/tests -v
+python -m unittest discover -s configs/openwebui-local-memory-0.11.4/public-template/context-guard/tests -v
 ```
 
 テストはmockと合成データだけを使います。実DBの読み取り、モデル読込、ネットワーク通信は行いません。
