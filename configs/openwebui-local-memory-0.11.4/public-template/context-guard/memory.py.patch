@@ -1,0 +1,16 @@
+--- a/open_webui/utils/memory.py
++++ b/open_webui/utils/memory.py
+@@ -13,0 +14 @@
++from open_webui.utils.memory_context_guard import is_allowed_memory_context_route
+@@ -291,0 +292,11 @@
++    # Version-pinned local-model allowlist. This must stay before the first
++    # Memories read / vector query below. Unknown and newly discovered provider
++    # models therefore return the original payload without reading Memory.
++    if not isinstance(model, dict) or model.get('id') != 'YOUR_LOCAL_OLLAMA_MODEL_ID':
++        return form_data
++    try:
++        ollama_base_urls = await Config.get('ollama.base_urls')
++    except Exception:
++        return form_data
++    if not is_allowed_memory_context_route(request, model, ollama_base_urls):
++        return form_data
