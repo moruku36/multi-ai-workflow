@@ -2,7 +2,7 @@
 
 [English](ai-team.md) | [日本語](ai-team.ja.md)
 
-> Operating snapshot: 2026-10-05; model names are owner-reported labels
+> Operating snapshot: 2026-10-06; model names are owner-reported labels
 
 ## Team
 
@@ -31,14 +31,9 @@ Dottie is the PM, not a claim that all task execution is automatic. Dottie clari
 
 ## Chappy and Codex
 
-Use Codex when it fits the task or is explicitly assigned. The owner-reported effort sequence is:
+Use Codex when it fits the task or is explicitly assigned. Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
 
-```text
-GPT-6 Luna / Low → Luna / Medium → Luna / High
-→ GPT-6.1 Sol / Low → Sol / Medium → Sol / High
-```
-
-Do not use ExtraHigh. Astra is reserved for individually justified advanced academic/technical analysis, not routine coding. These labels do not assert an API ID or prove runtime model selection.
+If actual worker selection or runtime confirmation is unavailable, report the limitation and `UNKNOWN`.
 
 ## Claude Code
 
@@ -70,4 +65,4 @@ Gemini/Antigravity is one suitable option for PoCs, mocks, or implementation; it
 
 Use Dottie, Chappy, Claude Code, Gemini/Antigravity, and Qwen as role labels when the context is clear. Convert a conversational request into a task-specific tool selection, and keep the requested model/effort separate from observed runtime. Do not invent CLI identifiers.
 
-See the [2026-10-05 operating decisions](operating-decisions-2026-10-05.md) and [routing guide](routing-guide.md).
+See the [2026-10-06 operating decisions](operating-decisions-2026-10-06.md) and [routing guide](routing-guide.md).

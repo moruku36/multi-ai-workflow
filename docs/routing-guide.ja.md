@@ -6,7 +6,7 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 
 Task fit、environment、quota evidence、quality、costに沿って利用可能なtoolを選びます。タスクに合わない固定model sequenceは使いません。model labelは本人の運用表記で、API IDや実行時modelの確認ではありません。
 
-## Current Snapshot - 2026-10-05
+## Current Snapshot - 2026-10-06
 
 | 作業 | 開始点 | 引き上げ／代替 |
 |---|---|---|
@@ -14,25 +14,16 @@ Task fit、environment、quota evidence、quality、costに沿って利用可能
 | 短い相談や下書き | ChatGPT Chat | 特定機能に応じて別ツールを選択 |
 | 調査と成果物 | ChatGPT Work | 必要に応じてQwenなど出典を確認できるツール |
 | 通常のコーディング | Claude Code / Sonnet 5.5 | 難しい作業ではOpus 5.5。適合性または明示指定によりCodex |
-| Codexを指定した変更 | Luna / Low | Luna Medium → Luna High → Sol Low → Medium → High。ExtraHighは使わない |
+| Codexを指定した変更 | GPT-6 Luna / Medium | 難度・品質要求に応じGPT-6.1 Sol / Medium。通常はMediumの2択 |
 | PoCやモック | Gemini/Antigravityも候補 | Claude Code、Codexなど適合する別ツール。PoCは任意 |
 | マルチモーダル／ローカル文章 | 入力に適したQwen環境 | Colabとローカルモデルは別環境 |
 | 独立レビュー | 実装担当とは異なるツール | 実装担当とタスクによりChappy/CodexまたはClaude Code |
 
-### Codexのeffort段階
+### 通常OpenAIのMedium 2択
 
-Codexを選んだ場合にのみ使います。品質やタスク難度に基づく具体的な理由をもって上げます。
+通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 
-```text
-GPT-6 Luna / Low
-  → Luna / Medium
-  → Luna / High
-  → GPT-6.1 Sol / Low
-  → Sol / Medium
-  → Sol / High
-```
-
-ExtraHighは運用方針に含みません。Astraはこのコーディング段階には含めず、個別に必要性を判断した高度な学術・技術分析に限ります。本人の運用表記からCLI IDや実行時モデルを推定しません。
+指定したworker model/effortと観測されたruntime model/effortを別々に記録します。実際のworker選択を行えない、または確認できない場合は制約を報告し、観測値を`UNKNOWN`とします。選択できたと偽ったり、代替モデルへ黙って切り替えたりしません。
 
 ### ClaudeとAntigravity
 
@@ -86,4 +77,4 @@ Dottieが仕様化と調整を行い、Factoryが薄い再利用可能なhandoff
 
 - 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得結果にはunit check 324件とmock browser check 25件が報告されました。これは単一結果であり、CLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
 
-日付付きの根拠と公開範囲は[運用判断記録](operating-decisions-2026-10-05.ja.md)を参照してください。
+日付付きの根拠と公開範囲は[運用判断記録](operating-decisions-2026-10-06.ja.md)を参照してください。

@@ -4,16 +4,16 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
-## Current operating snapshot — 2026-10-05
+## Current operating snapshot — 2026-10-06
 
 - The human is Product Owner. **Dottie** handles PM work: task specification, environment/provider selection, progress, and acceptance. **Chappy** handles architecture and review. **Claude Code** is the usual coding/deployment engineer; **Gemini/Antigravity** is an option for PoCs and mocks; **Qwen** supports local text and multimodal research.
 - Windows is the always-on local base and first choice. If work cannot proceed there, consult the user before switching to Mac; Mac is a helper environment.
 - Choose the tool and model by task difficulty, required quality, eligible environment, fresh quota observations, consumption pace/reset window, and cost. Do not use a fixed Antigravity-Claude-first route. Honor an explicit task-level choice without turning it into a global default.
 - Claude Code usually uses Sonnet 5.5; use Opus 5.5 for harder work. Its quota is separate from Claude inside Antigravity.
-- Codex escalation is **Luna / Low → Luna / Medium → Luna / High → GPT-6.1 Sol / Low → Medium → High** when needed. Do not use ExtraHigh. Astra is reserved for individually justified advanced academic/technical analysis; it is not a routine coding tier. These labels describe the owner's usage and do not assert a CLI model ID or runtime availability.
+- Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
 - CodexBar quota images are checked manually. Automated quota retrieval and fully automatic routing are not verified. Treat missing or stale observations as unknown and do not route on them as if current.
 
-See the [current operating decisions](docs/operating-decisions-2026-10-05.md) and [routing guide](docs/routing-guide.md).
+See the [current operating decisions](docs/operating-decisions-2026-10-06.md) and [routing guide](docs/routing-guide.md).
 
 ## Roles and workflow boundaries
 
@@ -65,8 +65,9 @@ This is a public repository. Do not include private conversations, personal or f
 ## Repository map
 
 - `README.md` / `README.ja.md`: English and Japanese overview
-- `docs/operating-decisions-2026-10-05.md`: dated status, evidence, and privacy boundaries in both languages
-- `docs/routing-guide.md`: tool selection and escalation guidance
+- `docs/operating-decisions-2026-10-06.md`: dated status, evidence, and privacy boundaries in both languages
+- `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md`: legacy policy and experiment records; historical evidence is retained
+- `docs/routing-guide.md`: tool selection and the two routine OpenAI Medium choices
 - `docs/ai-team.md`: team roles
 - `docs/dots-codexbar-orchestration.md`: PM/observation boundaries
 - `docs/handoff-templates.md`: reusable handoffs

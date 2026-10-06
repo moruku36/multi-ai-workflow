@@ -4,16 +4,16 @@
 
 ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
 
-## Current Snapshot - 2026-10-05
+## Current Snapshot - 2026-10-06
 
 - 人がProduct Ownerです。**Dottie**はタスク仕様、provider／環境選択、進捗、受入を担うPMです。**Chappy**はアーキテクト／レビュアー、**Claude Code**は通常の実装・デプロイ担当、**Gemini/Antigravity**はPoCやモックの候補、**Qwen**はローカル文章処理とマルチモーダル調査に使います。
 - Windowsを常時稼働のローカル基地かつ第一選択とします。Windowsで進められない場合、Macへ切り替える前にユーザーへ相談します。
 - タスク難度、必要品質、利用可能な環境、新鮮なquota観測、消費ペース／リセット時間、費用を考慮して選択します。AntigravityからClaudeへ固定的に優先する経路はありません。タスク単位の明示指定は尊重しますが、全体の固定defaultにはしません。
 - Claude Codeは通常Sonnet 5.5、難しい作業ではOpus 5.5を使います。Claude CodeとAntigravity内Claudeのquota poolは別です。
-- Codexは必要に応じて **Luna / Low → Luna / Medium → Luna / High → GPT-6.1 Sol / Low → Medium → High** の順で上げます。ExtraHighは使いません。Astraは個別に必要性を判断した高度な学術・技術検討に限り、通常のコーディングtierにはしません。これらは本人の運用表記であり、CLIのmodel IDや実行可能性を断定しません。
+- 通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 - CodexBarのquota画像は手動で確認します。quota自動取得と完全自動routingは未検証です。欠落・古い観測は`unknown`として扱い、現在値のようにroutingへ使いません。
 
-[現行の運用判断](docs/operating-decisions-2026-10-05.ja.md)と[Routing Guide](docs/routing-guide.ja.md)を参照してください。
+[現行の運用判断](docs/operating-decisions-2026-10-06.ja.md)と[Routing Guide](docs/routing-guide.ja.md)を参照してください。
 
 ## 役割とワークフローの境界
 
@@ -65,8 +65,9 @@ flowchart LR
 ## リポジトリ構成
 
 - `README.md` / `README.ja.md`: 英語・日本語の概要
-- `docs/operating-decisions-2026-10-05.md` / `.ja.md`: 日付付き状態、根拠、公開境界
-- `docs/routing-guide.md` / `docs/routing-guide.ja.md`: ツール選択と段階的な引き上げ
+- `docs/operating-decisions-2026-10-06.md` / `.ja.md`: 日付付き状態、根拠、公開境界
+- `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md`: legacyの方針・実験記録。過去の根拠を保持
+- `docs/routing-guide.md` / `docs/routing-guide.ja.md`: ツール選択と通常OpenAIのMedium 2択
 - `docs/ai-team.md`: チームの役割
 - `docs/dots-codexbar-orchestration.md`: PMと観測の境界
 - `docs/handoff-templates.md`: 再利用handoff

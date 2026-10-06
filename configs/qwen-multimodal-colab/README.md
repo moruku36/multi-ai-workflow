@@ -37,12 +37,17 @@ Qwen Multimodal Colabは、**個人用のマルチモーダル実験・調査環
 
 | 用途 | 第一候補 |
 |---|---|
-| 要件整理・文章・資料 | ChatGPT |
-| PoC・コードの大量初期実装 | Gemini 3.8 Flash + Antigravity |
-| 通常のコード実装 | Codex GPT-6 Luna |
-| 難しい実装 | Codex GPT-6 Sol / Claude Opus 5.5 |
-| 独立コードレビュー | Claude Opus 5.5 |
+| 要件整理・文章・資料 | ChatGPT（通常OpenAIはGPT-6 Luna / MediumまたはGPT-6.1 Sol / Medium） |
+| PoC・mock | Gemini/Antigravityなどタスクに適した候補。PoCは任意 |
+| 通常のコード実装 | Claude Code Sonnet 5.5。適合または明示指定でCodex |
+| Codexを指定した実装 | GPT-6 Luna / Medium、難度・品質要求に応じGPT-6.1 Sol / Medium |
+| 難しい実装 | Claude Code Opus 5.5、または指定されたCodex GPT-6.1 Sol / Medium |
+| 独立コードレビュー | 実装担当とは別系列のツール |
 | 画像・PDF・動画・音声・Qwen実験 | **Qwen Multimodal Colab** |
+
+通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
+
+詳細は[Routing Guide](../../docs/routing-guide.ja.md)を参照してください。
 
 ## セキュリティ上の注意
 

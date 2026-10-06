@@ -10,7 +10,7 @@
 - 大きな作業では目的、制約、受け入れ条件を明確にします。
 - 難度、品質、環境、最新capacity、消費ペース、reset、コストを見てtoolを選び、Antigravity Claude固定優先にしません。
 - タスク固有の指定を尊重しますが、全体既定に一般化しません。
-- Codexは必要に応じLuna Low → Medium → High → GPT-6.1 Sol Low → Medium → Highと上げます。ExtraHighは使いません。Astraは個別に正当化された高度な学術・技術検討向けです。
+- 通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 - Claude Codeは通常Sonnet 5.5、難しい作業はOpus 5.5です。直接Claude CodeとAntigravity内Claudeは別quota poolです。
 - PoCは不確実性低減に有効な場合に限り、明確な既存コード修正を重複実装しません。
 - CodexBar画像は手動確認です。quota自動取得や完全自動routingを主張しません。sessionとweekly枠を分け、5時間の無操作で全回復と判断しません。古い観測は`unknown`です。

@@ -22,4 +22,4 @@ Scripts such as `Modelfile`, `run.sh`, `run.ps1`, and `start-webui.bat` remain f
 | Multimodal capabilities | Do not infer from Colab | Notebook-specific image/PDF/audio/video capabilities |
 | Automation | Not established | Not implied by notebook verification |
 
-See the [current routing guide](../../docs/routing-guide.md) and [operating record](../../docs/operating-decisions-2026-10-05.md).
+See the [current routing guide](../../docs/routing-guide.md) and [operating record](../../docs/operating-decisions-2026-10-06.md).
