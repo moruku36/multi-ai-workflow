@@ -2,6 +2,8 @@
 
 [English](operating-decisions-2026-10-05.md) | [日本語](operating-decisions-2026-10-05.ja.md)
 
+> **Legacy (dated record):** Model selection is superseded by the [2026-10-06 owner policy](operating-decisions-2026-10-06.md). The historical ladder, experiments, and observations below are retained as history, not current recommendations.
+
 This public record summarizes operating guidance and evidence boundaries. Model labels are owner-reported; they do not establish API identifiers, exact runtime models, or availability in a particular CLI. No private account values, conversations, or logs belong here.
 
 ## Roles and routing

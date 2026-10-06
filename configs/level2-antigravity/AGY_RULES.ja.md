@@ -19,4 +19,4 @@
 - Web依頼のacceptedやWorking表示は、実装、テスト、完了、自動連携を証明しません。
 - ユーザー承認、実行環境の権限、ローカルテスト、live deployを別段階として記録します。正規の承認が拒否されたら保存して止めます。
 
-[Routing Guide](../../docs/routing-guide.ja.md)、[運用判断](../../docs/operating-decisions-2026-10-05.ja.md)、[handoffテンプレート](../../docs/handoff-templates.ja.md)を参照してください。
+[Routing Guide](../../docs/routing-guide.ja.md)、[運用判断](../../docs/operating-decisions-2026-10-06.ja.md)、[handoffテンプレート](../../docs/handoff-templates.ja.md)を参照してください。

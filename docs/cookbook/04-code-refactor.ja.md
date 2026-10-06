@@ -31,7 +31,7 @@ Requested tool/model/effort (task-specific, if any):
 
 選ばれた担当には実ファイルを確認して、範囲を限った変更と関連する確認を依頼します。少なくとも変更ファイルと挙動、実施した確認と結果、未解決の前提やruntime pending、必要な承認段階を報告します。
 
-Codexを指定したコーディングでは必要に応じてLuna Low → Luna Medium → Luna High → Sol Low → Sol Medium → Sol Highと段階的に上げます。ExtraHighは使いません。Astraは個別に正当化した高度な学術・技術分析向けで、通常のコーディングには使いません。
+通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 
 ## 独立レビュー
 

@@ -2,7 +2,7 @@
 
 [English](ai-team.md) | [日本語](ai-team.ja.md)
 
-> 2026-10-05時点の運用。モデル名は本人の運用上の表記です。
+> 2026-10-06時点の運用。モデル名は本人の運用上の表記です。
 
 | 担当 | ツール／役割 | 主な責務 |
 |---|---|---|
@@ -43,14 +43,9 @@ DottieはPMであり、全タスクが自動実行されるという意味では
 
 ## ChappyとCodex
 
-Codexはタスクに適する場合または明示的に割り当てられた場合に使います。本人の運用上のeffort段階は次の順です。
+Codexはタスクに適する場合または明示的に割り当てられた場合に使います。通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 
-```text
-GPT-6 Luna / Low → Luna / Medium → Luna / High
-→ GPT-6.1 Sol / Low → Sol / Medium → Sol / High
-```
-
-ExtraHighは使いません。Astraは個別に必要性を正当化した高度な学術・技術分析に限り、通常のコーディングには使いません。これらの表示からAPI IDや実際のruntime modelを断定しません。
+workerの実選択とruntime確認ができない場合は、その制約と`UNKNOWN`を報告します。
 
 ## Claude Code
 
@@ -73,5 +68,5 @@ PoC、mock、または適した実装での候補ですが、常に最初に使�
 
 Dottie、Chappy、Claude Code、Gemini/Antigravity、Qwenは文脈が明らかな場合の役割名として使います。会話上の依頼はタスク固有のtool選択に落とし込み、指定model/effortと観測runtimeを分けます。CLI IDを作りません。
 
-詳細は[2026-10-05運用判断](operating-decisions-2026-10-05.ja.md)と[routing guide](routing-guide.ja.md)を参照してください。
+詳細は[2026-10-06運用判断](operating-decisions-2026-10-06.ja.md)と[routing guide](routing-guide.ja.md)を参照してください。
 追加確認: MacのOpen WebUI 0.11.4とローカルQwen2.5 3Bはローカル応答とWeb検索結果を返しましたが、自動orchestrationではありません。WebUI → OpenAI-compatible API → on-demand RunPod Qwenは目標設計です。Podの自動起動、HTTP接続、自動終了は未確認です。OpenAI-compatibleはAPI形式を指し、有料OpenAI利用を意味しません。Pod停止と削除は異なり、停止中も永続storageに費用が発生することがあり、削除はデータを失う可能性があります。

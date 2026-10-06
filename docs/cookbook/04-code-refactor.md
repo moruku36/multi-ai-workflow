@@ -38,7 +38,7 @@ Ask the selected tool to inspect the actual files, make the bounded change, run 
 - unresolved assumptions or runtime-pending work
 - any required approval stage
 
-For Codex-assigned coding, the current effort sequence is Luna Low → Luna Medium → Luna High → Sol Low → Sol Medium → Sol High as needed. Do not use ExtraHigh. Astra is reserved for individually justified advanced academic/technical analysis, not routine coding.
+Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
 
 ## Independent review
 

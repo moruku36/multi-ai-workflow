@@ -20,4 +20,4 @@ This file describes task guidance, not a fixed global model or effort default. M
 - Separate user approval, execution-environment authorization, local tests, and live deployment. If proper approval is denied, preserve the work and stop; do not bypass through retries or a different route.
 - Make bounded changes, run relevant checks when authorized, and report changes, tests, blockers, and unresolved runtime status.
 
-See the [routing guide](../../docs/routing-guide.md), [operating decisions](../../docs/operating-decisions-2026-10-05.md), and [handoff templates](../../docs/handoff-templates.md).
+See the [routing guide](../../docs/routing-guide.md), [operating decisions](../../docs/operating-decisions-2026-10-06.md), and [handoff templates](../../docs/handoff-templates.md).

@@ -6,7 +6,7 @@ Windows is the always-on local base and first choice. If it cannot proceed, cons
 
 Choose an eligible tool for the task; do not follow a fixed model ladder when the task, environment, quota evidence, quality needs, or cost point elsewhere. Model labels are owner-reported operating names, not API IDs or proof of runtime selection.
 
-## Current snapshot — 2026-10-05
+## Current snapshot — 2026-10-06
 
 | Work | Starting point | Escalation / alternative |
 |---|---|---|
@@ -14,25 +14,16 @@ Choose an eligible tool for the task; do not follow a fixed model ladder when th
 | Short discussion or draft | ChatGPT Chat | Choose another tool for a specific capability |
 | Research and deliverables | ChatGPT Work | Qwen or another source-capable tool as needed |
 | Routine coding | Claude Code / Sonnet 5.5 | Opus 5.5 for hard work; Codex by fit or explicit choice |
-| Codex-assigned changes | Luna / Low | Luna Medium → Luna High → Sol Low → Medium → High; no ExtraHigh |
+| Codex-assigned changes | GPT-6 Luna / Medium | GPT-6.1 Sol / Medium when complexity or quality warrants it; two Medium choices |
 | PoC or mock | Gemini/Antigravity is one candidate | Claude Code, Codex, or another fitting tool; PoC is optional |
 | Multimodal/local text | Qwen environment matching the input | Colab and local model are separate environments |
 | Independent review | Tool different from builder | Chappy/ Codex or Claude Code, depending on builder and task |
 
-### Codex effort ladder
+### Two Medium choices for routine OpenAI work
 
-Use this only when Codex is the chosen tool. Escalate with a concrete quality or task-complexity reason:
+Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
 
-```text
-GPT-6 Luna / Low
-  → Luna / Medium
-  → Luna / High
-  → GPT-6.1 Sol / Low
-  → Sol / Medium
-  → Sol / High
-```
-
-ExtraHigh is outside the operating policy. Astra is not a coding step in this ladder; reserve it for individually justified advanced academic/technical analysis. Do not infer CLI IDs or runtime model from these owner-reported labels.
+Record requested worker model/effort separately from observed runtime model/effort. If actual worker selection cannot be made or verified, report that limitation and mark the observation `UNKNOWN`. Do not claim selection succeeded or silently substitute another model.
 
 ### Claude and Antigravity
 
@@ -86,4 +77,4 @@ User approval, execution-environment authorization, local test success, and chan
 
 Report each state precisely: **verified/merged**, **local/offline**, **runtime pending**, or **proposal**. A successful offline test does not prove a live send, deployed change, or automatic integration. Windows CLI startup has a reported rejection with unknown root cause; do not describe the CLI as fully operational.
 
-For current dated evidence and privacy boundaries, see the [operating decisions](operating-decisions-2026-10-05.md).
+For current dated evidence and privacy boundaries, see the [operating decisions](operating-decisions-2026-10-06.md).

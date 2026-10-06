@@ -2,7 +2,9 @@
 
 [English](operating-decisions-2026-10-02.md) | [日本語](operating-decisions-2026-10-02.ja.md)
 
-This dated record captures operating policy as of 2026-10-02. CLI observations were reported from the owner's session at that time and were not rerun for this documentation update. Approval of a direction, command acceptance, execution, and verification are separate facts. The [2026-10-05 current policy](operating-decisions-2026-10-05.md) updates later routing choices.
+> **Legacy (dated record):** Model selection is superseded by the [2026-10-06 owner policy](operating-decisions-2026-10-06.md). The historical ladder, experiments, and observations below are retained as history, not current recommendations.
+
+This dated record captures operating policy as of 2026-10-02. CLI observations were reported from the owner's session at that time and were not rerun for this documentation update. Approval of a direction, command acceptance, execution, and verification are separate facts. The [2026-10-05 later policy](operating-decisions-2026-10-05.md) updates later routing choices.
 
 ## Roles and model selection
 
