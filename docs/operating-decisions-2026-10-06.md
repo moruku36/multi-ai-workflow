@@ -2,6 +2,8 @@
 
 [English](operating-decisions-2026-10-06.md) | [日本語](operating-decisions-2026-10-06.ja.md)
 
+> Work allocation is superseded by the [2026-10-10 decision](operating-decisions-2026-10-10.md). Preserve this historical record; the two OpenAI Medium choices and model-label caveats remain in force.
+
 This documentation policy follows the owner’s latest instruction. It does not change or verify authentication settings or actual model runtime configuration.
 
 Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.

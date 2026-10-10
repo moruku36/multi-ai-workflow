@@ -2,6 +2,8 @@
 
 [English](operating-decisions-2026-10-06.md) | [日本語](operating-decisions-2026-10-06.ja.md)
 
+> 業務分担は[2026-10-10決定](operating-decisions-2026-10-10.ja.md)によりsuperseded。ここは当時の記録として保存し、OpenAI Medium 2択・呼称の留保は継承します。
+
 本人の最新指示に基づく文書上の運用方針です。認証設定や実モデルのruntime configを変更・検証するものではありません。
 
 通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。

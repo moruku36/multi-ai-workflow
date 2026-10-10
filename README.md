@@ -4,16 +4,16 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
-## Current operating snapshot — 2026-10-06
+## Current operating snapshot — 2026-10-10
 
-- The human is Product Owner. **Dottie** handles PM work: task specification, environment/provider selection, progress, and acceptance. **Chappy** handles architecture and review. **Claude Code** is the usual coding/deployment engineer; **Gemini/Antigravity** is an option for PoCs and mocks; **Qwen** supports local text and multimodal research.
+- The human owns final decisions and acceptance. **Dottie** handles short requirements, acceptance criteria, allocation and progress. **Codex / ChatGPT (Chappy)** handles complex initial design, difficult decisions and final escalation when needed. **Claude Code** and **Gemini/Antigravity** share research, writing, translation, GitHub docs and first review as well as implementation by fit and availability. **Local Qwen** supports authorized specialist research; **RunPod A100 Qwen** is an unaccepted future review candidate. Full-text Codex rewrites and comprehensive re-review are not the default.
 - Windows is the always-on local base and first choice. If work cannot proceed there, consult the user before switching to Mac; Mac is a helper environment.
-- Choose the tool and model by task difficulty, required quality, eligible environment, fresh quota observations, consumption pace/reset window, and cost. Do not use a fixed Antigravity-Claude-first route. Honor an explicit task-level choice without turning it into a global default.
+- First allocate to fitting, available authorized Claude / Antigravity candidates. Neither has a fixed priority: consider fit, capacity freshness, actual availability and cost. Missing capacity is `unknown`; manual rotation under stale observations is a proposal. Do not sum unlike provider token units.
 - Claude Code usually uses Sonnet 5.5; use Opus 5.5 for harder work. Its quota is separate from Claude inside Antigravity.
 - Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
 - CodexBar quota images are checked manually. Automated quota retrieval and fully automatic routing are not verified. Treat missing or stale observations as unknown and do not route on them as if current.
 
-See the [current operating decisions](docs/operating-decisions-2026-10-06.md) and [routing guide](docs/routing-guide.md).
+See the [current operating decisions](docs/operating-decisions-2026-10-10.md) and [routing guide](docs/routing-guide.md).
 
 ## Roles and workflow boundaries
 
@@ -28,7 +28,7 @@ These layers complement one another; they are not three overlapping, fully autom
 ```mermaid
 flowchart LR
     U["Product Owner"] --> D["Dottie<br/>PM / acceptance"]
-    D --> A["One selected engineer<br/>Claude Code / Codex / Antigravity / Qwen"]
+    D --> A["Selected production / research worker<br/>Claude / Antigravity / local Qwen"]
     A --> F["Factory<br/>handoff + artifacts + evidence"]
     F --> D
     B["AIteamBridge<br/>local capacity/router/transport work"] -. "not live autonomous dispatch" .-> D
@@ -52,11 +52,11 @@ Keep **verified/merged**, **local/offline**, **runtime pending**, and **proposal
 
 ## Qwen and on-demand GPU status
 
-- Windows text through Open WebUI/Ollama has received a user-operated response check. On Mac, Open WebUI 0.11.4 with a small local Qwen2.5 3B has returned local responses and web-search results; this is not automated orchestration.
-- The separate fixed-Q8 Colab chat notebook preserves the original multimodal setup. Qwen Multimodal Colab PR #35 reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run. A100 quality, speed, VRAM, and compute use remain deferred. See [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35).
-- The RunPod operations PR #1 is documentation-only. The latest chat candidate has Linux CPU validation; CUDA, model download, and inference remain unverified.
-- The proposed flow is WebUI → OpenAI-compatible API → on-demand RunPod Qwen. OpenAI-compatible describes an API shape and does not mean paid OpenAI. Starting a Pod, connecting over HTTP, and automatic termination remain design goals until verified.
-- Stopping a Pod and destroying it are different. Persistent storage may continue to incur charges after a Pod stops, while deletion may lose data. Keep this general and do not publish account balances or exact costs.
+- **Local:** Windows Open WebUI/Ollama text responses were owner-checked. Mac Open WebUI 0.11.4 with Qwen2.5 3B has past observations of local responses and web-search results. Search availability and specialist-research quality require environment-specific checks; this is not automated orchestration.
+- **RunPod Phase 1:** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) records one real response from small Qwen2.5-1.5B-Instruct and Pod deletion. It does not accept A100 independent-review quality or the complete workflow.
+- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Claude / Antigravity mutual review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
+- **Colab:** The fixed-Q8 chat notebook is separate. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI checks (2 skipped), not Colab/GPU inference, model-download or A100-quality verification.
+- OpenAI-compatible describes an API shape, not paid OpenAI. A single HTTP response does not establish automatic startup, connection and termination. Pod stop and deletion differ, including storage costs and data retention. This documentation change starts no GPU and changes no runtime settings.
 
 ## Privacy and security
 
@@ -65,8 +65,8 @@ This is a public repository. Do not include private conversations, personal or f
 ## Repository map
 
 - `README.md` / `README.ja.md`: English and Japanese overview
-- `docs/operating-decisions-2026-10-06.md`: dated status, evidence, and privacy boundaries in both languages
-- `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md`: legacy policy and experiment records; historical evidence is retained
+- `docs/operating-decisions-2026-10-10.md` / `.ja.md`: current responsibilities, work list, allocation/failure procedure and evidence limits
+- `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: historical policy and experiment records are retained
 - `docs/routing-guide.md`: tool selection and the two routine OpenAI Medium choices
 - `docs/ai-team.md`: team roles
 - `docs/dots-codexbar-orchestration.md`: PM/observation boundaries
