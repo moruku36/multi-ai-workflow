@@ -4,12 +4,20 @@
 
 ツール間で作業を渡すときは、範囲と受け入れ条件を明確にします。DottieはPMと受け入れ調整、Factoryは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のローカルcapacity/router/transport開発を担います。live quota取得と自動dispatchは未検証です。
 
+現行の[担当表・配分手順](operating-decisions-2026-10-10.ja.md)に従います。通常の受け渡し失敗は1回で原因を保存し、別の認可済み候補1つへ。権限拒否は停止し迂回しません。不可なら`blocked`／本人handoff待ちで、Codexの全文代行に自動で戻しません。
+
 ## Evidence manifest
 
 モデル比較や複数段階の作業では、実行前に入力、prompt、受け入れ条件、rubric、制約、評価手順を固定します。
 
 ```text
 task_id:
+goal / completion criteria:
+small input / revision:
+worker / one authorized alternative:
+planned budget / work limit:
+capacity pool / session-weekly observation time / reset time: 不明は unknown
+handoff failure / exception reason:
 input revision / paths / hashes:
 prompt / rubric / acceptance criteria:
 provider / route / environment:
@@ -23,7 +31,7 @@ reacquire source / revision / hash:
 
 依頼がacceptedまたはWorkingと表示されても、完了の証明にはなりません。結果を読み、受け入れ条件を確認します。local/offlineテストはlive provider経路や本番反映を証明しません。
 
-## Product Owner / Dottieから実装担当へ
+## Product Owner / Dottieから制作・調査・実装担当へ
 
 ```markdown
 # Goal

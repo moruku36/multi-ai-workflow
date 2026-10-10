@@ -6,18 +6,21 @@ Windows is the always-on local base and first choice. If it cannot proceed, cons
 
 Choose an eligible tool for the task; do not follow a fixed model ladder when the task, environment, quota evidence, quality needs, or cost point elsewhere. Model labels are owner-reported operating names, not API IDs or proof of runtime selection.
 
-## Current snapshot — 2026-10-06
+## Current snapshot — 2026-10-10
 
-| Work | Starting point | Escalation / alternative |
+| Work | Main candidate | Alternative / review |
 |---|---|---|
-| Requirements, scope, acceptance | Dottie PM with Product Owner | Chappy for architecture and review |
-| Short discussion or draft | ChatGPT Chat | Choose another tool for a specific capability |
-| Research and deliverables | ChatGPT Work | Qwen or another source-capable tool as needed |
-| Routine coding | Claude Code / Sonnet 5.5 | Opus 5.5 for hard work; Codex by fit or explicit choice |
-| Codex-assigned changes | GPT-6 Luna / Medium | GPT-6.1 Sol / Medium when complexity or quality warrants it; two Medium choices |
-| PoC or mock | Gemini/Antigravity is one candidate | Claude Code, Codex, or another fitting tool; PoC is optional |
-| Multimodal/local text | Qwen environment matching the input | Colab and local model are separate environments |
-| Independent review | Tool different from builder | Chappy/ Codex or Claude Code, depending on builder and task |
+| Short requirements, acceptance, allocation, progress | Dottie with owner | Codex / ChatGPT only for complex design/difficult decisions |
+| Research, official sources, comparisons, summaries, chart data | Antigravity | Suitable Claude; local Qwen for authorized source organization |
+| Technical docs, blog drafts, editing, translation | Claude | Antigravity alternative prose and first review |
+| Implementation, fixes, tests | Claude or Antigravity | Different-provider review where possible |
+| PoCs / mocks | Antigravity or Claude | Only to reduce meaningful uncertainty |
+| General repo edits, GitHub docs, PR preparation | Claude | Antigravity; another worker checks diff/links |
+| Independent first review | Different provider from author where possible | Claude / Antigravity mutual review now; Codex only for difficult points |
+| Authorized specialist research | Windows / Mac local Qwen | Verify search/source capabilities per environment |
+| Future independent review | RunPod A100 Qwen (unaccepted) | Claude / Antigravity for now |
+
+Roles are candidate assignments; allocate by fit, capacity freshness and availability. Full-text Codex substitution and comprehensive re-review are not the default.
 
 ### Two Medium choices for routine OpenAI work
 
@@ -31,6 +34,14 @@ Record requested worker model/effort separately from observed runtime model/effo
 - Antigravity can use different model/pool choices for different tasks. There is no global Antigravity-Claude-first rule. A specific user choice (for example, Gemini 3.8 Flash High for one task) is limited to that task unless stated otherwise.
 - Direct Claude Code and Claude inside Antigravity have separate capacity pools.
 
+## Allocation and handoff failure
+
+1. Record the goal, completion criteria, small input, worker, one alternative, planned budget/work limit, and artifact/evidence for each task.
+2. Confirm the authorized route is available and actually working. Separate subscription/API and provider pools, timestamped session/weekly capacity, and reset times. Missing/stale values are `unknown`. Do not add unlike provider token units to equalize work.
+3. First allocate to a fitting Claude / Antigravity candidate with available capacity. The role table is not a fixed assignment. Manual rotation when observations are stale is a proposal to reduce concentration, not proof of sufficient capacity.
+4. After one failed handoff, preserve the cause and artifacts. Stop on authorization denial; do not bypass it through another route. For ordinary availability failures, consider one other authorized candidate. If none works, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution. Record a short reason for exceptions.
+5. Separate builder/author and reviewer by provider where possible. Claude inside Antigravity and native Claude Code have separate pools but share a provider. Review the specified scope, evidence and major unknowns; escalate only difficult points to Codex when needed.
+
 ## Quota and cost observations
 
 1. Keep session and weekly usage windows separate; label each observation with its window and time.
@@ -42,6 +53,15 @@ Record requested worker model/effort separately from observed runtime model/effo
 
 Do not put quota screenshots, exact balances, per-account spend, credentials, or private session data in public documents.
 
+## Work routing examples
+
+| Work | Allocation example | Evidence and acceptance |
+|---|---|---|
+| Research, blogs and docs | Antigravity research/official sources → Claude draft/edit/translation → Antigravity chart data → different-provider review → owner approval → authorized publisher | Source URLs/dates, draft revision, numeric data, findings/fixes. Four-channel blog drafts remain unpublished before owner review |
+| Code, fixes and tests | Short Dottie specification → Codex initial design if needed → Claude or Antigravity implementation/tests → different-provider review → worker fixes/rechecks → owner acceptance | Diff, checks and unverified runtime; review does not become a complete reimplementation |
+| General repo edits and PR preparation | Small input + edit scope → Claude docs/PR preparation (alternative Antigravity) → another worker checks diff/links → authorized upload | Branch, changed files, preserved existing changes and readback. Merge only within separately explicit authorization |
+| Authorized specialist research | Local Qwen organizes sources → search-capable worker checks official sources → scoped Claude / Antigravity review → owner decision | Environment/model observations, permitted scope, sources/unknowns; no role change to bypass safety features |
+
 ## Workflow choice
 
 ```mermaid
@@ -50,7 +70,7 @@ flowchart TD
     D --> C{"Choose by task, quality, environment, fresh quota, cost"}
     C --> P{"PoC uncertainty worth reducing?"}
     P -->|Yes| M["Optional mock / PoC"]
-    P -->|No| I["Implement directly"]
+    P -->|No| I["Research / produce / implement"]
     M --> I
     I --> V{"Independent review warranted?"}
     V -->|Yes| R["Different tool reviews evidence"]
@@ -64,12 +84,11 @@ Dottie specifies and coordinates. The Factory provides a thin reusable handoff/a
 
 ## Qwen and runtime boundaries
 
-- Windows Open WebUI/Ollama text responses have been checked through user operation.
-- Mac Open WebUI 0.11.4 with local Qwen2.5 3B returned local responses and web-search results; that does not establish automated orchestration.
-- The fixed-Q8 Colab chat notebook preserves its original multimodal setup. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI tests (2 skipped); no Colab/GPU inference or model download was run. A100 quality, speed, VRAM, and compute use remain deferred.
-- RunPod operations PR #1 is documentation-only. The current chat candidate passed Linux CPU validation; CUDA, model download, and inference remain runtime-pending.
-- WebUI → OpenAI-compatible API → on-demand RunPod Qwen is a target design. API compatibility does not imply paid OpenAI. Automatic startup, HTTP connection, and termination are not verified.
-- Pod stop and Pod deletion differ: persistent storage may continue to incur charges while stopped, and deletion can remove data.
+- **Local:** Windows Open WebUI/Ollama text responses were owner-checked. Mac Open WebUI 0.11.4 with Qwen2.5 3B has past observations of local responses and web-search results. Search availability and specialist-research quality require environment-specific checks; this is not automated orchestration.
+- **RunPod Phase 1:** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) records one real response from small Qwen2.5-1.5B-Instruct and Pod deletion. It does not accept A100 independent-review quality or the complete workflow.
+- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Claude / Antigravity mutual review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
+- **Colab:** The fixed-Q8 chat notebook is separate. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI checks (2 skipped), not Colab/GPU inference, model-download or A100-quality verification.
+- OpenAI-compatible describes an API shape, not paid OpenAI. A single HTTP response does not establish automatic startup, connection and termination. Pod stop and deletion differ, including storage costs and data retention. This documentation change starts no GPU and changes no runtime settings.
 
 ## Authorization and verification boundaries
 
@@ -77,4 +96,4 @@ User approval, execution-environment authorization, local test success, and chan
 
 Report each state precisely: **verified/merged**, **local/offline**, **runtime pending**, or **proposal**. A successful offline test does not prove a live send, deployed change, or automatic integration. Windows CLI startup has a reported rejection with unknown root cause; do not describe the CLI as fully operational.
 
-For current dated evidence and privacy boundaries, see the [operating decisions](operating-decisions-2026-10-06.md).
+For current dated evidence and privacy boundaries, see the [operating decisions](operating-decisions-2026-10-10.md).

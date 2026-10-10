@@ -4,12 +4,20 @@
 
 Use a short, bounded handoff when work crosses tools. Dottie coordinates PM, task scope, provider/environment selection, progress, and acceptance. Factory is the thin reusable handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport project; live quota retrieval and automatic dispatch remain unverified.
 
+Follow the current [roles and allocation procedure](operating-decisions-2026-10-10.md). Preserve the cause after one ordinary failed handoff and consider one other authorized candidate. Stop on authorization denial without bypassing it. If unavailable, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution.
+
 ## Evidence manifest
 
 For model comparisons or multi-stage work, freeze input artifacts, prompt, acceptance criteria, rubric, constraints, and evaluation procedure before execution.
 
 ```text
 task_id:
+goal / completion criteria:
+small input / revision:
+worker / one authorized alternative:
+planned budget / work limit:
+capacity pool / session-weekly observation time / reset time: unknown unless evidenced
+handoff failure / exception reason:
 input revision / paths / hashes:
 prompt / rubric / acceptance criteria:
 provider / route / environment:
@@ -23,7 +31,7 @@ reacquire source / revision / hash:
 
 A request shown as accepted or Working is not proof of completed work. Read the result and verify acceptance criteria. A local/offline test does not prove a live provider path or production change.
 
-## 1. Product Owner / Dottie to an implementation tool
+## 1. Product Owner / Dottie to a production, research or implementation worker
 
 ```markdown
 # Goal
