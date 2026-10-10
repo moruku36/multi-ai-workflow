@@ -1,5 +1,7 @@
 # AIチームと本人の共同作業：2026年10月5日〜9日
 
+**結論：今回のような調査・文書化・開発・模擬検証では、人が要件・意思決定・最終確認を担い、AIに実務を任せる体制を推奨する。今回の見積もりでは人手のみより費用対効果が高い。ただし同品質の成果を比較した実測ROIではなく、見積もりに基づく判断である。**
+
 > 2026-10-10作成。本人申告の支払額と確認済み請求根拠を用いた費用シナリオを含む。ChatGPTの請求周期・税区分、RunPodの実消費額は未確認。
 
 対象は **2026年10月5日（月）00:00〜9日（金）23:59、日本時間（JST）**。当時の作業記録から整理した35件の到達範囲を報告する。完了した成果と、未完了プロジェクト内で進んだ工程を分け、10月10日の成果を遡って加えない。
@@ -7,6 +9,12 @@
 35件に相当する作業を、既存のリポジトリ・ツール・知識を使う熟練者が生成AIなしで行う仮想試算は、低位・中央・高位で **約180／310／510時間**。1人月160時間では **1.12／1.93／3.17人月**、5日間・1人40時間では理論上 **4.46／7.73／12.68人**となる。中央の配置案は9〜12人程度だが、これは未検証の計画シナリオであり、5日間の納期を保証しない。
 
 計算用為替1USD＝150円では、対象5日分のサブスク配賦は約3,710円、RunPodの前払残高購入を1回加えた参考額は約5,210円。中央の人間工数×仮定単価は約232万円。ただしAI側は本人の指示・承認・レビュー時間等を含まないため、実測の節約額や純原価比較ではない。
+
+意思決定の基準として、人手中央ケースの **309時間・2,317,500円** とAI側の参考額 **5,209.92円** を比べる。人の管理・レビュー時間は未計測だが、仮に40時間を時給7,500円（120万円÷160時間）で加えると、AI併用は **305,209.92円（約30万5,210円）** となり、人手中央ケースより **約87%低い**。これは実績値ではなく、同品質を独立に確認した比較でもない、管理時間を置いた意思決定シナリオである。RunPodのUSD10は利用消費額ではなく入金である。
+
+この仮想比較の損益分岐では、人手中央ケースからAI参考額を引いた **2,312,290.08円（約231万円）** まで、管理・レビュー等の追加費用を吸収できる。同時給7,500円なら **約308時間** に相当する。ただし人手の低位工数×低位単価の **892,500円** と比べると、追加費用の枠は887,290.08円、同時給なら **約118時間** に縮む。中央ケースだけを一般化せず、品質不足による再作業や損失も、この追加費用の枠に含めて判断する。それらの実際の費用は未計測である。
+
+経営判断として、**範囲が明確で成果を検証できる仕事にはAI併用を採用する**。責任ある承認、機密・安全・本番変更、品質を検証できない仕事では、人の監督と適切な専門家を残す。今回だけで人員削減や完全無人化は判断しない。
 
 これは実測労働時間、実測の節約額、生産性倍率を示すものではない。成果件数も難度や価値の共通単位ではない。本人の実作業時間やAI側の全費用を測定した比較ではない。
 
@@ -163,8 +171,8 @@
 
 中央工数×中央単価は **約232万円**、工数と単価の両端は **約89〜507万円**。同じ5日間の到達成果に対する仮想的な作業費シナリオと、AI側の配賦・追加支出参考額を並べた比較である。
 
-AI側には本人の指示・承認・レビュー時間、既存PCの電気・通信、初期setup投資等を含めていない。RunPod実消費額も不明で、サブスク配賦＋前払購入は純実消費ベースのAI総原価ではない。人間側は仮定単価の作業費で、同一の会計範囲ではない。差額・費用倍率・実際の節約額は算出せず、「99.8%節約」、測定ROI、速度倍率等は主張しない。
+AI側の費用表には本人の指示・承認・レビュー時間、既存PCの電気・通信、初期setup投資等を含めていない。冒頭の40時間シナリオは管理・レビューの仮定費用を追加したもので、これらの実費を測定したものではない。RunPod実消費額も不明で、サブスク配賦＋前払購入は純実消費ベースのAI総原価ではない。人間側は仮定単価の作業費で、同一の会計範囲ではない。仮想比較の差額・損益分岐は判断材料として示すが、実際の節約額、「99.8%節約」、測定ROI、速度倍率等は主張しない。
 
 ## English summary
 
-The report covers 35 bounded accomplishments from 5–9 October 2026 (JST), separating achieved stages in still-open projects. An indicative bottom-up human-work scenario is about 180 / 310 / 510 hours, or 1.12 / 1.93 / 3.17 person-months at 160 hours each. It assumes experienced people using existing repositories, tools and knowledge without generative AI. It is not measured labor, savings or an AI productivity multiplier. The central staffing sketch is 9–12 available people with constrained allocation. At an assumed JPY150/USD, five-day subscription allocation is about JPY3,710; including one USD10 RunPod prepaid purchase gives a reference figure of about JPY5,210. This is not total AI consumption cost: owner labor and other costs are excluded, ChatGPT allocation uses an assumed 31-day cycle, and RunPod actual consumption is unknown.
+For bounded work whose outputs can be checked, the report recommends AI-assisted execution with human requirements, decisions and final acceptance. This is a scenario-based judgment, not measured ROI or a verified same-quality comparison. The report covers 35 bounded accomplishments from 5–9 October 2026 (JST), separating achieved stages in still-open projects. An indicative bottom-up human-work scenario is about 180 / 310 / 510 hours, or 1.12 / 1.93 / 3.17 person-months at 160 hours each. It assumes experienced people using existing repositories, tools and knowledge without generative AI. The central staffing sketch is 9–12 available people with constrained allocation. At an assumed JPY150/USD, five-day subscription allocation plus one USD10 RunPod prepaid purchase is about JPY5,210. Adding an assumed 40 hours of human management/review at JPY7,500 per hour gives about JPY305,210, roughly 87% below the central hypothetical human-work cost of JPY2,317,500. This is not actual savings: quality-related rework/losses and other costs are unmeasured, ChatGPT allocation uses an assumed 31-day cycle, and RunPod actual consumption is unknown. Human supervision and relevant expertise remain necessary; this report does not justify headcount reduction or fully unattended operation.
