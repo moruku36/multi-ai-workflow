@@ -65,6 +65,7 @@ flowchart LR
 ## リポジトリ構成
 
 - `README.md` / `README.ja.md`: 英語・日本語の概要
+- [2026年10月5日〜9日の共同作業・人間工数・費用比較](docs/reports/2026-10-05-to-09-ai-team-work-and-human-effort.ja.md)
 - `docs/operating-decisions-2026-10-10.md` / `.ja.md`: 最新担当表、業務一覧、配分・失敗時の手順、確認範囲
 - `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: 過去の方針・実験記録を保持
 - `docs/routing-guide.md` / `docs/routing-guide.ja.md`: ツール選択と通常OpenAIのMedium 2択
