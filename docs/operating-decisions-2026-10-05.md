@@ -33,7 +33,7 @@ Codex is used when it fits the task or the owner assigns it. Its effort sequence
 
 ## System boundaries and dated evidence
 
-- **Dottie** performs PM work. **AI Engineering Factory** supplies a thin reusable handoff/artifact/evidence layer. Its minimal handoff was verified in [Factory PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, including Ubuntu/Windows quality gates and offline container-boundary verification.
+- **Dottie** performs PM work. **AI Governance Control** supplies a thin reusable handoff/artifact/evidence layer. Its minimal handoff was verified in [AI Governance Control PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, including Ubuntu/Windows quality gates and offline container-boundary verification.
 - **AIteamBridge** is a separate capacity/router/transport implementation project. Reported state: local/offline, 246 tests, uncommitted/unpublished; live autonomous quota retrieval and dispatch are unverified. Recheck the Bridge repository before revising this dated observation.
 - These three roles are complementary; do not portray them as duplicate fully automatic orchestrators.
 - One supervised Antigravity web session showed a task request and response; the retrieved result reported 324 unit checks and 25 mock browser checks. This single result does not prove CLI operation, general automatic routing, or independent test reproduction.

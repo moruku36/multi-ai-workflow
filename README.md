@@ -20,16 +20,16 @@ See the [current operating decisions](docs/operating-decisions-2026-10-10.md) an
 | Layer | Responsibility | Status |
 |---|---|---|
 | Dottie | PM: task scope, provider/environment selection, progress and acceptance | Human-directed PM role; do not imply complete autonomous dispatch |
-| AI Engineering Factory | Reusable minimal handoff, artifacts, and evidence layer | Minimal handoff verified in Factory PR #29; it is not a second autonomous orchestrator |
+| AI Governance Control | Reusable minimal handoff, artifacts, and evidence layer | Minimal handoff verified in AI Governance Control PR #29; it is not a second autonomous orchestrator |
 | AIteamBridge | Capacity observations, routing, and transport implementation project | Local/offline stage; live quota retrieval and autonomous dispatch unverified |
 
-These layers complement one another; they are not three overlapping, fully automated command centers. For Factory's verified minimal handoff, see [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29) (merged at `4fb014a`). Bridge details can change with its repository, so keep public claims limited to dated verification and generic boundaries.
+These layers complement one another; they are not three overlapping, fully automated command centers. For AI Governance Control's verified minimal handoff, see [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29) (merged at `4fb014a`). Bridge details can change with its repository, so keep public claims limited to dated verification and generic boundaries.
 
 ```mermaid
 flowchart LR
     U["Product Owner"] --> D["Dottie<br/>PM / acceptance"]
     D --> A["Selected production / research worker<br/>Claude / Antigravity / local Qwen"]
-    A --> F["Factory<br/>handoff + artifacts + evidence"]
+    A --> F["AI Governance Control<br/>handoff + artifacts + evidence"]
     F --> D
     B["AIteamBridge<br/>local capacity/router/transport work"] -. "not live autonomous dispatch" .-> D
 ```
@@ -45,7 +45,7 @@ flowchart LR
 
 Keep **verified/merged**, **local/offline**, **runtime pending**, and **proposal** distinct in English and Japanese. A user approval, execution-environment authorization, a passing local test, and a production/runtime change are separate stages. Do not repeatedly retry rejected approvals or use another route to bypass them; preserve the work and stop for the correct approval path.
 
-- The Factory minimal-handoff direction is verified by PR #29 and includes Ubuntu/Windows quality gates and an offline, container-boundary verification. This does not establish live automation.
+- The AI Governance Control minimal-handoff direction is verified by PR #29 and includes Ubuntu/Windows quality gates and an offline, container-boundary verification. This does not establish live automation.
 - AIteamBridge capacity/router work has been reported at 246 local/offline tests; it is uncommitted/unpublished, and live autonomous quota retrieval/dispatch is unverified. Recheck the source repository before changing this dated evidence.
 - In one supervised Antigravity web session, a task request and response were observed; the retrieved result reported 324 unit checks and 25 mock browser checks. This is a single web-task result, not proof of CLI operation, general automated routing, or independently reproduced tests. Local Windows CLI status remains unverified.
 - CodexBar quota-image review is manual. No claim of automatic reading or complete quota-aware routing.

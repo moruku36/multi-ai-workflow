@@ -76,11 +76,11 @@ flowchart TD
     V -->|はい| R["別ツールが根拠をレビュー"]
     V -->|いいえ| E["実装担当が受入を検証"]
     R --> E
-    E --> F["Factory: 再利用handoff / 成果物 / evidence"]
+    E --> F["AI Governance Control: 再利用handoff / 成果物 / evidence"]
     F --> D
 ```
 
-Dottieが仕様化と調整を行い、Factoryが薄い再利用可能なhandoff／成果物／evidence層を提供します。AIteamBridgeは別のローカル容量／router／transport開発プロジェクトで、ライブ自律dispatchが確立済みとはしません。各層は補完関係にあり、重複する自動orchestratorではありません。
+Dottieが仕様化と調整を行い、AI Governance Controlが薄い再利用可能なhandoff／成果物／evidence層を提供します。AIteamBridgeは別のローカル容量／router／transport開発プロジェクトで、ライブ自律dispatchが確立済みとはしません。各層は補完関係にあり、重複する自動orchestratorではありません。
 
 ## Qwenと実行環境の境界
 

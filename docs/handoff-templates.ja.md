@@ -2,7 +2,7 @@
 
 [English](handoff-templates.md) | [日本語](handoff-templates.ja.md)
 
-ツール間で作業を渡すときは、範囲と受け入れ条件を明確にします。DottieはPMと受け入れ調整、Factoryは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のローカルcapacity/router/transport開発を担います。live quota取得と自動dispatchは未検証です。
+ツール間で作業を渡すときは、範囲と受け入れ条件を明確にします。DottieはPMと受け入れ調整、AI Governance Controlは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のローカルcapacity/router/transport開発を担います。live quota取得と自動dispatchは未検証です。
 
 現行の[担当表・配分手順](operating-decisions-2026-10-10.ja.md)に従います。通常の受け渡し失敗は1回で原因を保存し、別の認可済み候補1つへ。権限拒否は停止し迂回しません。不可なら`blocked`／本人handoff待ちで、Codexの全文代行に自動で戻しません。
 

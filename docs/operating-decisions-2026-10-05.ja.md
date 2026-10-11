@@ -33,7 +33,7 @@ Codexはタスクに適合する場合、または本人が割り当てた場合
 
 ## システム境界と日付付き根拠
 
-- **Dottie**はPM業務を行います。**AI Engineering Factory**は薄い再利用handoff／artifact／evidence層です。minimal handoffは[Factory PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）で検証済みで、Ubuntu/Windows品質ゲートとofflineのcontainer-boundary検証を含みます。
+- **Dottie**はPM業務を行います。**AI Governance Control**は薄い再利用handoff／artifact／evidence層です。minimal handoffは[AI Governance Control PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）で検証済みで、Ubuntu/Windows品質ゲートとofflineのcontainer-boundary検証を含みます。
 - **AIteamBridge**は別個のcapacity/router/transport実装プロジェクトです。報告されている状態はlocal/offline、246 tests、未commit／未publishで、ライブ自律quota取得／dispatchは未検証です。この日付付き状況を変更する際はBridge repoを再確認します。
 - これらは補完する役割です。重複する完全自動orchestratorとして説明しません。
 - 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得した結果にはunit check 324件とmock browser check 25件が報告されていました。この単一結果はCLI稼働、一般的な自動routing、テストの独立再実行を証明しません。

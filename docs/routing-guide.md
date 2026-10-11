@@ -76,11 +76,11 @@ flowchart TD
     V -->|Yes| R["Different tool reviews evidence"]
     V -->|No| E["Builder verifies acceptance"]
     R --> E
-    E --> F["Factory: reusable handoff / artifact / evidence"]
+    E --> F["AI Governance Control: reusable handoff / artifact / evidence"]
     F --> D
 ```
 
-Dottie specifies and coordinates. The Factory provides a thin reusable handoff/artifact/evidence layer. AIteamBridge is the separate local capacity/router/transport engineering project; it is not established as live autonomous dispatch. These are complementary boundaries, not duplicate automatic orchestrators.
+Dottie specifies and coordinates. The AI Governance Control provides a thin reusable handoff/artifact/evidence layer. AIteamBridge is the separate local capacity/router/transport engineering project; it is not established as live autonomous dispatch. These are complementary boundaries, not duplicate automatic orchestrators.
 
 ## Qwen and runtime boundaries
 

@@ -18,7 +18,7 @@ This dated record captures operating policy as of 2026-10-02. CLI observations w
 
 The ordinary Codex writing/coding path at that time started at Luna / Low and could escalate through Luna Medium, Luna High, then Sol Medium. This applied to Codex work, not all coding. Preserve explicit owner assignments and reuse existing implementations.
 
-For distillation and Factory initial research, the owner expressly permitted Astra for paper interpretation; use Sol when sufficient. This exception did not make Astra the default for all tasks. Claude used Sonnet as the normal model and Opus for hard work. Versioned model labels are owner-reported snapshots, not proof of runtime identity or API identifiers.
+For distillation and AI Governance Control initial research, the owner expressly permitted Astra for paper interpretation; use Sol when sufficient. This exception did not make Astra the default for all tasks. Claude used Sonnet as the normal model and Opus for hard work. Versioned model labels are owner-reported snapshots, not proof of runtime identity or API identifiers.
 
 The historical Gemini effort policy and the owner's preference differed at this snapshot: the repository described High normally and Medium when quota was low after considering reset and difficulty, while the owner preferred Medium for that work. This dated record is superseded for current routing by the 2026-10-05 task-based policy; requested effort and observed runtime should be recorded separately.
 
@@ -53,11 +53,11 @@ Requested model/effort does not prove the runtime model/effort. Use `UNKNOWN` wh
 
 These narrow tests did not establish deployment, repository edits, unattended execution, or full automation.
 
-## Windows base and Factory at the time
+## Windows base and AI Governance Control at the time
 
 Windows was the intended always-on local base. As reported on 2026-10-02, the Windows wrapper prototype (task7) had 14 offline tests passed, but live execution through it was untested. The Antigravity wrapper was pending verification of per-invocation tool-scope controls. These were dated observations, not general product limitations. Dottie's cloud PM role, CodexBar routing, and local-agent adapters still required integration verification; the workflow was not described as fully automated.
 
-At that time, the Factory minimal manifest/review/reacquire direction was approved for implementation but unproven. Preserve source/revision/hash references for reacquiring artifacts; missing artifacts require reacquisition and re-verification, not reconstruction from memory. Keep implementation approval distinct from end-to-end verification. See the 2026-10-05 record for later Factory evidence.
+At that time, the AI Governance Control minimal manifest/review/reacquire direction was approved for implementation but unproven. Preserve source/revision/hash references for reacquiring artifacts; missing artifacts require reacquisition and re-verification, not reconstruction from memory. Keep implementation approval distinct from end-to-end verification. See the 2026-10-05 record for later AI Governance Control evidence.
 
 ## Public documentation boundary
 

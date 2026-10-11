@@ -21,4 +21,4 @@
 
 ## 現在の境界
 
-DottieはPM、AI Engineering Factoryは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のlocal capacity/router/transport projectです。live quota取得と自動dispatchは未検証です。Qwenのlocal、Colab、提案中のRunPod flowを分け、目標設計を実装済みruntimeとして説明しません。
+DottieはPM、AI Governance Controlは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のlocal capacity/router/transport projectです。live quota取得と自動dispatchは未検証です。Qwenのlocal、Colab、提案中のRunPod flowを分け、目標設計を実装済みruntimeとして説明しません。

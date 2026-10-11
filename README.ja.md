@@ -20,16 +20,16 @@ ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装
 | 層 | 責任 | 状態 |
 |---|---|---|
 | Dottie | PM: タスク範囲、provider／環境選択、進捗、受入 | 人が判断するPM役割。完全自律dispatchとは表現しない |
-| AI Engineering Factory | 再利用できる簡潔なhandoff、成果物、evidenceの層 | Factory PR #29でminimal-handoffを検証済み。第二の自律orchestratorではない |
+| AI Governance Control | 再利用できる簡潔なhandoff、成果物、evidenceの層 | AI Governance Control PR #29でminimal-handoffを検証済み。第二の自律orchestratorではない |
 | AIteamBridge | 容量観測、routing、transportの実装プロジェクト | ローカル／offline段階。ライブquota取得と自律dispatchは未検証 |
 
-各層は補完的であり、重複する完全自動の司令塔3つとして扱いません。Factoryの検証済みminimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）を参照してください。Bridgeの詳細はリポジトリで変わるため、公開文書では日付付きの検証状況と一般的な境界に絞ります。
+各層は補完的であり、重複する完全自動の司令塔3つとして扱いません。AI Governance Controlの検証済みminimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）を参照してください。Bridgeの詳細はリポジトリで変わるため、公開文書では日付付きの検証状況と一般的な境界に絞ります。
 
 ```mermaid
 flowchart LR
     U["Product Owner"] --> D["Dottie<br/>PM / 受入"]
     D --> A["選択された制作・調査担当<br/>Claude / Antigravity / local Qwen"]
-    A --> F["Factory<br/>handoff + artifacts + evidence"]
+    A --> F["AI Governance Control<br/>handoff + artifacts + evidence"]
     F --> D
     B["AIteamBridge<br/>ローカル容量/router/transport開発"] -. "ライブ自律dispatchではない" .-> D
 ```
@@ -45,7 +45,7 @@ flowchart LR
 
 英語・日本語とも **verified/merged**、**local/offline**、**runtime pending**、**proposal** を区別します。ユーザー承認、実行環境での権限承認、ローカルテスト成功、稼働環境への反映は別の段階です。承認が拒否されたら再試行を連打したり別経路で迂回せず、作業を保存して正規の承認経路で止まります。
 
-- Factoryのminimal-handoffはPR #29で検証済みです。Ubuntu/Windows品質ゲートと、offlineのcontainer-boundary検証を含みます。ライブ自動化を意味しません。
+- AI Governance Controlのminimal-handoffはPR #29で検証済みです。Ubuntu/Windows品質ゲートと、offlineのcontainer-boundary検証を含みます。ライブ自動化を意味しません。
 - AIteamBridgeのcapacity/router作業はlocal/offlineで246 testsと報告されています。未commit／未publishであり、ライブの自律quota取得／dispatchは未検証です。この日付付き根拠を更新する際は対象repoを再確認してください。
 - 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得した結果にはunit check 324件とmock browser check 25件が報告されていました。この単一結果はCLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
 - CodexBar quota画像の確認は手動です。自動読み取りやquota対応routing全体の自動化を主張しません。

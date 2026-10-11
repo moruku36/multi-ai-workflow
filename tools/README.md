@@ -10,7 +10,7 @@
 
 - For code changes, select an appropriate Codex, Claude Code, or Antigravity route per the [routing guide](../docs/routing-guide.md).
 - For local text, Windows Open WebUI/Ollama has had a user-operated response check; a Mac local setup has also returned responses. These checks do not establish automatic orchestration.
-- Dottie, Factory, and AIteamBridge have different PM, handoff/evidence, and local capacity/router/transport responsibilities. Bridge live quota retrieval and autonomous dispatch remain unverified.
+- Dottie, AI Governance Control, and AIteamBridge have different PM, handoff/evidence, and local capacity/router/transport responsibilities. Bridge live quota retrieval and autonomous dispatch remain unverified.
 - Independent review uses a tool different from the builder when warranted. Claude Code commonly uses Sonnet 5.5; Opus 5.5 is for hard work.
 
 ## Legacy CLI modes

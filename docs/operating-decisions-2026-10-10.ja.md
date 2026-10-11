@@ -48,7 +48,7 @@ quota観測は手動。live quota取得・自動dispatchは未検証。CodexBar�
 ## 継承する方針と公開境界
 
 - [2026-10-06](operating-decisions-2026-10-06.ja.md)のOpenAI Medium 2択・モデル呼称の留保を保持。OpenAIへ仕事を戻す基準は本書の限定した役割と例外理由。モデルID・runtimeを推測しない。
-- Factoryは薄いhandoff／artifact／evidence層、AIteamBridgeは別のlocal開発project。どちらもlive自動配分の完成とは扱わない。
+- AI Governance Controlは薄いhandoff／artifact／evidence層、AIteamBridgeは別のlocal開発project。どちらもlive自動配分の完成とは扱わない。
 - 私的会話、個人・家族事情、資格情報、ログイン先、account・quota詳細、識別子を公開しない。新規課金・認証・設定変更は本改訂の対象外。
 - 過去の[10月2日](operating-decisions-2026-10-02.ja.md)・[10月5日](operating-decisions-2026-10-05.ja.md)・[10月6日](operating-decisions-2026-10-06.ja.md)記録を保存し、当時の検証や方針を遡って書き換えない。
 

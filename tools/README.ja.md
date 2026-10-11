@@ -10,7 +10,7 @@
 
 - コード変更は[routing guide](../docs/routing-guide.ja.md)に従ってCodex、Claude Code、Antigravityなどから選びます。
 - Windows Open WebUI/Ollamaのローカル文章応答は本人操作で確認済みです。Mac環境での応答確認も、自動orchestrationを証明しません。
-- Dottie、Factory、AIteamBridgeはPM、handoff/evidence、local capacity/router/transportで役割が異なります。Bridgeのlive quota取得や自動dispatchは未検証です。
+- Dottie、AI Governance Control、AIteamBridgeはPM、handoff/evidence、local capacity/router/transportで役割が異なります。Bridgeのlive quota取得や自動dispatchは未検証です。
 - 必要な場合は実装担当と異なるツールで独立レビューします。
 
 ## 旧式CLIモード

@@ -43,7 +43,7 @@
 | 5 | VoiceCopilot：追加タブレット展開と端末固有の確認。#4の共通修正・Windows作業を除く | 作業記録／本人確認 | 3 | 6 | 10 |
 | 6 | RunPod Phase 1：Open WebUIから小型Qwen2.5-1.5B-Instructの実回答1件、Pod削除、記録merge・close。継続サービスや全ワークフロー完成ではない | [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) | 6 | 10 | 16 |
 | 7 | Trivy修正確認ツール：実スキャン前後比較、日英JSON、公開リポジトリ | [初回コミット](https://github.com/moruku36/trivy-remediation-evidence/commit/2d29efa09f29869de68793231cc801765c98cf2b)、作業記録 | 12 | 20 | 32 |
-| 8 | AI Engineering Factory：JUnitのall-skipped・count-only等の偽成功をbounded parserで拒否する修正とWindows／Ubuntu／Docker CI記録。Experimental／MANUAL_ONLY等の制限は維持 | [PR #30](https://github.com/moruku36/ai-engineering-factory/pull/30) | 12 | 20 | 32 |
+| 8 | AI Governance Control：JUnitのall-skipped・count-only等の偽成功をbounded parserで拒否する修正とWindows／Ubuntu／Docker CI記録。Experimental／MANUAL_ONLY等の制限は維持 | [PR #30](https://github.com/moruku36/ai-engineering-factory/pull/30) | 12 | 20 | 32 |
 | 9 | PQC Crypto Inventory Lab：秘密非漏出・不完全結果等の防御的回帰テスト15件を追加。scanner本体変更なし、教育用static labの範囲 | [PR #1](https://github.com/moruku36/pqc-crypto-inventory-lab/pull/1) | 8 | 14 | 22 |
 | 10 | Open WebUI記憶：Qwenでの確認を伴う限定保存試験と汎用テンプレート検証。全条件網羅や汎用版の実環境install・有効化完了ではない | 作業記録／本人の限定保存確認 | 8 | 14 | 24 |
 | 11 | 個人セキュリティ監査ツール：Windows／Chrome／Mac、保存・記録・README・CI改善。追加PR #7やPC全体の安全化完了は含めない | 作業記録／本人確認 | 8 | 14 | 24 |
@@ -57,7 +57,7 @@
 | # | 期間内に達した範囲と限定 | 根拠 | 低位 | 中央 | 高位 |
 |---|---|---|---:|---:|---:|
 | 15 | AIチーム運用文書：日英更新、モデル振り分け簡素化。10月5日・6日の文書merge | [PR #12](https://github.com/moruku36/multi-ai-workflow/pull/12)、[#13](https://github.com/moruku36/multi-ai-workflow/pull/13)、[#14](https://github.com/moruku36/multi-ai-workflow/pull/14)、[#15](https://github.com/moruku36/multi-ai-workflow/pull/15)、[#16](https://github.com/moruku36/multi-ai-workflow/pull/16)、[#17](https://github.com/moruku36/multi-ai-workflow/pull/17) | 4 | 7 | 12 |
-| 16 | GitHubプロフィール：Factory／PQC紹介、Qwen名称・リンク・pin整理 | 作業記録／本人確認 | 1 | 2 | 3 |
+| 16 | GitHubプロフィール：AI Governance Control／PQC紹介、Qwen名称・リンク・pin整理 | 作業記録／本人確認 | 1 | 2 | 3 |
 | 17 | クラウドエンジニアAI検証記事：Zenn／DEVに日英公開 | 作業記録／本人の公開報告 | 6 | 10 | 16 |
 | 18 | AIチーム週次振り返り記事：日英執筆・公開・close | 作業記録／本人確認 | 4 | 7 | 12 |
 | 19 | PC買替比較：調査と23ページWord／PDF納品。個人の予算・資産情報は非掲載 | 作業記録／本人確認 | 10 | 16 | 26 |
@@ -130,7 +130,7 @@
 | Codex／WSL／音声handoff／Grafana | 症例整理、Issue・support照会、診断工程。障害解消ではない | 4 | 8 | 16 |
 | **追加工程小計（重複確認前・主計外）** | | **16.5** | **32** | **58** |
 
-根拠は当時の作業記録。公開範囲外の個人連絡・手続きは追加工程の対象外とする。10月10日のRunPod Phase 2、Codex更新、資格情報のmain統合を含めない。Factory #29は10月4日merge、#31〜34は10月10日mergeのため、当週のmerge成果には含めない。
+根拠は当時の作業記録。公開範囲外の個人連絡・手続きは追加工程の対象外とする。10月10日のRunPod Phase 2、Codex更新、資格情報のmain統合を含めない。AI Governance Control #29は10月4日merge、#31〜34は10月10日mergeのため、当週のmerge成果には含めない。
 
 ## 5. 費用比較：対象週の配賦と仮想人件費
 
