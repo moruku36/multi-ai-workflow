@@ -20,7 +20,7 @@
 
 Dottie is the PM, not a claim that all task execution is automatic. Dottie clarifies scope and acceptance, selects an eligible provider/environment, tracks progress, and coordinates review and handoffs.
 
-- **AI Engineering Factory** is the thin reusable handoff/artifact/evidence layer. Minimal-handoff verification is recorded in [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, with Ubuntu/Windows quality gates and offline container-boundary verification.
+- **AI Governance Control** is the thin reusable handoff/artifact/evidence layer. Minimal-handoff verification is recorded in [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, with Ubuntu/Windows quality gates and offline container-boundary verification.
 - **AIteamBridge** is the separate local capacity/router/transport engineering project. Reported status: 246 local/offline tests, uncommitted/unpublished; live quota collection and autonomous dispatch are unverified.
 - These projects have complementary responsibilities; they are not three fully automated orchestrators.
 

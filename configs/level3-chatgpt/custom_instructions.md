@@ -25,7 +25,7 @@ The current operating snapshot is [recorded here](../../docs/operating-decisions
 ## Current project boundaries
 
 - Dottie handles PM and acceptance coordination.
-- AI Engineering Factory provides a thin reusable handoff/artifact/evidence layer.
+- AI Governance Control provides a thin reusable handoff/artifact/evidence layer.
 - AIteamBridge is the separate local capacity/router/transport project; live quota retrieval and autonomous dispatch are unverified.
 - These are complementary components, not redundant complete orchestrators.
 - Qwen's local, Colab, and proposed RunPod flows are separate. Do not present a target design as an implemented connection or automated runtime.

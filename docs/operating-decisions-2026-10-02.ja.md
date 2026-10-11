@@ -18,7 +18,7 @@
 
 当時の通常Codex文章／コーディングはLuna / Lowから開始し、必要に応じLuna Medium、Luna High、Sol Mediumへ進める方針でした。これはCodex作業に適用され、すべてのコーディングをCodexへ割り当てる指示ではありません。本人の明示指定を優先し、既存実装を再利用します。
 
-蒸留とFactoryの初期調査では、本人が論文解釈へのAstra利用を明示的に許可していました。十分ならSolを使います。この例外は全タスクのAstra標準化を意味しません。Claudeは通常Sonnet、Opusは難しい作業に使います。版付きモデル名は本人申告のスナップショットであり、実行時モデルやAPI IDの証明ではありません。
+蒸留とAI Governance Controlの初期調査では、本人が論文解釈へのAstra利用を明示的に許可していました。十分ならSolを使います。この例外は全タスクのAstra標準化を意味しません。Claudeは通常Sonnet、Opusは難しい作業に使います。版付きモデル名は本人申告のスナップショットであり、実行時モデルやAPI IDの証明ではありません。
 
 当時、Gemini effort方針と本人の希望に差がありました。既存文書は通常High、quotaが少ない場合はリセット時刻と難度を考慮してMediumとし、本人はその作業でMediumを希望していました。この記録は当時の状況です。現行routingは2026-10-05のタスク別方針に従い、指定effortと実行時観測を別々に記録します。
 
@@ -53,11 +53,11 @@ reacquire_source / revision_or_hash:
 
 これらの限定テストはdeploy、repo編集、無人実行、完全自動化を示しません。
 
-## 当時のWindows基盤とFactory
+## 当時のWindows基盤とAI Governance Control
 
 Windowsは常時稼働ローカル基盤の想定でした。2026-10-02の報告ではWindows wrapper prototype (task7) は14 offline testsに合格しましたが、wrapper経由のlive実行は未テストでした。Antigravity wrapperは呼出単位のtool-scope制御確認待ちでした。これは日付付き観測で一般的な製品制約ではありません。Dottieのcloud PM、CodexBar routing、local agent adapterは統合検証が必要で、完全自動とは表現していませんでした。
 
-当時Factoryのminimal manifest/review/reacquire方針は実装承認済み、検証未了でした。artifactを再取得できるようsource/revision/hashを保持し、欠落時は記憶から再構成せず再取得・再検証します。実装承認とend-to-end検証を分けます。後続のFactory根拠は2026-10-05記録を参照してください。
+当時AI Governance Controlのminimal manifest/review/reacquire方針は実装承認済み、検証未了でした。artifactを再取得できるようsource/revision/hashを保持し、欠落時は記憶から再構成せず再取得・再検証します。実装承認とend-to-end検証を分けます。後続のAI Governance Control根拠は2026-10-05記録を参照してください。
 
 ## 公開文書の境界
 

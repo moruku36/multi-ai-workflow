@@ -21,7 +21,7 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 ## 役割の境界
 
 - DottieがPMとしてscope、provider／環境選択、進捗、受け入れを調整します。すべての実行が自動とは限りません。
-- AI Engineering Factoryは再利用可能な薄いhandoff、artifact、evidence層です。minimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)で検証済みです。
+- AI Governance Controlは再利用可能な薄いhandoff、artifact、evidence層です。minimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)で検証済みです。
 - AIteamBridgeはcapacity、router、transportを扱う別のローカル開発プロジェクトです。live quota取得と自動dispatchは未検証です。
 
 これらは補完関係にあり、完全自律型の重複orchestratorではありません。状態はverified/merged、local/offline、runtime pending、proposalに分けます。
@@ -42,7 +42,7 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 
 DottieはPMであり、全タスクが自動実行されるという意味ではありません。scopeと受け入れ条件を明確にし、適格なprovider／環境を選び、進捗とhandoffを調整します。
 
-- **AI Engineering Factory**は薄い再利用可能なhandoff/artifact/evidence層です。minimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）で確認され、Ubuntu/Windows品質ゲートとoffline container-boundary検証を含みます。
+- **AI Governance Control**は薄い再利用可能なhandoff/artifact/evidence層です。minimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)（`4fb014a`でmerge）で確認され、Ubuntu/Windows品質ゲートとoffline container-boundary検証を含みます。
 - **AIteamBridge**は別のlocal capacity/router/transport開発projectです。246件のlocal/offlineテストが報告されていますが、未commit・未公開で、live quota取得と自動dispatchは未検証です。
 - 3つの役割は補完的で、完全自動orchestratorが3つあるという説明はしません。
 

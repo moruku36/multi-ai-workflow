@@ -16,7 +16,7 @@
 - GitHubでコードを変更したときは、影響するREADME、使い方、設計文書と既存の日英対応ページを更新し、両言語の状態を一致させます。
 - [routing guide](../routing-guide.ja.md)のタスク別選択基準を使います。
 - 本人の運用上のモデル名と明記し、CLI IDや実行可能性を作りません。
-- Dottie（PM）、Factory（薄いhandoff/artifact/evidence）、AIteamBridge（ローカルcapacity/router/transport開発）の責務を分けます。
+- Dottie（PM）、AI Governance Control（薄いhandoff/artifact/evidence）、AIteamBridge（ローカルcapacity/router/transport開発）の責務を分けます。
 - verified/merged、local/offline、runtime pending、proposalを一貫して使います。
 - 私的会話、認証情報、quota画像、残高、個人・家族情報、接続識別子を公開しません。
 - 目標設計をdeploy済み、自動稼働中と説明しません。

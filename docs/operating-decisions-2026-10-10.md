@@ -48,7 +48,7 @@ These examples are candidate assignments, not claims of completed execution. Bou
 ## Retained policy and public boundaries
 
 - Preserve the [2026-10-06](operating-decisions-2026-10-06.md) OpenAI Medium choices and model-label caveats. This document limits when work returns to OpenAI; record exception reasons. Do not infer model IDs or runtime identity.
-- Factory is the thin handoff/artifact/evidence layer; AIteamBridge is separate local engineering. Neither establishes live automatic allocation.
+- AI Governance Control is the thin handoff/artifact/evidence layer; AIteamBridge is separate local engineering. Neither establishes live automatic allocation.
 - Do not publish private conversations, personal/family details, credentials, login destinations, account/quota details or identifiers. New charges, authentication and settings changes are out of scope.
 - Retain the [Oct 2](operating-decisions-2026-10-02.md), [Oct 5](operating-decisions-2026-10-05.md) and [Oct 6](operating-decisions-2026-10-06.md) records without retroactively changing their observations or historical policy.
 
