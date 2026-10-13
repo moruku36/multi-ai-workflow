@@ -6,6 +6,10 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 
 Task fit、environment、quota evidence、quality、costに沿って利用可能なtoolを選びます。タスクに合わない固定model sequenceは使いません。model labelは本人の運用表記で、API IDや実行時modelの確認ではありません。
 
+## Gemini 4 Argonの条件付きルーティング — 2026-10-14
+
+**提案／runtime未適用：** Antigravityで実際にArgonを使用できることを確認後、PoC・モックに加えて、通常の機能実装、UI/API、単体・結合テスト、小規模修正を候補にします。複雑な横断変更・難しい修正はClaude、難しいアーキテクチャや独立PRレビューはGPT-6/Codexを引き続き使います。固定優先順位ではなく、タスク適性・品質・観測されたquotaを重視。Argonが実行確認できない間は利用可能なGemini/Claudeを選び、実行モデルを正確に記録します。[移行条件と構成図](gemini-4-argon-rollout.ja.md)。
+
 ## Current Snapshot - 2026-10-13
 
 | 作業 | 主な候補 | 代替・review |
