@@ -19,7 +19,7 @@ CodexBar画像は手動で確認します。自動画像読取やlive quota feed
 
 ## 確認状況
 
-AI Governance Controlのminimal handoffは[PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29)で検証済みです。Bridgeの246件というテスト報告はlocal/offline、未commit/未公開であり、live quota取得と自動dispatchは未検証です。
+AI Governance Controlのminimal handoffは[PR #29](https://github.com/moruku36/ai-governance-control/pull/29)で検証済みです。Bridgeの246件というテスト報告はlocal/offline、未commit/未公開であり、live quota取得と自動dispatchは未検証です。
 
 監督付きAntigravity Webセッション1件で依頼と応答を確認し、結果にはunit check 324件とmock browser check 25件が報告されました。これはWebでの単発タスク観測です。CLI稼働、一般的な自動routing、テストの独立再現を示しません。個別の会話、接続先、識別子、logは公開しません。
 
