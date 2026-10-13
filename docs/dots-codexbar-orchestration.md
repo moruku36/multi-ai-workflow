@@ -33,7 +33,7 @@ flowchart TD
 
 ## Current verification boundary
 
-- AI Governance Control's minimal handoff is verified in [PR #29](https://github.com/moruku36/ai-engineering-factory/pull/29), merged at `4fb014a`, including Ubuntu/Windows quality gates and offline container-boundary verification.
+- AI Governance Control's minimal handoff is verified in [PR #29](https://github.com/moruku36/ai-governance-control/pull/29), merged at `4fb014a`, including Ubuntu/Windows quality gates and offline container-boundary verification.
 - Bridge capacity/router work is reported at 246 local/offline tests, uncommitted and unpublished. Live quota retrieval and autonomous dispatch are unverified; recheck that repository before treating the count or state as current.
 - One supervised Antigravity web session showed a task request and response; the retrieved result reported 324 unit checks and 25 mock browser checks. This single result does not prove CLI operation, general automatic routing, or independent test reproduction.
 - Local Windows CLI received an access-denied response and remains unverified. The web route and local CLI are different routes.
