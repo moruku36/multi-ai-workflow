@@ -6,7 +6,7 @@ Windows is the always-on local base and first choice. If it cannot proceed, cons
 
 Choose an eligible tool for the task; do not follow a fixed model ladder when the task, environment, quota evidence, quality needs, or cost point elsewhere. Model labels are owner-reported operating names, not API IDs or proof of runtime selection.
 
-## Current snapshot — 2026-10-10
+## Current snapshot — 2026-10-13
 
 | Work | Main candidate | Alternative / review |
 |---|---|---|
@@ -16,7 +16,7 @@ Choose an eligible tool for the task; do not follow a fixed model ladder when th
 | Implementation, fixes, tests | Claude or Antigravity | Different-provider review where possible |
 | PoCs / mocks | Antigravity or Claude | Only to reduce meaningful uncertainty |
 | General repo edits, GitHub docs, PR preparation | Claude | Antigravity; another worker checks diff/links |
-| Independent first review | Different provider from author where possible | Claude / Antigravity mutual review now; Codex only for difficult points |
+| Independent first review | Different provider from author where possible | Codex Review for Claude/Gemini code PRs; Claude/Gemini for Codex-built PRs |
 | Authorized specialist research | Windows / Mac local Qwen | Verify search/source capabilities per environment |
 | Future independent review | RunPod A100 Qwen (unaccepted) | Claude / Antigravity for now |
 
@@ -40,7 +40,7 @@ Record requested worker model/effort separately from observed runtime model/effo
 2. Confirm the authorized route is available and actually working. Separate subscription/API and provider pools, timestamped session/weekly capacity, and reset times. Missing/stale values are `unknown`. Do not add unlike provider token units to equalize work.
 3. First allocate to a fitting Claude / Antigravity candidate with available capacity. The role table is not a fixed assignment. Manual rotation when observations are stale is a proposal to reduce concentration, not proof of sufficient capacity.
 4. After one failed handoff, preserve the cause and artifacts. Stop on authorization denial; do not bypass it through another route. For ordinary availability failures, consider one other authorized candidate. If none works, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution. Record a short reason for exceptions.
-5. Separate builder/author and reviewer by provider where possible. Claude inside Antigravity and native Claude Code have separate pools but share a provider. Review the specified scope, evidence and major unknowns; escalate only difficult points to Codex when needed.
+5. Separate builder/author and reviewer by provider where possible. Claude inside Antigravity and native Claude Code have separate pools but share a provider. Review the specified scope, evidence and major unknowns; use bounded Codex Review for Claude/Gemini code PRs, and Claude/Gemini review for Codex-built PRs.
 
 ## Quota and cost observations
 
@@ -86,7 +86,7 @@ Dottie specifies and coordinates. The AI Governance Control provides a thin reus
 
 - **Local:** Windows Open WebUI/Ollama text responses were owner-checked. Mac Open WebUI 0.11.4 with Qwen2.5 3B has past observations of local responses and web-search results. Search availability and specialist-research quality require environment-specific checks; this is not automated orchestration.
 - **RunPod Phase 1:** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) records one real response from small Qwen2.5-1.5B-Instruct and Pod deletion. It does not accept A100 independent-review quality or the complete workflow.
-- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Claude / Antigravity mutual review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
+- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
 - **Colab:** The fixed-Q8 chat notebook is separate. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI checks (2 skipped), not Colab/GPU inference, model-download or A100-quality verification.
 - OpenAI-compatible describes an API shape, not paid OpenAI. A single HTTP response does not establish automatic startup, connection and termination. Pod stop and deletion differ, including storage costs and data retention. This documentation change starts no GPU and changes no runtime settings.
 
@@ -96,4 +96,8 @@ User approval, execution-environment authorization, local test success, and chan
 
 Report each state precisely: **verified/merged**, **local/offline**, **runtime pending**, or **proposal**. A successful offline test does not prove a live send, deployed change, or automatic integration. Windows CLI startup has a reported rejection with unknown root cause; do not describe the CLI as fully operational.
 
-For current dated evidence and privacy boundaries, see the [operating decisions](operating-decisions-2026-10-10.md).
+For current dated evidence and privacy boundaries, see the [operating decisions](operating-decisions-2026-10-13.md).
+
+## PR Review Pipeline — 2026-10-13
+
+Apply the [Codex Review / PR Review Pipeline](pr-review-pipeline.md) to code PRs. Codex reviews Claude/Gemini changes; another provider reviews Codex changes. Bind review and CI to the same head SHA. Comprehensive re-review of ordinary prose/research remains outside the default. Medium/high risk requires human acceptance; low-risk auto-merge is conditional on explicit policy, configuration and verification. Qwen review quality remains unaccepted; automatic review, enforced CI and auto-merge are runtime pending.

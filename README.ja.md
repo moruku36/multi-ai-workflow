@@ -4,16 +4,22 @@
 
 ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
 
-## Current Snapshot - 2026-10-10
+## Current Snapshot - 2026-10-13
 
-- 人がProduct Ownerとして最終判断・受入を担います。**Dottie**は短い要件・受入条件・配分・進捗のPM、**Codex / ChatGPT（Chappy）**は複雑な初期設計・難しい判断・必要時の最終エスカレーションを担当します。**Claude Code**と**Gemini/Antigravity**には実装だけでなく調査・文章・翻訳・GitHub文書更新・一次レビューも適性と稼働に応じ配分します。**Qwen local**は許可済み専門調査、**RunPod A100 Qwen**は未受入の将来レビュー候補です。Codexの全文再作成・全面再レビューを標準にしません。
+- 人がProduct Ownerとして最終判断・受入を担います。**Dottie**は短い要件・受入条件・配分・進捗のPM、**Codex / ChatGPT（Chappy）**は複雑な初期設計・難しい判断・必要時の最終エスカレーションと、Claude/GeminiのPRへの範囲限定Codex Reviewを担当します。**Claude Code**と**Gemini/Antigravity**には実装だけでなく調査・文章・翻訳・GitHub文書更新・一次レビューも適性と稼働に応じ配分します。**Qwen local**は許可済み専門調査、**RunPod A100 Qwen**は未受入の将来レビュー候補です。Codexの全文再作成・全面再レビューを標準にしません。
 - Windowsを常時稼働のローカル基地かつ第一選択とします。Windowsで進められない場合、Macへ切り替える前にユーザーへ相談します。
 - まずClaude / Antigravityの適任かつ余裕ある認可済み候補へ配分します。固定した両者の優先順はなく、適性・残量観測の鮮度・稼働状態・費用を確認します。残量不明は`unknown`、古い観測での手動ローテーションは提案扱いです。異なるproviderのtoken単位を単純合算しません。
 - Claude Codeは通常Sonnet 5.5、難しい作業ではOpus 5.5を使います。Claude CodeとAntigravity内Claudeのquota poolは別です。
 - 通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 - CodexBarのquota画像は手動で確認します。quota自動取得と完全自動routingは未検証です。欠落・古い観測は`unknown`として扱い、現在値のようにroutingへ使いません。
 
-[現行の運用判断](docs/operating-decisions-2026-10-10.ja.md)と[Routing Guide](docs/routing-guide.ja.md)を参照してください。
+[現行の運用判断](docs/operating-decisions-2026-10-13.ja.md)と[Routing Guide](docs/routing-guide.ja.md)を参照してください。
+
+## Codex Review / PR Review Pipeline — 2026-10-13
+
+**今回の追加：** AIによる実装 → 別AIのレビューと再現可能なCI → 指摘修正・新headで再確認 → リスクと権限に応じたマージ。Claude/GeminiのPRにはCodex Review、Codex実装にはClaude/Geminiを選びます。Qwenは品質未受入の将来候補です。
+
+[詳細・構成図](docs/pr-review-pipeline.ja.md)、[運用更新](docs/operating-decisions-2026-10-13.ja.md)、[更新履歴](CHANGELOG.ja.md)を追加し、役割・routing・handoff・保守手順も日英で更新しました。レビュー規則とPRテンプレート付きです。自動レビュー・必須CI・自動マージのlive設定は別途確認する段階です。
 
 ## 役割とワークフローの境界
 
@@ -54,7 +60,7 @@ flowchart LR
 
 - **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
 - **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はClaude / Antigravity相互レビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
+- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
 - **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
 - OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
 
@@ -66,7 +72,7 @@ flowchart LR
 
 - `README.md` / `README.ja.md`: 英語・日本語の概要
 - [2026年10月5日〜9日の共同作業・人間工数・費用比較](docs/reports/2026-10-05-to-09-ai-team-work-and-human-effort.ja.md)
-- `docs/operating-decisions-2026-10-10.md` / `.ja.md`: 最新担当表、業務一覧、配分・失敗時の手順、確認範囲
+- `docs/operating-decisions-2026-10-10.md` / `.ja.md`: 今回のPRレビュー運用更新（以前の配分方針は2026-10-10記録に保持）
 - `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: 過去の方針・実験記録を保持
 - `docs/routing-guide.md` / `docs/routing-guide.ja.md`: ツール選択と通常OpenAIのMedium 2択
 - `docs/ai-team.md`: チームの役割

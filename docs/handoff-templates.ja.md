@@ -4,7 +4,7 @@
 
 ツール間で作業を渡すときは、範囲と受け入れ条件を明確にします。DottieはPMと受け入れ調整、AI Governance Controlは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のローカルcapacity/router/transport開発を担います。live quota取得と自動dispatchは未検証です。
 
-現行の[担当表・配分手順](operating-decisions-2026-10-10.ja.md)に従います。通常の受け渡し失敗は1回で原因を保存し、別の認可済み候補1つへ。権限拒否は停止し迂回しません。不可なら`blocked`／本人handoff待ちで、Codexの全文代行に自動で戻しません。
+現行の[担当表・配分手順](operating-decisions-2026-10-13.ja.md)に従います。通常の受け渡し失敗は1回で原因を保存し、別の認可済み候補1つへ。権限拒否は停止し迂回しません。不可なら`blocked`／本人handoff待ちで、Codexの全文代行に自動で戻しません。
 
 ## Evidence manifest
 
@@ -135,3 +135,23 @@ PoCが重要な不確実性を減らす場合にだけ使います。既存artif
 - Critical/Majorの指摘にはseverity、file/line、根拠、影響、再現または確認方法を含めます。
 - 未確認の前提と重要なテスト不足を列挙します。
 - 重大な指摘がなければその旨を述べ、残るtest/runtime gapも記します。
+## 7. PR Review Evidence
+
+[PR Review Pipeline](pr-review-pipeline.ja.md)向けに、依頼受付と完了・検証を分けて記録します。
+
+```text
+PR URL / base SHA / head SHA:
+goal / acceptance criteria / changed files:
+risk: low | medium | high | unknown; rationale:
+builder tool / observed provider:
+reviewer tool / observed provider / independence limitation:
+requested review / completed review / reviewed SHA / result URL:
+findings: ID / severity / file-line / evidence / impact / reproduction:
+fix SHA / disposition / new-head review:
+required checks / commands / result / current-head logs:
+inapplicable gates / rationale / approved exceptions:
+unresolved test and runtime gaps:
+work limit / repair cycles / blocker:
+merge authorization / human acceptance / decision / decision head SHA:
+status: documented | configured | executed | verified
+```

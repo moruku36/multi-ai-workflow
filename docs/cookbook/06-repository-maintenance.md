@@ -27,3 +27,7 @@ The public repository contains only reusable operating guidance and evidence sta
 - Check links, bilingual references, whitespace, and old claims.
 - Review the changed-file list and diff for secrets or private context.
 - Report checks and blockers precisely. Approval of a direction, an accepted request, execution, local test success, and production reflection are distinct states.
+
+## PR Review Pipeline — 2026-10-13
+
+Follow the [review procedure](../pr-review-pipeline.md): record base/head SHA, risk, builder/reviewer providers, current-head checks and finding dispositions. Claude/Gemini are independent-review candidates for Codex implementations. Docs-only PRs check links, bilingual alignment and disclosures, with an explicit rationale for inapplicable code tests/SAST. Refresh relevant review/checks after pushes and confirm risk and existing merge authorization. Documentation updates do not implicitly enable auto-merge, change protections or incur charges.

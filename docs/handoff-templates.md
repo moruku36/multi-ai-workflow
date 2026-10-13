@@ -4,7 +4,7 @@
 
 Use a short, bounded handoff when work crosses tools. Dottie coordinates PM, task scope, provider/environment selection, progress, and acceptance. AI Governance Control is the thin reusable handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport project; live quota retrieval and automatic dispatch remain unverified.
 
-Follow the current [roles and allocation procedure](operating-decisions-2026-10-10.md). Preserve the cause after one ordinary failed handoff and consider one other authorized candidate. Stop on authorization denial without bypassing it. If unavailable, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution.
+Follow the current [roles and allocation procedure](operating-decisions-2026-10-13.md). Preserve the cause after one ordinary failed handoff and consider one other authorized candidate. Stop on authorization denial without bypassing it. If unavailable, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution.
 
 ## Evidence manifest
 
@@ -123,4 +123,25 @@ Keep changes minimal. Run relevant checks. Report changed files, test results, a
 ```markdown
 The required action was rejected at [authorization stage]. Do not retry repeatedly or use an alternate route to bypass it.
 Preserve current work and report the exact action, target, rejection reason, saved artifacts, and authorized next step.
+```
+
+## 7. PR Review Evidence
+
+For the [PR Review Pipeline](pr-review-pipeline.md), record request acceptance separately from completion and verification.
+
+```text
+PR URL / base SHA / head SHA:
+goal / acceptance criteria / changed files:
+risk: low | medium | high | unknown; rationale:
+builder tool / observed provider:
+reviewer tool / observed provider / independence limitation:
+requested review / completed review / reviewed SHA / result URL:
+findings: ID / severity / file-line / evidence / impact / reproduction:
+fix SHA / disposition / new-head review:
+required checks / commands / result / current-head logs:
+inapplicable gates / rationale / approved exceptions:
+unresolved test and runtime gaps:
+work limit / repair cycles / blocker:
+merge authorization / human acceptance / decision / decision head SHA:
+status: documented | configured | executed | verified
 ```
