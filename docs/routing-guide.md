@@ -6,6 +6,10 @@ Windows is the always-on local base and first choice. If it cannot proceed, cons
 
 Choose an eligible tool for the task; do not follow a fixed model ladder when the task, environment, quota evidence, quality needs, or cost point elsewhere. Model labels are owner-reported operating names, not API IDs or proof of runtime selection.
 
+## Conditional Gemini 4 Argon routing — 2026-10-14
+
+**Proposal / runtime pending:** After real Antigravity access is verified, consider Argon for mocks, PoCs, ordinary feature implementation, UI/APIs, unit/integration tests and small fixes. Claude remains a strong choice for complex cross-cutting tasks and escalation; GPT-6/Codex for difficult architecture and bounded separate PR review. Continue fit- and quota-based selection rather than fixed provider priority. Until Argon runs in the actual environment, route to available Gemini/Claude workers and record the selected runtime honestly. Pilot and quality criteria: [rollout plan](gemini-4-argon-rollout.md).
+
 ## Current snapshot — 2026-10-13
 
 | Work | Main candidate | Alternative / review |
