@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-10-14 (Asia/Tokyo)
+
+- Documented conditional Gemini 4 Argon integration, promoting Gemini from PoC/mock-only use to a candidate for routine code, tests and fixes **after verified Antigravity access and measured pilots**.
+- Preserved Claude complex implementation, GPT-6/Codex architecture and bounded PR review, Dottie coordination, Qwen specialist research and unaccepted future review status.
+- Updated bilingual README and routing; added bilingual [rollout architecture](docs/gemini-4-argon-rollout.md). **Documentation only; no runtime/model configuration changed.**
+
 ## 2026-10-13 (Asia/Tokyo)
 
 ### Added
