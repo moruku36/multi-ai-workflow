@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-10-14（Asia/Tokyo）
+
+- Gemini 4 Argonの条件付き統合方針を追加。Antigravityで実利用と品質を確認した後、PoC・モックから通常実装・テスト・小規模修正へ担当拡大を検討。
+- Claudeの難しい実装、GPT-6/Codexの設計・限定PRレビュー、DottieのPM、Qwenの専門調査と将来レビュー候補（未受入）を維持。
+- README・ルーティングを日英で更新し、[導入手順と構成図](docs/gemini-4-argon-rollout.ja.md)を追加。**文書のみ。実行環境の設定変更なし。**
+
 ## 2026-10-13（Asia/Tokyo）
 
 ### 追加
