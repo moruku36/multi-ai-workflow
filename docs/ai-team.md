@@ -4,6 +4,10 @@
 
 > Operating snapshot: 2026-10-13; model names are owner-reported labels
 
+## Planned Gemini 4 Argon expansion — 2026-10-14
+
+Once its real availability within Antigravity is verified, Gemini 4 Argon becomes a candidate for ordinary coding, tests, UI/APIs and small fixes in addition to PoCs/mocks. Claude focuses on difficult implementation/escalations; Chappy/Codex retains complex design and scoped separate PR review; Dottie remains PM and Qwen's independent review remains unaccepted. This is a future routing proposal, not a verified deployment, model identifier, or guaranteed level of engineering seniority. [Detailed rollout and flow](gemini-4-argon-rollout.md).
+
 ## Team
 
 | Worker / environment | Candidate work | Boundary |
