@@ -4,6 +4,10 @@
 
 ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
 
+## Gemini 4 Argon の段階的導入方針（2026-10-14）
+
+**将来方針／未適用：** AntigravityでArgonの実動作が確認できたら、Geminiの担当をPoC・モックから、通常の機能実装、UI/API、テスト、小規模修正へ拡大します。複雑な修正・大規模変更・デプロイはClaude、複雑な設計と限定的PRレビューはGPT-6/Codex、PMはDottie、専門調査と未受入の将来レビュー候補はQwenという役割を維持します。利用可能になるまでは現行の利用可能な担当へ配分し、Argon利用済みとは扱いません。昇格判断は実案件の品質・コスト・利用枠・受入条件に基づきます。[日英の詳細・構成図](docs/gemini-4-argon-rollout.ja.md) / [English](docs/gemini-4-argon-rollout.md)。
+
 ## Current Snapshot - 2026-10-13
 
 - 人がProduct Ownerとして最終判断・受入を担います。**Dottie**は短い要件・受入条件・配分・進捗のPM、**Codex / ChatGPT（Chappy）**は複雑な初期設計・難しい判断・必要時の最終エスカレーションと、Claude/GeminiのPRへの範囲限定Codex Reviewを担当します。**Claude Code**と**Gemini/Antigravity**には実装だけでなく調査・文章・翻訳・GitHub文書更新・一次レビューも適性と稼働に応じ配分します。**Qwen local**は許可済み専門調査、**RunPod A100 Qwen**は未受入の将来レビュー候補です。Codexの全文再作成・全面再レビューを標準にしません。
