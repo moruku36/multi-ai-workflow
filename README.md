@@ -4,6 +4,10 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
+## Gemini 4 Argon — conditional rollout (2026-10-14)
+
+**Planned, not active:** when Argon is verified as usable in Antigravity, expand Gemini from PoCs/mocks to ordinary feature implementation, UI/API work, tests and small fixes. Keep Claude for difficult multi-step fixes, large changes and deployment, GPT-6/Codex for complex design and bounded independent PR review, Dottie for coordination, and Qwen for authorized research / future unaccepted review. Until then, keep selecting available workers by fit; never imply that Argon is already running. Promotion requires measured pilot quality, quota/cost and acceptance gates, not benchmark-to-seniority analogies. See [Argon rollout plan](docs/gemini-4-argon-rollout.md) ([日本語](docs/gemini-4-argon-rollout.ja.md)).
+
 ## Current operating snapshot — 2026-10-13
 
 - The human owns final decisions and acceptance. **Dottie** handles short requirements, acceptance criteria, allocation and progress. **Codex / ChatGPT (Chappy)** handles complex initial design, difficult decisions and final escalation when needed, plus bounded Codex Review for Claude/Gemini PRs. **Claude Code** and **Gemini/Antigravity** share research, writing, translation, GitHub docs and first review as well as implementation by fit and availability. **Local Qwen** supports authorized specialist research; **RunPod A100 Qwen** is an unaccepted future review candidate. Full-text Codex rewrites and comprehensive re-review are not the default.
