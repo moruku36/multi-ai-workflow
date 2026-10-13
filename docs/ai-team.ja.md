@@ -2,17 +2,17 @@
 
 [English](ai-team.md) | [日本語](ai-team.ja.md)
 
-> 2026-10-10時点の運用。モデル名は本人の運用上の表記です。
+> 2026-10-13時点の運用。モデル名は本人の運用上の表記です。
 
 | 担当・環境 | 主な担当候補 | 境界 |
 |---|---|---|
 | 本人 | 目的・優先順位・責任ある承認・最終受入・公開判断 | AIの結果を検証し、必要な専門家を残す |
 | Dottie | 短い要件・受入条件・配分・進捗・handoff | 長文制作の常設担当や自律dispatchではない |
-| Codex / ChatGPT（Chappy） | 複雑な初期設計、難しい判断、必要時の最終エスカレーション | 全成果物の全文再作成・全面再レビューを標準にしない |
+| Codex / ChatGPT（Chappy） | 複雑な初期設計、難しい判断、最終エスカレーション、範囲限定Codex Review | 全成果物の全文再作成・全面再レビューを標準にしない |
 | Claude Code | 実装・修正・試験、技術文書、ブログ初稿・推敲・翻訳、GitHub文書更新・PR整形 | 稼働・適性・新鮮な残量を確認。公開・本番操作には適切な承認 |
 | Gemini / Antigravity | 調査・公式出典確認、比較表・要約・図表用データ、PoC / mock、文章の別案、独立一次レビュー | 同じ基準でClaudeと配分。別ツールでも同providerならprovider独立とは限らない |
 | Qwen local（Windows / Mac） | 許可済み範囲の専門調査・資料整理。セキュリティ・社会的テーマ等も許可と適性の範囲内 | 環境ごとにモデル機能・ネット検索可否・出典確認を検証。安全制御回避には使わない |
-| RunPod A100 Qwen | 将来の独立レビュー候補 | live運用・品質は未受入。現時点の代替はClaude / Antigravity相互レビュー |
+| RunPod A100 Qwen | 将来の独立レビュー候補 | live運用・品質は未受入。現時点の代替はCodex ReviewまたはClaude / Antigravityの別providerレビュー |
 
 ## Windowsを基盤にした運用
 
@@ -32,7 +32,7 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 
 - **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
 - **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はClaude / Antigravity相互レビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
+- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
 - **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
 - OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
 
@@ -48,7 +48,7 @@ DottieはPMであり、全タスクが自動実行されるという意味では
 
 ## ChappyとCodex
 
-Codex / ChatGPTは複雑な初期設計・難しい判断・必要時の最終エスカレーションを中心に使い、全成果物の全文再作成・全面再レビューは標準にしません。通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
+Codex / ChatGPTは複雑な初期設計・難しい判断・必要時の最終エスカレーションと、Claude/GeminiのPRへの範囲限定Codex Reviewに使い、全成果物の全文再作成・全面再レビューは標準にしません。通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 
 workerの実選択とruntime確認ができない場合は、その制約と`UNKNOWN`を報告します。
 
@@ -66,7 +66,7 @@ workerの実選択とruntime確認ができない場合は、その制約と`UNK
 2. 認可済み経路の利用可否と実際の稼働を確認する。subscriptionとAPI、provider別pool、観測時刻付きsession／weekly残量、reset時刻を分ける。不明・古い値は`unknown`。異なるproviderのtoken単位を単純合算して均等化しない。
 3. まずClaude / Antigravityの適任かつ余裕ある候補に配分する。役割表は固定割当ではない。残量が古い場合の手動ローテーションは偏りを避ける提案であり、十分な残量の証明ではない。
 4. 受け渡し失敗は1回で原因と保存済み成果を記録する。権限拒否は止め、別経路で迂回しない。通常の稼働不良なら別の認可済み候補1つを検討する。不可なら`blocked`／本人handoff待ちとし、自動的にCodexの全文代行へ戻さない。例外は短い理由を記録する。
-5. 可能なら制作・実装者とレビュー担当をprovider別にする。Antigravity内ClaudeとClaude Codeは別poolでも同providerなので独立性を区別する。レビューは指定範囲・根拠・重大な不確実性を扱い、Codexは難しい論点だけを必要時に判断する。
+5. 可能なら制作・実装者とレビュー担当をprovider別にする。Antigravity内ClaudeとClaude Codeは別poolでも同providerなので独立性を区別する。レビューは指定範囲・根拠・重大な不確実性を扱い、コードPRはCodex Review候補とし、Codex実装時はClaude/Geminiを選ぶ。
 
 ## Quotaを考慮した選択
 
@@ -81,4 +81,8 @@ workerの実選択とruntime確認ができない場合は、その制約と`UNK
 
 Dottie、Chappy、Claude Code、Gemini/Antigravity、Qwenは文脈が明らかな場合の役割名として使います。会話上の依頼はタスク固有のtool選択に落とし込み、指定model/effortと観測runtimeを分けます。CLI IDを作りません。
 
-詳細は[2026-10-10運用判断](operating-decisions-2026-10-10.ja.md)と[routing guide](routing-guide.ja.md)を参照してください。
+詳細は[2026-10-10運用判断](operating-decisions-2026-10-13.ja.md)と[routing guide](routing-guide.ja.md)を参照してください。
+
+## PR Review Pipeline — 2026-10-13
+
+コードPRには[Codex Review / PR Review Pipeline](pr-review-pipeline.ja.md)を適用します。Claude/Gemini実装にはCodex、Codex実装には別provider担当を選び、同じhead SHAのレビューとCIを記録します。通常の文書・調査の全面再レビューは標準にしません。中・高リスクは人が受入し、低リスク自動マージは明示方針・設定・検証後だけの案です。Qwenの品質は未受入、自動レビュー・CI強制・自動マージはruntime pendingです。

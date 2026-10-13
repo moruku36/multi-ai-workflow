@@ -6,7 +6,7 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 
 Task fit、environment、quota evidence、quality、costに沿って利用可能なtoolを選びます。タスクに合わない固定model sequenceは使いません。model labelは本人の運用表記で、API IDや実行時modelの確認ではありません。
 
-## Current Snapshot - 2026-10-10
+## Current Snapshot - 2026-10-13
 
 | 作業 | 主な候補 | 代替・review |
 |---|---|---|
@@ -16,7 +16,7 @@ Task fit、environment、quota evidence、quality、costに沿って利用可能
 | 実装・修正・試験 | ClaudeまたはAntigravity | 可能なら別provider review |
 | PoC / mock | AntigravityまたはClaude | 不確実性を下げる場合だけ実施 |
 | 一般repo編集・GitHub文書更新・PR整形 | Claude | Antigravity、別担当の差分・リンク確認 |
-| 独立一次review | 制作者とは別providerを可能な限り選択 | 現時点はClaude / Antigravity相互review。難しい論点だけCodex |
+| 独立一次review | 制作者とは別providerを可能な限り選択 | Claude/GeminiのコードPRはCodex Review。Codex実装時はClaude/Gemini |
 | 許可済み専門調査 | Windows / Mac local Qwen | 検索・出典能力は環境ごとに確認 |
 | 将来の独立review | RunPod A100 Qwen（未受入） | 現時点はClaude / Antigravity |
 
@@ -40,7 +40,7 @@ Task fit、environment、quota evidence、quality、costに沿って利用可能
 2. 認可済み経路の利用可否と実際の稼働を確認する。subscriptionとAPI、provider別pool、観測時刻付きsession／weekly残量、reset時刻を分ける。不明・古い値は`unknown`。異なるproviderのtoken単位を単純合算して均等化しない。
 3. まずClaude / Antigravityの適任かつ余裕ある候補に配分する。役割表は固定割当ではない。残量が古い場合の手動ローテーションは偏りを避ける提案であり、十分な残量の証明ではない。
 4. 受け渡し失敗は1回で原因と保存済み成果を記録する。権限拒否は止め、別経路で迂回しない。通常の稼働不良なら別の認可済み候補1つを検討する。不可なら`blocked`／本人handoff待ちとし、自動的にCodexの全文代行へ戻さない。例外は短い理由を記録する。
-5. 可能なら制作・実装者とレビュー担当をprovider別にする。Antigravity内ClaudeとClaude Codeは別poolでも同providerなので独立性を区別する。レビューは指定範囲・根拠・重大な不確実性を扱い、Codexは難しい論点だけを必要時に判断する。
+5. 可能なら制作・実装者とレビュー担当をprovider別にする。Antigravity内ClaudeとClaude Codeは別poolでも同providerなので独立性を区別する。レビューは指定範囲・根拠・重大な不確実性を扱い、コードPRはCodex Review候補とし、Codex実装時はClaude/Geminiを選ぶ。
 
 ## Quotaと費用の観測
 
@@ -86,7 +86,7 @@ Dottieが仕様化と調整を行い、AI Governance Controlが薄い再利用�
 
 - **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
 - **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はClaude / Antigravity相互レビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
+- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
 - **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
 - OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
 
@@ -96,4 +96,8 @@ Dottieが仕様化と調整を行い、AI Governance Controlが薄い再利用�
 
 - 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得結果にはunit check 324件とmock browser check 25件が報告されました。これは単一結果であり、CLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
 
-日付付きの根拠と公開範囲は[運用判断記録](operating-decisions-2026-10-10.ja.md)を参照してください。
+日付付きの根拠と公開範囲は[運用判断記録](operating-decisions-2026-10-13.ja.md)を参照してください。
+
+## PR Review Pipeline — 2026-10-13
+
+コードPRには[Codex Review / PR Review Pipeline](pr-review-pipeline.ja.md)を適用します。Claude/Gemini実装にはCodex、Codex実装には別provider担当を選び、同じhead SHAのレビューとCIを記録します。通常の文書・調査の全面再レビューは標準にしません。中・高リスクは人が受入し、低リスク自動マージは明示方針・設定・検証後だけの案です。Qwenの品質は未受入、自動レビュー・CI強制・自動マージはruntime pendingです。
