@@ -2,6 +2,12 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## v2026.10.15-r2 — 2026-10-15 (Asia/Tokyo)
+
+- Adopted MiMo-V2.6-Pro API as the **planned** review default for code, validation and documents; Flash remains an optional pilot.
+- Reassigned RunPod to GPU/model-serving experiments only, superseding the proposed recurring RunPod/Qwen review route.
+- Require independent checks for serious findings, privacy assessment and measured quality/cost before rollout. Documentation only, no runtime or paid changes.
+
 ## 2026-10-15 (Asia/Tokyo)
 
 - Added the [dated operating decision](docs/operating-decisions-2026-10-15.md): one bounded, final escalation to Claude Opus 5.5 Medium when a hard problem stalls under owner-selected GPT/Sol. It is owner operating judgment, not a claim that Opus is objectively best or always better than Sol.
