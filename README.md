@@ -4,6 +4,12 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
+## Review policy v2026.10.15-r2 — MiMo-V2.6-Pro API (2026-10-15)
+
+**Owner-selected future default (not yet deployed):** use **Xiaomi MiMo-V2.6-Pro API** for independent code/PR review, validation/evidence review, and document/design review. MiMo-V2.6-Flash is an optional lightweight pilot, not an accepted default. Validate significant findings with independent Claude/Codex review, tests and static analysis; a human retains final acceptance.
+
+**RunPod is for GPU/model-serving, quantization and inference experiments only**, not the routine quality-review backend. This supersedes the previous proposed RunPod/Qwen review path, preserving historical work. Confirm actual model ID, terms, pricing, data handling, and measure defect detection, false positives and cost before rollout. Documentation only: no credentials, API requests, bills, automated routing or runtime changes.
+
 ## Gemini 4 Argon — conditional rollout (2026-10-14)
 
 **Planned, not active:** when Argon is verified as usable in Antigravity, expand Gemini from PoCs/mocks to ordinary feature implementation, UI/API work, tests and small fixes. Keep Claude for difficult multi-step fixes, large changes and deployment, GPT-6/Codex for complex design and bounded independent PR review, Dottie for coordination, and Qwen for authorized research / future unaccepted review. Until then, keep selecting available workers by fit; never imply that Argon is already running. Promotion requires measured pilot quality, quota/cost and acceptance gates, not benchmark-to-seniority analogies. See [Argon rollout plan](docs/gemini-4-argon-rollout.md) ([日本語](docs/gemini-4-argon-rollout.ja.md)).
