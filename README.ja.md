@@ -8,7 +8,15 @@ ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装
 
 **将来方針／未適用：** AntigravityでArgonの実動作が確認できたら、Geminiの担当をPoC・モックから、通常の機能実装、UI/API、テスト、小規模修正へ拡大します。複雑な修正・大規模変更・デプロイはClaude、複雑な設計と限定的PRレビューはGPT-6/Codex、PMはDottie、専門調査と未受入の将来レビュー候補はQwenという役割を維持します。利用可能になるまでは現行の利用可能な担当へ配分し、Argon利用済みとは扱いません。昇格判断は実案件の品質・コスト・利用枠・受入条件に基づきます。[日英の詳細・構成図](docs/gemini-4-argon-rollout.ja.md) / [English](docs/gemini-4-argon-rollout.md)。
 
+## Claude Opus 5.5 Mediumへの限定的な最終エスカレーション（2026-10-15）
+
+本人が選んだGPT/Sol（通常はGPT-6.1 Sol Medium）で難題が停滞した場合、本人は**Claude Opus 5.5 Medium**へ範囲を限った最終エスカレーションを1回行えます。これは経験に基づく本人の運用判断であり、Opusが客観的に最良、またはSolより常に優れるという主張ではありません。発動条件は、同じ失敗の繰り返し、または合意した作業上限内に具体的な進捗がないことです。先に現象・再現手順・試行と結果・未検証事項・制約・受入条件・最小限の非秘密のソース/revisionを保存し、token残量・費用を確認（欠落・古い場合は`unknown`）、指定とruntime観測のmodel/effortを分けて記録し、権限・TLS検証・秘密情報・有料操作の承認を守り、拒否の迂回やruntimeの黙示的変更をせず、現在のrevisionと証拠をレビューし、完了後は通常モデルへ戻します。通常の実装はClaudeまたはAntigravity Sonnet、Codexは設計・調整・レビューのままです。
+
+RunPod Phase 2：Claude Opus 5.5 Mediumで接続試験に合格したという**本人報告**があります。独立した試験ログ、Pod終了、課金停止は当方では未確認です。これはA100の独立レビュー品質や自動運用とは別で、それらは引き続き**未受入**です。Mattermostは難題の例であり、完了項目ではありません。[2026-10-15の決定](docs/operating-decisions-2026-10-15.ja.md)（[English](docs/operating-decisions-2026-10-15.md)）を参照。
+
 ## Current Snapshot - 2026-10-13
+
+> 日付付きsnapshot。以下の「Phase 2はmock/offlineのみ」「Codexが最終エスカレーション」は、上の2026-10-15の節により一部更新されています。Qwenレビューは未受入のままです。
 
 - 人がProduct Ownerとして最終判断・受入を担います。**Dottie**は短い要件・受入条件・配分・進捗のPM、**Codex / ChatGPT（Chappy）**は複雑な初期設計・難しい判断・必要時の最終エスカレーションと、Claude/GeminiのPRへの範囲限定Codex Reviewを担当します。**Claude Code**と**Gemini/Antigravity**には実装だけでなく調査・文章・翻訳・GitHub文書更新・一次レビューも適性と稼働に応じ配分します。**Qwen local**は許可済み専門調査、**RunPod A100 Qwen**は未受入の将来レビュー候補です。Codexの全文再作成・全面再レビューを標準にしません。
 - Windowsを常時稼働のローカル基地かつ第一選択とします。Windowsで進められない場合、Macへ切り替える前にユーザーへ相談します。
@@ -64,7 +72,7 @@ flowchart LR
 
 - **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
 - **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
+- **RunPod Phase 2：** *（2026-10-13時点：mock / offlineのみ。2026-10-15以降、Claude Opus 5.5 Mediumで接続試験に合格したという本人報告がある。独立ログでは未確認で、レビュー品質・運用の受入ではない。）* A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
 - **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
 - OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
 
@@ -76,7 +84,8 @@ flowchart LR
 
 - `README.md` / `README.ja.md`: 英語・日本語の概要
 - [2026年10月5日〜9日の共同作業・人間工数・費用比較](docs/reports/2026-10-05-to-09-ai-team-work-and-human-effort.ja.md)
-- `docs/operating-decisions-2026-10-10.md` / `.ja.md`: 今回のPRレビュー運用更新（以前の配分方針は2026-10-10記録に保持）
+- `docs/operating-decisions-2026-10-15.md` / `.ja.md`: Claude Opus 5.5 Mediumへの限定的な最終エスカレーション（最新の日付付き決定）
+- `docs/operating-decisions-2026-10-13.md` / `.ja.md`: PRレビュー運用更新（以前の配分方針は2026-10-10記録に保持）
 - `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: 過去の方針・実験記録を保持
 - `docs/routing-guide.md` / `docs/routing-guide.ja.md`: ツール選択と通常OpenAIのMedium 2択
 - `docs/ai-team.md`: チームの役割

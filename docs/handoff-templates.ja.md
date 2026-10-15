@@ -155,3 +155,30 @@ work limit / repair cycles / blocker:
 merge authorization / human acceptance / decision / decision head SHA:
 status: documented | configured | executed | verified
 ```
+
+## 8. Claude Opus 5.5 Mediumへの限定的な最終エスカレーション（2026-10-15）
+
+本人選択のGPT/Solで難題が停滞した場合（同じ失敗の繰り返し、または合意した作業上限内に具体的な進捗なし）にのみ使います。本人の運用判断であり、Opusが客観的に最良という主張ではありません。[2026-10-15の決定](operating-decisions-2026-10-15.ja.md)に従います。秘密情報、私的な会話、アカウント識別子、quota残高は含めず、最小限の非秘密のソース/revisionを使います。
+
+```markdown
+# Goal and acceptance criteria
+[範囲を限定した目標]
+
+## Preserved state
+- 現象:
+- 再現手順:
+- 試した方法と結果:
+- 未検証事項:
+- 制約（権限、TLS検証、秘密情報、有料操作の承認）:
+- 最小限の非秘密のソース / revision:
+
+## Delegation bounds
+- 作業上限（完了または上限で通常モデルへ戻す）:
+- token残量・費用の確認（証拠がなければ unknown / stale）:
+- Requested model/effort: Claude Opus 5.5 Medium
+- Observed runtime model/effort: 証拠がなければ UNKNOWN
+
+## Rules
+- 拒否を迂回せず、runtime・モデル・TLS設定・権限を黙って変更しない。停止して報告する。
+- 変更ファイル、確認結果、現在revisionの証拠、未検証事項、blockerを報告する。
+```

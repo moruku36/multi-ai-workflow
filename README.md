@@ -8,7 +8,15 @@ Public, evidence-aware guidance for coordinating research, implementation, revie
 
 **Planned, not active:** when Argon is verified as usable in Antigravity, expand Gemini from PoCs/mocks to ordinary feature implementation, UI/API work, tests and small fixes. Keep Claude for difficult multi-step fixes, large changes and deployment, GPT-6/Codex for complex design and bounded independent PR review, Dottie for coordination, and Qwen for authorized research / future unaccepted review. Until then, keep selecting available workers by fit; never imply that Argon is already running. Promotion requires measured pilot quality, quota/cost and acceptance gates, not benchmark-to-seniority analogies. See [Argon rollout plan](docs/gemini-4-argon-rollout.md) ([日本語](docs/gemini-4-argon-rollout.ja.md)).
 
+## Limited final escalation to Claude Opus 5.5 Medium (2026-10-15)
+
+When a hard problem stalls under the owner-selected GPT/Sol worker (usually GPT-6.1 Sol Medium), the owner may make one bounded, final escalation to **Claude Opus 5.5 Medium**. This is the owner's operating judgment from experience, not a claim that Opus is objectively best or always better than Sol. Trigger: the same failure repeats, or no concrete progress within the agreed work limit. First preserve the phenomenon, reproduction, attempts/results, unverified items, constraints, acceptance criteria and smallest non-secret source/revision; check token capacity/cost (`unknown` if missing/stale); record requested vs observed model/effort; respect permissions, TLS validation, secrets and paid-action approvals; never bypass a denial or silently change the runtime; review the current revision and evidence; then return to the ordinary model. Routine implementation stays with Claude or Antigravity Sonnet; Codex designs, coordinates and reviews.
+
+RunPod Phase 2: an **owner report** says the connection test passed with Claude Opus 5.5 Medium. Independent test logs, Pod termination and billing stop are not yet confirmed by us. This is separate from independent A100 review quality and automated operation, which remain **unaccepted**. Mattermost is a hard-problem example, not a completed item. See the [2026-10-15 decision](docs/operating-decisions-2026-10-15.md) ([日本語](docs/operating-decisions-2026-10-15.ja.md)).
+
 ## Current operating snapshot — 2026-10-13
+
+> Dated snapshot. “Phase 2 mock/offline only” and “Codex as final escalation” below are superseded in part by the 2026-10-15 section above; Qwen review remains unaccepted.
 
 - The human owns final decisions and acceptance. **Dottie** handles short requirements, acceptance criteria, allocation and progress. **Codex / ChatGPT (Chappy)** handles complex initial design, difficult decisions and final escalation when needed, plus bounded Codex Review for Claude/Gemini PRs. **Claude Code** and **Gemini/Antigravity** share research, writing, translation, GitHub docs and first review as well as implementation by fit and availability. **Local Qwen** supports authorized specialist research; **RunPod A100 Qwen** is an unaccepted future review candidate. Full-text Codex rewrites and comprehensive re-review are not the default.
 - Windows is the always-on local base and first choice. If work cannot proceed there, consult the user before switching to Mac; Mac is a helper environment.
@@ -64,7 +72,7 @@ Keep **verified/merged**, **local/offline**, **runtime pending**, and **proposal
 
 - **Local:** Windows Open WebUI/Ollama text responses were owner-checked. Mac Open WebUI 0.11.4 with Qwen2.5 3B has past observations of local responses and web-search results. Search availability and specialist-research quality require environment-specific checks; this is not automated orchestration.
 - **RunPod Phase 1:** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) records one real response from small Qwen2.5-1.5B-Instruct and Pod deletion. It does not accept A100 independent-review quality or the complete workflow.
-- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
+- **RunPod Phase 2:** *(2026-10-13 snapshot: mock/offline only. Since 2026-10-15 an owner report of a passed connection test with Claude Opus 5.5 Medium exists; it is unconfirmed by independent logs and is not review-quality or operation acceptance.)* Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
 - **Colab:** The fixed-Q8 chat notebook is separate. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI checks (2 skipped), not Colab/GPU inference, model-download or A100-quality verification.
 - OpenAI-compatible describes an API shape, not paid OpenAI. A single HTTP response does not establish automatic startup, connection and termination. Pod stop and deletion differ, including storage costs and data retention. This documentation change starts no GPU and changes no runtime settings.
 
@@ -75,7 +83,8 @@ This is a public repository. Do not include private conversations, personal or f
 ## Repository map
 
 - `README.md` / `README.ja.md`: English and Japanese overview
-- `docs/operating-decisions-2026-10-13.md` / `.ja.md`: current PR review extension (previous allocation details remain in the 2026-10-10 record)
+- `docs/operating-decisions-2026-10-15.md` / `.ja.md`: limited final escalation to Claude Opus 5.5 Medium (latest dated decision)
+- `docs/operating-decisions-2026-10-13.md` / `.ja.md`: PR review extension (previous allocation details remain in the 2026-10-10 record)
 - `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: historical policy and experiment records are retained
 - `docs/routing-guide.md`: tool selection and the two routine OpenAI Medium choices
 - `docs/ai-team.md`: team roles
