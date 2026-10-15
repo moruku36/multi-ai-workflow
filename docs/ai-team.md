@@ -2,7 +2,11 @@
 
 [English](ai-team.md) | [日本語](ai-team.ja.md)
 
-> Operating snapshot: 2026-10-13; model names are owner-reported labels
+> Operating snapshot: 2026-10-13 (dated; the table below is partly updated by the 2026-10-15 section); model names are owner-reported labels
+
+## Limited final escalation — 2026-10-15
+
+If a hard problem stalls under owner-selected GPT/Sol (usually GPT-6.1 Sol Medium) — the same failure repeats or no concrete progress within the agreed work limit — the owner may make one bounded, final escalation to **Claude Opus 5.5 Medium**. This is owner operating judgment, not a claim that Opus is objectively best or always better than Sol. Routine implementation stays with Claude or Antigravity Sonnet; Codex designs, coordinates and reviews; the owner accepts. Preserve the evidence first, check capacity/cost, record requested vs observed model/effort, respect permissions/TLS/secrets/paid approvals, then return to the ordinary model. The RunPod Phase 2 connection pass with Opus is an **owner report**, not independently confirmed, and does not accept A100 review quality or automated operation. Mattermost is only a hard-problem example. See [2026-10-15 decision](operating-decisions-2026-10-15.md).
 
 ## Planned Gemini 4 Argon expansion — 2026-10-14
 
@@ -36,7 +40,7 @@ Dottie is the PM, not a claim that all task execution is automatic. Dottie clari
 
 ## Chappy and Codex
 
-Use Codex / ChatGPT for complex initial design, difficult decisions, final escalation when needed and bounded Codex Review for Claude/Gemini PRs; full-text rewrites and comprehensive re-review of every deliverable are not the default. Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
+Use Codex / ChatGPT for complex initial design, difficult decisions, final escalation when needed (a 2026-10-13 snapshot; see the limited Opus step in the [2026-10-15 decision](operating-decisions-2026-10-15.md) for hard problems stalled under owner-selected GPT/Sol) and bounded Codex Review for Claude/Gemini PRs; full-text rewrites and comprehensive re-review of every deliverable are not the default. Routine OpenAI selection uses only **GPT-6 Luna / Medium** or **GPT-6.1 Sol / Medium**. Choose Luna Medium for bounded work and Sol Medium when complexity or the quality bar warrants it; there is no Low/Medium/High six-step ladder. ExtraHigh remains outside the policy. Astra is an exception only when academic research or particularly difficult advanced investigation needs it, with a concrete reason; use Sol Medium when sufficient. These are owner-reported labels, not CLI IDs or proof of runtime availability.
 
 If actual worker selection or runtime confirmation is unavailable, report the limitation and `UNKNOWN`.
 
@@ -52,7 +56,7 @@ Candidate work also includes research, official-source checks, comparison tables
 
 - **Local:** Windows Open WebUI/Ollama text responses were owner-checked. Mac Open WebUI 0.11.4 with Qwen2.5 3B has past observations of local responses and web-search results. Search availability and specialist-research quality require environment-specific checks; this is not automated orchestration.
 - **RunPod Phase 1:** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) records one real response from small Qwen2.5-1.5B-Instruct and Pod deletion. It does not accept A100 independent-review quality or the complete workflow.
-- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
+- **RunPod Phase 2:** *(2026-10-13 snapshot: mock/offline only. Since 2026-10-15 an owner report of a passed connection test with Claude Opus 5.5 Medium exists; it is unconfirmed by independent logs and is not review-quality or operation acceptance.)* Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
 - **Colab:** The fixed-Q8 chat notebook is separate. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI checks (2 skipped), not Colab/GPU inference, model-download or A100-quality verification.
 - OpenAI-compatible describes an API shape, not paid OpenAI. A single HTTP response does not establish automatic startup, connection and termination. Pod stop and deletion differ, including storage costs and data retention. This documentation change starts no GPU and changes no runtime settings.
 

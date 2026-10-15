@@ -2,7 +2,11 @@
 
 [English](ai-team.md) | [日本語](ai-team.ja.md)
 
-> 2026-10-13時点の運用。モデル名は本人の運用上の表記です。
+> 2026-10-13時点の運用（日付付き。下の表は2026-10-15の節で一部更新）。モデル名は本人の運用上の表記です。
+
+## 限定的な最終エスカレーション — 2026-10-15
+
+本人選択のGPT/Sol（通常GPT-6.1 Sol Medium）で難題が停滞した場合（同じ失敗の繰り返し、または合意した作業上限内に具体的進捗なし）、本人は**Claude Opus 5.5 Medium**へ範囲を限った最終エスカレーションを1回行えます。本人の運用判断であり、Opusが客観的に最良／Solより常に優れるという主張ではありません。通常の実装はClaudeまたはAntigravity Sonnet、Codexは設計・調整・レビュー、受入は本人です。先に証拠を保存し、残量・費用を確認し、指定とruntime観測のmodel/effortを分け、権限・TLS・秘密情報・有料承認を守り、完了後は通常モデルへ戻します。Opusを使ったRunPod Phase 2の接続合格は**本人報告**で独立確認されておらず、A100レビュー品質や自動運用の受入ではありません。Mattermostは難題の例示のみです。[2026-10-15の決定](operating-decisions-2026-10-15.ja.md)参照。
 
 | 担当・環境 | 主な担当候補 | 境界 |
 |---|---|---|
@@ -32,7 +36,7 @@ Windowsを常時稼働のローカル基地かつ第一選択とします。Wind
 
 - **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
 - **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
+- **RunPod Phase 2：** *（2026-10-13時点：mock / offlineのみ。2026-10-15以降、Claude Opus 5.5 Mediumで接続試験に合格したという本人報告がある。独立ログでは未確認で、レビュー品質・運用の受入ではない。）* A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
 - **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
 - OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
 
@@ -48,7 +52,7 @@ DottieはPMであり、全タスクが自動実行されるという意味では
 
 ## ChappyとCodex
 
-Codex / ChatGPTは複雑な初期設計・難しい判断・必要時の最終エスカレーションと、Claude/GeminiのPRへの範囲限定Codex Reviewに使い、全成果物の全文再作成・全面再レビューは標準にしません。通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
+Codex / ChatGPTは複雑な初期設計・難しい判断・必要時の最終エスカレーション（2026-10-13時点の記述。本人選択のGPT/Solで停滞した難題への限定的なOpus段階は[2026-10-15の決定](operating-decisions-2026-10-15.ja.md)を参照）と、Claude/GeminiのPRへの範囲限定Codex Reviewに使い、全成果物の全文再作成・全面再レビューは標準にしません。通常のOpenAI選定は **GPT-6 Luna / Medium** または **GPT-6.1 Sol / Medium** の2択です。範囲が明確な作業にはLuna Medium、難度や品質要求が高い作業にはSol Mediumを選び、Low/Medium/Highの6段階運用は行いません。ExtraHighは引き続き使いません。Astraは学術研究や特に難しい上級調査で必要な場合のみ、具体的な理由を示して使う例外です。Sol Mediumで十分ならそれを使います。モデル名は本人の運用上の表記であり、CLI IDやruntimeでの利用可能性を証明しません。
 
 workerの実選択とruntime確認ができない場合は、その制約と`UNKNOWN`を報告します。
 

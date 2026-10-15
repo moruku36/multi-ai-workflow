@@ -145,3 +145,30 @@ work limit / repair cycles / blocker:
 merge authorization / human acceptance / decision / decision head SHA:
 status: documented | configured | executed | verified
 ```
+
+## 8. Limited final escalation to Claude Opus 5.5 Medium (2026-10-15)
+
+Use only when a hard problem stalls under the owner-selected GPT/Sol worker: the same failure repeats, or no concrete progress within the agreed work limit. This is owner operating judgment, not a claim that Opus is objectively best. Follow the [2026-10-15 decision](operating-decisions-2026-10-15.md). Do not include secrets, private conversations, account identifiers or quota balances; use the smallest non-secret source/revision.
+
+```markdown
+# Goal and acceptance criteria
+[Bounded target]
+
+## Preserved state
+- Phenomenon:
+- Reproduction:
+- Attempted methods and results:
+- Unverified items:
+- Constraints (permissions, TLS validation, secrets, paid-action approvals):
+- Smallest non-secret source / revision:
+
+## Delegation bounds
+- Work limit (return to ordinary model at completion or limit):
+- Token capacity / cost checked (unknown / stale if not evidenced):
+- Requested model/effort: Claude Opus 5.5 Medium
+- Observed runtime model/effort: UNKNOWN unless evidenced
+
+## Rules
+- Do not bypass a denial or silently change the runtime, model, TLS settings or permissions; stop and report instead.
+- Report changed files, checks, current-revision evidence, unverified items and blockers.
+```

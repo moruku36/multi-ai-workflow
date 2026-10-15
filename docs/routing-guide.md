@@ -10,7 +10,21 @@ Choose an eligible tool for the task; do not follow a fixed model ladder when th
 
 **Proposal / runtime pending:** After real Antigravity access is verified, consider Argon for mocks, PoCs, ordinary feature implementation, UI/APIs, unit/integration tests and small fixes. Claude remains a strong choice for complex cross-cutting tasks and escalation; GPT-6/Codex for difficult architecture and bounded separate PR review. Continue fit- and quota-based selection rather than fixed provider priority. Until Argon runs in the actual environment, route to available Gemini/Claude workers and record the selected runtime honestly. Pilot and quality criteria: [rollout plan](gemini-4-argon-rollout.md).
 
+## Limited final escalation to Claude Opus 5.5 Medium — 2026-10-15
+
+**Owner operating judgment, not a benchmark claim:** Opus is not asserted to be objectively best or always better than Sol. Routine implementation stays with Claude or Antigravity Sonnet; Codex designs, coordinates and reviews; difficult work usually uses GPT-6.1 Sol Medium.
+
+1. **Trigger:** under the owner-selected GPT/Sol worker, the same failure repeats, or there is no concrete progress within the agreed work limit.
+2. **Preserve first:** phenomenon, reproduction, attempted methods/results, unverified items, constraints, acceptance criteria, and the smallest non-secret source/revision ([handoff template](handoff-templates.md)).
+3. **Check capacity/cost** before bounded delegation; missing or stale observations are `unknown`, not current.
+4. **Record** requested vs observed model/effort (`UNKNOWN` unless evidenced). Respect permissions, TLS certificate validation, secrets and paid-action approvals. Never bypass a denial or silently change the runtime.
+5. **Review** the current revision and its evidence. After completion or the work limit, **return to the ordinary model**.
+
+RunPod Phase 2 connection pass with Opus is an **owner report** (no independent log, Pod termination or billing-stop confirmation yet); independent A100 review quality and automated operation remain unaccepted. Mattermost is only a hard-problem example, not a completed item. Details: [2026-10-15 decision](operating-decisions-2026-10-15.md).
+
 ## Current snapshot — 2026-10-13
+
+> Dated snapshot; “final escalation” and “Phase 2 mock/offline only” are superseded in part by the 2026-10-15 section above.
 
 | Work | Main candidate | Alternative / review |
 |---|---|---|
@@ -90,7 +104,7 @@ Dottie specifies and coordinates. The AI Governance Control provides a thin reus
 
 - **Local:** Windows Open WebUI/Ollama text responses were owner-checked. Mac Open WebUI 0.11.4 with Qwen2.5 3B has past observations of local responses and web-search results. Search availability and specialist-research quality require environment-specific checks; this is not automated orchestration.
 - **RunPod Phase 1:** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39) records one real response from small Qwen2.5-1.5B-Instruct and Pod deletion. It does not accept A100 independent-review quality or the complete workflow.
-- **RunPod Phase 2:** Mock/offline only. Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
+- **RunPod Phase 2:** *(2026-10-13 snapshot: mock/offline only. Since 2026-10-15 an owner report of a passed connection test with Claude Opus 5.5 Medium exists; it is unconfirmed by independent logs and is not review-quality or operation acceptance.)* Live A100 independent review, quality and ongoing operation are not accepted. Use Codex Review or Claude / Antigravity different-provider review for now. The conversational label “around 3.7” is unresolved and is not a model ID.
 - **Colab:** The fixed-Q8 chat notebook is separate. [PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35) reports 287 CPU CI checks (2 skipped), not Colab/GPU inference, model-download or A100-quality verification.
 - OpenAI-compatible describes an API shape, not paid OpenAI. A single HTTP response does not establish automatic startup, connection and termination. Pod stop and deletion differ, including storage costs and data retention. This documentation change starts no GPU and changes no runtime settings.
 

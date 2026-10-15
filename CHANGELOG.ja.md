@@ -2,6 +2,14 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-10-15（Asia/Tokyo）
+
+- [日付付き運用判断](docs/operating-decisions-2026-10-15.ja.md)を追加。本人選択のGPT/Solで難題が停滞した場合の、Claude Opus 5.5 Mediumへの限定的な最終エスカレーション1回。本人の運用判断であり、Opusが客観的に最良／Solより常に優れるという主張ではない。
+- 日英README、役割表、routing guide、handoffテンプレートへ規則を追加（証拠保存、残量・費用確認、指定とruntime観測の分離、承認、現在revisionのレビュー、通常モデルへの復帰）。
+- 2026-10-13時点の「Phase 2はmock/offlineのみ」「Codexが最終エスカレーション」を日付付きsnapshotと明記。過去記録は保持。
+- OpusによるRunPod Phase 2接続合格は**本人報告**。独立ログ、Pod終了、課金停止は未確認。A100レビュー品質・自動運用は未受入。Mattermostは難題の例示のみ。
+- **文書のみ。GPU、モデル、TLS、権限、runtimeの変更なし。**
+
 ## 2026-10-14（Asia/Tokyo）
 
 - Gemini 4 Argonの条件付き統合方針を追加。Antigravityで実利用と品質を確認した後、PoC・モックから通常実装・テスト・小規模修正へ担当拡大を検討。

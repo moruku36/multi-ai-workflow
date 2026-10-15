@@ -2,6 +2,14 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-10-15 (Asia/Tokyo)
+
+- Added the [dated operating decision](docs/operating-decisions-2026-10-15.md): one bounded, final escalation to Claude Opus 5.5 Medium when a hard problem stalls under owner-selected GPT/Sol. It is owner operating judgment, not a claim that Opus is objectively best or always better than Sol.
+- Added escalation rules to the bilingual README, roles, routing guide and a handoff template (evidence preservation, capacity/cost check, requested vs observed model, approvals, current-revision review, return to the ordinary model).
+- Qualified the 2026-10-13 snapshot claims "Phase 2 mock/offline only" and "Codex as final escalation" as dated; older records are preserved.
+- RunPod Phase 2 connection pass with Opus is an **owner report**; independent logs, Pod termination and billing stop are unconfirmed. A100 review quality and automated operation remain unaccepted. Mattermost is only a hard-problem example.
+- **Documentation only; no GPU, model, TLS, permission or runtime change.**
+
 ## 2026-10-14 (Asia/Tokyo)
 
 - Documented conditional Gemini 4 Argon integration, promoting Gemini from PoC/mock-only use to a candidate for routine code, tests and fixes **after verified Antigravity access and measured pilots**.

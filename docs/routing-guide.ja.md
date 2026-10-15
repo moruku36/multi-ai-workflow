@@ -10,7 +10,21 @@ Task fit、environment、quota evidence、quality、costに沿って利用可能
 
 **提案／runtime未適用：** Antigravityで実際にArgonを使用できることを確認後、PoC・モックに加えて、通常の機能実装、UI/API、単体・結合テスト、小規模修正を候補にします。複雑な横断変更・難しい修正はClaude、難しいアーキテクチャや独立PRレビューはGPT-6/Codexを引き続き使います。固定優先順位ではなく、タスク適性・品質・観測されたquotaを重視。Argonが実行確認できない間は利用可能なGemini/Claudeを選び、実行モデルを正確に記録します。[移行条件と構成図](gemini-4-argon-rollout.ja.md)。
 
+## Claude Opus 5.5 Mediumへの限定的な最終エスカレーション — 2026-10-15
+
+**本人の運用判断であり、ベンチマーク主張ではありません：** Opusが客観的に最良、またはSolより常に優れるとは主張しません。通常の実装はClaudeまたはAntigravity Sonnet、Codexは設計・調整・レビュー、難しい作業は通常GPT-6.1 Sol Mediumです。
+
+1. **発動条件：** 本人選択のGPT/Sol担当で、同じ失敗が繰り返される、または合意した作業上限内に具体的な進捗がない。
+2. **先に保存：** 現象、再現手順、試した方法と結果、未検証事項、制約、受入条件、再現に必要な最小限の非秘密のソース/revision（[handoffテンプレート](handoff-templates.ja.md)）。
+3. 限定的な委任の前に**残量・費用を確認**。欠落・古い観測は現在値ではなく`unknown`。
+4. 指定とruntime観測のmodel/effortを**分けて記録**（証拠がなければ`UNKNOWN`）。権限、TLS証明書検証、秘密情報、有料操作の承認を守り、拒否を迂回せず、runtimeを黙って変更しない。
+5. **現在のrevision**と証拠をレビューし、完了または作業上限で**通常モデルへ戻す**。
+
+OpusによるRunPod Phase 2接続合格は**本人報告**です（独立ログ、Pod終了、課金停止は未確認）。A100の独立レビュー品質と自動運用は未受入のままです。Mattermostは難題の例示であり完了項目ではありません。詳細は[2026-10-15の決定](operating-decisions-2026-10-15.ja.md)。
+
 ## Current Snapshot - 2026-10-13
+
+> 日付付きsnapshot。「最終エスカレーション」「Phase 2はmock/offlineのみ」は上の2026-10-15の節により一部更新されています。
 
 | 作業 | 主な候補 | 代替・review |
 |---|---|---|
@@ -90,7 +104,7 @@ Dottieが仕様化と調整を行い、AI Governance Controlが薄い再利用�
 
 - **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
 - **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** mock / offlineの範囲のみ。A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
+- **RunPod Phase 2：** *（2026-10-13時点：mock / offlineのみ。2026-10-15以降、Claude Opus 5.5 Mediumで接続試験に合格したという本人報告がある。独立ログでは未確認で、レビュー品質・運用の受入ではない。）* A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
 - **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
 - OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
 
