@@ -4,6 +4,10 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
+## Daybreak models and authorized OSS security review (2026-10-16)
+
+**Documented, not enabled:** OpenAI's Daybreak (Trusted Access for Cyber) offers Blue (reduced refusals for authorized defensive work) and Red (separately approved specialist cyber access). Per the official API guide, Blue-type use covers `gpt-6-sol`, and `gpt-6.1-sol` / `gpt-6-astra` with Red-level approval and project access; `gpt-5.6-cyber` is Red. Source pages name the offerings inconsistently, which is recorded unresolved. This repository does not claim to hold access and has run no Daybreak request or scan. Authorized OSS review is proposed as: written scope and approval check, isolated least-privilege environment, independent validation, coordinated disclosure, and no unpatched details in public artifacts. Routine model selection and the review default are unchanged. See [Daybreak and OSS security review](docs/daybreak-authorized-oss-security-review.md) ([日本語](docs/daybreak-authorized-oss-security-review.ja.md)).
+
 ## Review policy v2026.10.15-r2 — MiMo-V2.6-Pro API (2026-10-15)
 
 **Owner-selected future default (not yet deployed):** use **Xiaomi MiMo-V2.6-Pro API** for independent code/PR review, validation/evidence review, and document/design review. MiMo-V2.6-Flash is an optional lightweight pilot, not an accepted default. Validate significant findings with independent Claude/Codex review, tests and static analysis; a human retains final acceptance.
@@ -89,6 +93,7 @@ This is a public repository. Do not include private conversations, personal or f
 ## Repository map
 
 - `README.md` / `README.ja.md`: English and Japanese overview
+- `docs/daybreak-authorized-oss-security-review.md` / `.ja.md`: Daybreak models per official docs and a proposed authorized OSS security review procedure (documented, not enabled)
 - `docs/operating-decisions-2026-10-15.md` / `.ja.md`: limited final escalation to Claude Opus 5.5 Medium (latest dated decision)
 - `docs/operating-decisions-2026-10-13.md` / `.ja.md`: PR review extension (previous allocation details remain in the 2026-10-10 record)
 - `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: historical policy and experiment records are retained

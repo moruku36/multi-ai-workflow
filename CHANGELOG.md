@@ -2,6 +2,11 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-10-16 (Asia/Tokyo)
+
+- Added the bilingual [Daybreak and authorized OSS security review](docs/daybreak-authorized-oss-security-review.md) page: Daybreak Blue/Red per OpenAI's public documentation, models listed in the API guide, naming discrepancies between sources (unresolved), and a proposed operating procedure for authorized OSS review.
+- **Documentation only. Access is not held or claimed; no Daybreak request, scan, credential, model, permission or runtime change.** Routine model selection and the MiMo review default are unchanged.
+
 ## v2026.10.15-r2 — 2026-10-15 (Asia/Tokyo)
 
 - Adopted MiMo-V2.6-Pro API as the **planned** review default for code, validation and documents; Flash remains an optional pilot.
