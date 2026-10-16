@@ -2,6 +2,11 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-10-16（Asia/Tokyo）
+
+- 日英の[Daybreakと認可されたOSSセキュリティレビュー](docs/daybreak-authorized-oss-security-review.ja.md)を追加：OpenAI公開文書に基づくDaybreak Blue/Red、APIガイド記載のモデル、出典間の名称の違い（未解決）、認可されたOSSレビューの運用手順案。
+- **文書のみ。アクセスは保有も主張もせず、Daybreakのリクエスト、スキャン、認証情報、モデル、権限、実行環境の変更はありません。** 定常のモデル選択とMiMoレビュー標準は変更しません。
+
 ## v2026.10.15-r2 — 2026-10-15（Asia/Tokyo）
 
 - コード・検証・資料／設計書レビューの**今後の標準**をMiMo-V2.6-Pro APIに変更。Flashは軽量レビューの任意検証候補。

@@ -4,6 +4,10 @@
 
 ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
 
+## Daybreak対象モデルと認可されたOSSセキュリティレビュー（2026-10-16）
+
+**文書化のみ・未有効化：** OpenAIのDaybreak（Trusted Access for Cyber）には、Blue（認可された防御作業向けに拒否を減らす）とRed（別途承認される専門のサイバーアクセス）があります。公式APIガイドでは、Blue系の利用は `gpt-6-sol`、およびRed級の承認とプロジェクトのアクセスを要する `gpt-6.1-sol`／`gpt-6-astra`、Redは `gpt-5.6-cyber` です。出典ページ間で提供物の呼び名が一致せず、未解決のまま記録しています。本リポジトリはアクセスを保有するとは主張せず、Daybreakのリクエストやスキャンも実行していません。認可されたOSSレビューは、書面での範囲と承認の確認、隔離した最小権限の環境、独立した検証、協調的開示、未修正の詳細を公開成果物に載せないこと、を提案としてまとめています。定常のモデル選択とレビュー標準は変更しません。[Daybreakと認可されたOSSセキュリティレビュー](docs/daybreak-authorized-oss-security-review.ja.md)（[English](docs/daybreak-authorized-oss-security-review.md)）を参照。
+
 ## レビュー運用方針 v2026.10.15-r2 — MiMo-V2.6-Pro API（2026-10-15）
 
 **本人が選択した今後の標準方針（実運用は未導入）：** 独立した**コード／PRレビュー、検証結果・根拠のレビュー、資料・設計書レビュー**には、原則 **Xiaomi MiMo-V2.6-Pro API** を使用します。MiMo-V2.6-Flashは軽量レビューの比較検証候補であり、品質受入済みの標準ではありません。重大指摘はClaude／Codex、テスト、静的解析などで独立確認し、最終判断は人が行います。
@@ -90,6 +94,7 @@ flowchart LR
 
 - `README.md` / `README.ja.md`: 英語・日本語の概要
 - [2026年10月5日〜9日の共同作業・人間工数・費用比較](docs/reports/2026-10-05-to-09-ai-team-work-and-human-effort.ja.md)
+- `docs/daybreak-authorized-oss-security-review.md` / `.ja.md`: 公式文書に基づくDaybreak対象モデルと、認可されたOSSセキュリティレビューの運用手順案（文書化のみ・未有効化）
 - `docs/operating-decisions-2026-10-15.md` / `.ja.md`: Claude Opus 5.5 Mediumへの限定的な最終エスカレーション（最新の日付付き決定）
 - `docs/operating-decisions-2026-10-13.md` / `.ja.md`: PRレビュー運用更新（以前の配分方針は2026-10-10記録に保持）
 - `docs/operating-decisions-2026-10-02.md` / `2026-10-05.md` / `2026-10-06.md`: 過去の方針・実験記録を保持
