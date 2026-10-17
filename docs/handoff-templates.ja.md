@@ -6,6 +6,27 @@
 
 現行の[担当表・配分手順](operating-decisions-2026-10-13.ja.md)に従います。通常の受け渡し失敗は1回で原因を保存し、別の認可済み候補1つへ。権限拒否は停止し迂回しません。不可なら`blocked`／本人handoff待ちで、Codexの全文代行に自動で戻しません。
 
+## 短い進捗受渡し
+
+通常の進捗受渡しは次の4項目に絞ります。詳しい根拠が必要な場合は下の evidence manifest を参照し、会話履歴全体を複製しません。
+
+```text
+目的: [達成目標と観測可能な完了条件]
+現在の状態: [提案 | 受付 | 実行 | 検証 | 保留。環境も記載]
+根拠: [成果物のパス、revision、テスト結果、または UNKNOWN]
+次の一歩: [範囲を限定した操作、担当、必要な承認]
+```
+
+`受付` は依頼が受理されたことだけを示します。`実行` には実際の成果物、`検証` には指定 revision の完了条件に照らした確認が必要です。オフライン・模擬結果を実接続成功に読み替えません。headless `request-review` の権限拒否は soft denial も含めて `保留` とし、拒否の根拠を保存して正規の判断を求めます。別のID・権限・経路による迂回再試行はしません。公開する受渡しには資格情報、私的な会話、アカウント固有の利用量を含めません。
+
+オフライン例（合成データのみ）:
+
+| 観測 | 報告する状態 | 次の一歩 |
+|---|---|---|
+| 担当が依頼を受け付けたが成果物がない | `受付` | 結果を確認するかタイムアウトを記録し、完了としない |
+| サンプル入力の成果物が得られ、ローカル確認が通った | `検証済み（オフラインのサンプル）` | 必要なら別途承認された実接続確認へ進む |
+| headless レビューが権限段階で拒否された | `保留` | 拒否を保存し、具体的な正規の判断を求める |
+
 ## Evidence manifest
 
 モデル比較や複数段階の作業では、実行前に入力、prompt、受け入れ条件、rubric、制約、評価手順を固定します。
@@ -18,6 +39,8 @@ worker / one authorized alternative:
 planned budget / work limit:
 capacity pool / session-weekly observation time / reset time: 不明は unknown
 handoff failure / exception reason:
+authorization stage / decision / evidence reference: 観測できなければ unknown
+input data class / approved destination: 原則として公開・合成データを使用
 input revision / paths / hashes:
 prompt / rubric / acceptance criteria:
 provider / route / environment:
