@@ -6,6 +6,27 @@ Use a short, bounded handoff when work crosses tools. Dottie coordinates PM, tas
 
 Follow the current [roles and allocation procedure](operating-decisions-2026-10-13.md). Preserve the cause after one ordinary failed handoff and consider one other authorized candidate. Stop on authorization denial without bypassing it. If unavailable, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution.
 
+## Short progress handoff
+
+Use these four fields for a routine status transfer. Point to the evidence manifest below when a claim needs detail; do not copy the entire conversation.
+
+```text
+purpose: [goal and observable completion condition]
+current state: [proposed | accepted | executed | verified | blocked; name the environment]
+evidence: [artifact path, revision, test result, or UNKNOWN]
+next step: [one bounded action, owner, and any approval needed]
+```
+
+`accepted` means only that a request was received. `executed` needs an actual result artifact. `verified` needs a check against the completion condition on the stated revision. Do not promote an offline or mock result to live execution. A headless `request-review` authorization denial, including a soft denial, is `blocked`: preserve the rejection and ask for the authorized decision; do not retry through a different identity, permission, or route. Never place credentials, private conversations, or account-specific usage in a public handoff.
+
+Offline examples (synthetic data only):
+
+| Observation | Reported state | Next step |
+|---|---|---|
+| Worker accepted a request but returned no artifact | `accepted` | Read the result or preserve the timeout; no completion claim |
+| Sample input produced an artifact and local checks passed | `verified (offline sample)` | Seek separately authorized live validation if required |
+| Headless review was denied at the permission gate | `blocked` | Preserve the denial and request a specific authorized decision |
+
 ## Evidence manifest
 
 For model comparisons or multi-stage work, freeze input artifacts, prompt, acceptance criteria, rubric, constraints, and evaluation procedure before execution.
@@ -18,6 +39,8 @@ worker / one authorized alternative:
 planned budget / work limit:
 capacity pool / session-weekly observation time / reset time: unknown unless evidenced
 handoff failure / exception reason:
+authorization stage / decision / evidence reference: unknown unless observed
+input data class / approved destination: use public or synthetic data by default
 input revision / paths / hashes:
 prompt / rubric / acceptance criteria:
 provider / route / environment:
