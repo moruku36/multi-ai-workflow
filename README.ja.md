@@ -4,6 +4,14 @@
 
 ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
 
+![現行の Multi-AI ワークフロー：本人 → Dottie 調整（Codex は受け渡し・結果確認のみ） → Gemini 3.8 Flash 主体の実作業 → 既存 Open WebUI の MiMo V2.6 Pro による独立手動レビュー → テストと本人承認。難所のみ手動で上位モデルを使用。](assets/workflow-architecture.ja.svg)
+
+[SVG を拡大して見る](assets/workflow-architecture.ja.svg)。
+
+> [!NOTE]
+> **現行手動運用と自動化の未検証範囲：**
+> 上図は本人の最新手動運用（本人方針 → Dottie 調整〈Codex は受け渡し・結果確認のみ〉 → Antigravity Gemini 3.8 Flash 実作業 → 難所のみ手動で上位モデル昇格・復帰 → 既存 Open WebUI で実利用中の MiMo V2.6 Pro による独立手動レビュー → テスト・本人承認）を示しています。自動配線・自動振分け・自動 API 呼出・自動マージ等の自動化機能は未検証・未導入です。後述の過去記録（2026-10-15 時点の API 展開検討等）にある「候補／未展開」記述と混同しないよう、図は現行の手動運用体制を表しています。
+
 ## モデル・効率化運用方針 — Gemini 3.8 Flash ベースと昇格・復帰（2026-10-19更新）
 
 **合意された運用方針：**

@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node render.mjs"
+  },
+  "devDependencies": {
+    "pele": "file:vendor/pele-1.6.0.tgz"
+  }
+}
