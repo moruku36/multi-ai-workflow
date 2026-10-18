@@ -14,6 +14,7 @@ Public, evidence-aware guidance for coordinating research, implementation, revie
 - **Clear Exit Criteria:** Maintain exact match between reviewed and verified head SHA, passing required CI/static checks, complete resolution of Blocker/Major review findings, and explicit human (Product Owner) final acceptance.
 - **Decoupled Quota and Expense Accounting:** Subscription quota observation (window and timestamp) and API usage/billing must be tracked in separate fields and never commingled (record numbers only when available). Stale or missing observations are marked `unknown`, returning to explicit manual selection rather than an unconditional execution halt.
 - **Review Candidates:** Maintain **Xiaomi MiMo-V2.6-Pro API** as an independent review candidate (without fixing it as a sole universal reviewer or compromising the distinct-provider rule).
+- **Operational Checklist & Verification Example:** For the 2026-10-19 operational efficiency checklist (5 core items) and the empirical case study based on this review task (merged in PR #27), see [2026-10-19-mimo-efficiency-review.md](docs/reports/2026-10-19-mimo-efficiency-review.md).
 
 ### Changelog entry — 2026-10-19
 - **Concrete Efficiency Framework:** Formalized Gemini 3.8 Flash as the baseline model with on-demand escalation and immediate return to baseline upon hurdle resolution; established diff- and artifact-centric concise handoffs (no full-transcript dumps); codified failure taxonomy with fail-closed halts on authorization denials.
