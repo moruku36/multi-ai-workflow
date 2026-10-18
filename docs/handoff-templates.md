@@ -4,7 +4,16 @@
 
 Use a short, bounded handoff when work crosses tools. Dottie coordinates PM, task scope, provider/environment selection, progress, and acceptance. AI Governance Control is the thin reusable handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport project; live quota retrieval and automatic dispatch remain unverified.
 
-Follow the current [roles and allocation procedure](operating-decisions-2026-10-13.md). Preserve the cause after one ordinary failed handoff and consider one other authorized candidate. Stop on authorization denial without bypassing it. If unavailable, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution.
+Follow the current [roles and allocation procedure](operating-decisions-2026-10-13.md). Handoffs must focus on **diffs, artifact references (paths/SHA/diff), and structured summaries**; copying or resending full conversation histories is prohibited (do not mandate rigid N-turn windows; provide only the bounded context needed for the task).
+
+Categorize and log failure causes:
+- **Authorization Denial (`authorization`)**: Stop immediately (`fail-closed`). Retrying through alternate IDs, pathways, or unauthorized parameters is prohibited.
+- **Environment Glitch (`environment`) / Timeout (`timeout`) / Quality Defect (`quality`)**: Preserve cause and artifacts after one failure, and consider at most one authorized candidate (max one fallback; no unauthorized runaway retries). If unavailable, mark `blocked` / awaiting owner handoff; do not automatically return to full-text Codex substitution.
+
+## Template Selection Criteria
+
+- **Concise 4-Item Progress Handoff**: Routine progress updates within the same environment, single-file edits, typo fixes, or bounded research summaries (low-risk tasks not crossing safety boundaries).
+- **Evidence Manifest**: Cross-model / cross-provider escalations or handoffs, external service outputs, authentication/permission operations, approval gate transitions, logging handoff failures/exceptions, and multi-stage pipelines.
 
 ## Short progress handoff
 
@@ -37,7 +46,7 @@ goal / completion criteria:
 small input / revision:
 worker / one authorized alternative:
 planned budget / work limit:
-capacity pool / session-weekly observation time / reset time: unknown unless evidenced
+capacity pool / subscription quota observation (window, time, reset; unknown if unobserved) / api usage & charges (recorded only when available; not commingled with subscription units):
 handoff failure / exception reason:
 authorization stage / decision / evidence reference: unknown unless observed
 input data class / approved destination: use public or synthetic data by default
