@@ -200,9 +200,9 @@ Record the following fields for each evaluated task (numbers recorded only when 
 
 A concise, 5-item checklist to govern daily task execution:
 
-1. **Eliminate Redundant Inspection**: Do not re-explore completed tasks or unchanging artifacts. Re-verify only upon artifact changes, failures, or exceptions.
+1. **Eliminate Redundant Inspection**: Do not re-explore completed tasks or unchanging artifacts (while maintaining required CI, static inspection, and approval gates for every iteration). Re-verify only upon artifact changes, failures, or exceptions.
 2. **Diff- and Artifact-Centric Handoffs**: Prohibit resending full conversation transcripts. Transmit only purpose, current state, evidence, next step, and minimal bounded diffs (paths, commit SHAs, diffs; do not mandate rigid N-turn windows).
-3. **Outcome-Centric Progress Tracking**: Avoid intermediate conversational chatter; focus updates on verifiable artifacts and completion results (do not claim unverified automated notification systems).
+3. **Outcome-Centric Progress Tracking**: Avoid intermediate conversational chatter; focus updates on verifiable outcomes—including completions, failures, and pending decision points (do not claim unverified automated notification systems).
 4. **Failure Taxonomy and Halt on Denial**: Never loop across identical failures. Classify and save causes (environment, authorization, timeout, quality), and consider at most one authorized alternative (max 1 fallback). Always stop immediately (`fail-closed`) on authorization denials or security boundary violations.
 5. **Manual Concurrency Limit and Decoupled Metrics**: Maintain an operational ceiling of at most 2 independent tasks under manual oversight. Record subscription quota observations (window and timestamp) and API usage/billing in separate fields without commingling (record numbers only when available; `unknown` permitted).
 
@@ -237,6 +237,6 @@ Empirical verification data from this efficiency review workflow (from receiving
 
 ### 8.3 Lightweight Future Benchmarks and Quality Metrics
 Guiding metrics for evaluating similar tasks in future iterations without heavy telemetry overhead:
-- **Review Round Index**: External review rounds per modified file (target: 1–2 rounds).
+- **Review Round Index**: Record and compare external review rounds per similar, same-scale task (without setting rigid fixed targets; observe empirical trends relative to task scale).
 - **Context Hygiene Index**: Full chat transcript resend rate in handoffs (target: 0%).
 - **Gate Completion Rate**: 100% adherence to all 4 exit gates (head SHA match, CI/static validation pass, Blocker resolution, Product Owner acceptance).
