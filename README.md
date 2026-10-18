@@ -4,6 +4,14 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
+![Current Multi-AI workflow: owner → Dottie coordination (Codex for handoff & result checks only) → Gemini 3.8 Flash primary implementation → independent manual review via MiMo V2.6 Pro in existing Open WebUI → tests & owner acceptance; higher models used manually for hard problems.](assets/workflow-architecture.en.svg)
+
+[Open the full-size SVG](assets/workflow-architecture.en.svg).
+
+> [!NOTE]
+> **Current manual operation vs. unverified automation scope:**
+> The diagram illustrates the owner's active manual workflow: Owner direction → Dottie coordination (Codex for handoff and result verification only) → Antigravity Gemini 3.8 Flash primary implementation → manual escalation to higher-tier models for hard problems and return to Flash → independent manual review via MiMo V2.6 Pro in an existing Open WebUI deployment → tests and owner acceptance. Automated routing, automatic dispatch, automated API calls, and automatic merge are unverified and not deployed. To avoid confusion with historical records below (such as the 2026-10-15 API candidate planning), the diagram reflects the active manual workflow.
+
 ## Model & Efficiency Operational Policy — Gemini 3.8 Flash Baseline, Escalation & Return (2026-10-19 Update)
 
 **Adopted operational policy:**

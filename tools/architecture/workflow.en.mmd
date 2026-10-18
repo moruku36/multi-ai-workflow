@@ -1,0 +1,7 @@
+flowchart TB
+    O["Product Owner<br/>direction & final acceptance"] --> D["Dottie coordination<br/>Codex: handoff & result checks only"]
+    D --> F["Antigravity · Gemini 3.8 Flash<br/>primary implementation"]
+    F --> R["Independent manual review<br/>MiMo V2.6 Pro<br/>active in existing Open WebUI"]
+    R --> G["Tests & checks<br/>owner approval → deliverable"]
+    F -. "hard problems only · manual" .-> H["Higher-tier model<br/>as needed for hard problems"]
+    H -. "return to Flash" .-> F
