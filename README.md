@@ -4,20 +4,20 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
-## Model workflow policy — Gemini 3.8 Flash implementation default (2026-10-17)
+## Model & Efficiency Operational Policy — Gemini 3.8 Flash Baseline, Escalation & Return (2026-10-19 Update)
 
 **Adopted operational policy:**
-- **Implementation default:** **Gemini 3.8 Flash** is the operational default for implementation tasks (feature coding, bug fixes, test creation, and routine repository edits).
-- **Selective escalation for difficult parts:** Switch selectively to an available higher model (e.g., GPT-6.1 Sol / Medium, or bounded escalation to Claude Opus 5.5 Medium per established escalation rules) only for difficult parts, complex edge cases, or stalled problems.
-- **Claude as-needed:** Use Claude only when needed (e.g., specialized tasks requiring Claude's distinctive strengths, complex multi-step reasoning where lower tiers stall, or independent cross-provider review), rather than as the routine implementation baseline.
-- **Progress checks & concise handoffs:** Use lightweight models and short handoffs for routine progress checks. Handoffs must convey **purpose, current state, evidence, and next step** (`purpose / current state / evidence / next step`), not full completed conversation history. Avoid repetitive duplicate checks on unchanged artifacts while strictly preserving necessary human approvals, security boundaries, and safety checks.
-- **Unverified status & no invented metrics:** Model names, designations, and quota levels are owner-reported operational preferences, not vendor service specifications or verified runtime claims. Operational preference must not be presented as service specifications, and token savings percentages or cost multipliers must not be invented.
-- **Resolution of prior policies:** Supersedes prior text assigning routine implementation to Claude or Antigravity Sonnet, and clarifies the pre-Argon constraint that limited Gemini to PoCs/mocks. (Gemini 4 Argon remains a planned future candidate subject to separate verification).
+- **Flash Baseline with Escalation and Return:** **Gemini 3.8 Flash** is the operational baseline for implementation, bug fixes, exploration, and routine edits. Reasoning effort (Low/Medium/High) is not a universal default; it is selected and recorded per task or upon explicit owner instruction. Escalate selectively to higher-tier models (Sonnet, GPT-6.1 Sol Medium, bounded Claude Opus per rules) only for complex architecture, repeated errors, or hard blockers, and immediately return to the baseline model upon resolving the hurdle or reaching the work limit.
+- **Diff-Centric Handoffs:** Handoffs must focus strictly on **diffs, artifact references (paths/SHA/diff), and structured summaries (purpose, current state, evidence, next step)**; copying or resending full completed conversation histories is prohibited (do not mandate rigid N-turn windows; provide only the bounded context needed for the task).
+- **Failure Taxonomy and Halt on Denial:** Categorize failure causes into environment, authorization, timeout, and quality. Authorization denials stop immediately (`fail-closed`, no circumvention). Ordinary failures preserve cause and artifacts, considering at most one authorized alternative (max one fallback; no unauthorized runaway retries).
+- **Maximum 2 Concurrent Tasks:** Concurrency target is an operational ceiling of at most 2 independent tasks under manual oversight (not an automated dispatch feature in the repo).
+- **Clear Exit Criteria:** Maintain exact match between reviewed and verified head SHA, passing required CI/static checks, complete resolution of Blocker/Major review findings, and explicit human (Product Owner) final acceptance.
+- **Decoupled Quota and Expense Accounting:** Subscription quota observation (window and timestamp) and API usage/billing must be tracked in separate fields and never commingled (record numbers only when available). Stale or missing observations are marked `unknown`, returning to explicit manual selection rather than an unconditional execution halt.
+- **Review Candidates:** Maintain **Xiaomi MiMo-V2.6-Pro API** as an independent review candidate (without fixing it as a sole universal reviewer or compromising the distinct-provider rule).
 
-### Changelog entry — 2026-10-17
-- **Implementation default:** Set Gemini 3.8 Flash as the implementation default; switch selectively to higher models only for difficult parts; use Claude only when needed.
-- **Progress checking & handoffs:** Adopted lightweight models for progress checks; standardized handoffs to 4 core items (purpose, current state, evidence, next step) rather than full completed history; eliminated redundant repeated checks while preserving safety and approval gates.
-- **Policy alignment:** Recorded model labels and quotas as unverified operational preferences (no invented token savings percentages or service specification claims); reconciled contradictions with prior Claude/Sonnet implementation baseline and pre-Argon PoC/mock limits.
+### Changelog entry — 2026-10-19
+- **Concrete Efficiency Framework:** Formalized Gemini 3.8 Flash as the baseline model with on-demand escalation and immediate return to baseline upon hurdle resolution; established diff- and artifact-centric concise handoffs (no full-transcript dumps); codified failure taxonomy with fail-closed halts on authorization denials.
+- **Operational Ceilings and Exit Gates:** Codified manual ceiling of at most 2 concurrent tasks; integrated strict exit criteria (head SHA match, CI pass, blocker resolution, human sign-off); mandated separate tracking for subscription quota vs. API usage/billing (no commingling).
 
 ## Daybreak models and authorized OSS security review (2026-10-16)
 

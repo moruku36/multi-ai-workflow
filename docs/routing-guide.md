@@ -6,6 +6,23 @@ Windows is the always-on local base and first choice. If it cannot proceed, cons
 
 Choose an eligible tool for the task; do not follow a fixed model ladder when the task, environment, quota evidence, quality needs, or cost point elsewhere. Model labels are owner-reported operating names, not API IDs or proof of runtime selection.
 
+## Efficiency, Model Escalation/Demotion, and Concurrency — 2026-10-19
+
+1. **Flash-Centric Routing with Escalation and Return**:
+   - Routine implementation, exploration, and fixes use **Gemini 3.8 Flash** as the baseline model. Effort (Low/Medium/High) is not treated as a universal default; it is selected and recorded per task or upon explicit owner specification.
+   - **Escalation Triggers**: Repetitive failure with identical symptoms, reaching agreed attempt limits, or demanding architecture design triggers on-demand escalation to Sonnet or higher-tier models (Sol Medium, bounded Opus, etc.).
+   - **Demotion Triggers (Return to Baseline)**: Immediately following resolution of the hurdle or reaching the escalated work limit, return execution to the baseline model (Flash).
+   - Position **Xiaomi MiMo-V2.6-Pro API** as an independent code/PR review candidate (without fixing it as a sole universal reviewer or compromising the distinct-provider rule).
+2. **Maximum 2 Concurrent Tasks and Exit Criteria**:
+   - Concurrency target is an operational ceiling of at most 2 independent tasks under manual oversight (not an automated dispatch feature in the repo).
+   - Completion and integration criteria: Exact match between reviewed and verified head SHA, passing required CI/static checks, resolution of Blocker/Major review findings, and explicit human (Product Owner) acceptance.
+3. **Handoff and Failure Taxonomy**:
+   - Handoffs focus on diffs, artifact references (paths/SHA/diff), and structured summaries; resending full conversation history is prohibited (rigid N-turn windows are not mandated).
+   - Classify failure causes into environment, authorization, timeout, and quality. Authorization denials stop immediately (`fail-closed`, no bypass). Ordinary failures preserve cause and artifacts, considering at most one authorized alternative (no unauthorized runaway retries).
+4. **Decoupled Quota and Expense Accounting**:
+   - Subscription quota observation (window and timestamp) and API usage/billing must be tracked in separate fields and never commingled (record numbers only when available).
+   - Stale or missing observations are marked `unknown`, returning to explicit manual selection rather than an unconditional execution halt.
+
 ## Conditional Gemini 4 Argon routing — 2026-10-14
 
 **Proposal / runtime pending:** After real Antigravity access is verified, consider Argon for mocks, PoCs, ordinary feature implementation, UI/APIs, unit/integration tests and small fixes. Claude remains a strong choice for complex cross-cutting tasks and escalation; GPT-6/Codex for difficult architecture and bounded separate PR review. Continue fit- and quota-based selection rather than fixed provider priority. Until Argon runs in the actual environment, route to available Gemini/Claude workers and record the selected runtime honestly. Pilot and quality criteria: [rollout plan](gemini-4-argon-rollout.md).

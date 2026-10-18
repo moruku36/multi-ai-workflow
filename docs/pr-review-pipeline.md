@@ -10,15 +10,14 @@ The goal is to verify AI-written changes with a separate reviewer and reproducib
 
 | Stage | Responsibility | Boundary |
 |---|---|---|
-| Scope / risk | Dottie + Product Owner | Define acceptance criteria, risk, reviewer and work limit |
-| Implementation / fixes | Claude Code or Gemini/Antigravity; Codex when selected | Commit code, regression checks and a bounded PR |
-| Codex Review | Codex reviewing Claude/Gemini changes | Review the diff and relevant context; do not rewrite the implementation |
-| Alternate independent review | Claude or Gemini when Codex built the change | A fresh Codex session is a second pass, not a different-provider review |
+| Scope / risk | Dottie + Product Owner | Define acceptance criteria, risk, reviewer and work limit (max 2 concurrent tasks) |
+| Implementation / fixes | Gemini 3.8 Flash baseline (escalating to Sonnet/higher on demand); Codex when selected | Commit code, regression checks and a bounded PR |
+| Independent review candidates | Xiaomi MiMo-V2.6-Pro API (candidate), Codex Review, Claude/Gemini | Separate provider from builder. Do not fix MiMo as sole reviewer; differentiate depth between routine and governance docs |
 | Deterministic verification | Target repository's GitHub Actions / CI | Run applicable tests, lint, build and security checks at the reviewed head |
-| Acceptance / merge | Product Owner or explicitly authorized maintainer | Confirm evidence and resolve consequential uncertainties |
+| Acceptance / merge | Product Owner or explicitly authorized maintainer | Confirm exact head SHA match, CI pass, resolution of Blocker/Major findings, and human acceptance |
 | Future review candidate | RunPod A100 Qwen | Benchmark quality first; no GPU startup or accepted review quality is implied |
 
-Antigravity is an environment, not a provider: record the actual provider if observed, otherwise `UNKNOWN`. Different accounts or quota pools alone do not establish independence. Codex now has an explicit bounded PR review role; ordinary prose and research do not acquire mandatory comprehensive Codex review.
+Antigravity is an environment, not a provider: record the actual provider if observed, otherwise `UNKNOWN`. Different accounts or quota pools alone do not establish independence. Codex and MiMo have explicit bounded review roles; ordinary prose and research do not acquire mandatory comprehensive review. Furthermore, review depth is tiered between routine documentation (typos, layout) and governance/security documentation to eliminate redundant reviews for identical objectives.
 
 ## Pipeline and correction loop
 
@@ -39,10 +38,10 @@ flowchart TD
 
 1. Freeze the base SHA, head SHA, acceptance criteria, changed files, risk and selected reviewer in the PR. Provide relevant code and requirements; do not ask the reviewer to simply endorse the builder's explanation.
 2. The builder runs applicable checks and reports commands, results and gaps. Tests should exercise the changed behavior, including a negative or regression case when useful.
-3. Request a separate review. Codex is a candidate for Claude/Gemini PRs; choose Claude/Gemini for Codex-authored work. If unavailable, preserve the diff and mark review `pending` or `blocked`; do not treat the builder's self-check as independent review.
+3. Request a separate review. Codex is a candidate for Claude/Gemini PRs; choose Claude/Gemini for Codex-authored work; Xiaomi MiMo-V2.6-Pro API is an independent candidate. If unavailable, preserve the diff and mark review `pending` or `blocked`; do not treat the builder's self-check as independent review.
 4. Run CI and review against the same head SHA. Findings need severity, file/line, evidence, impact and a reproduction or check. Record reviewer identity/provider, result URL, reviewed SHA and unverified assumptions.
 5. Validate findings before applying minimal fixes. A new push invalidates the previous head's merge decision: rerun affected checks and obtain an updated scoped review. Failed, missing, canceled or inapplicable-required checks do not count as passing.
-6. Merge only after the current head satisfies acceptance, required checks and reviews, blocking findings are resolved, and merge authorization exists. Bound repair loops; when the agreed work limit is reached, retain artifacts and escalate.
+6. Merge only after the current head satisfies acceptance, required CI/checks and reviews, all Blocker and Major findings are resolved, and human Product Owner acceptance exists. Bound repair loops; when the agreed work limit is reached, retain artifacts and escalate.
 
 ## Codex entry point
 

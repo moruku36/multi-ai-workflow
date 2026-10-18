@@ -4,7 +4,16 @@
 
 ツール間で作業を渡すときは、範囲と受け入れ条件を明確にします。DottieはPMと受け入れ調整、AI Governance Controlは薄いhandoff/artifact/evidence層、AIteamBridgeは別個のローカルcapacity/router/transport開発を担います。live quota取得と自動dispatchは未検証です。
 
-現行の[担当表・配分手順](operating-decisions-2026-10-13.ja.md)に従います。通常の受け渡し失敗は1回で原因を保存し、別の認可済み候補1つへ。権限拒否は停止し迂回しません。不可なら`blocked`／本人handoff待ちで、Codexの全文代行に自動で戻しません。
+現行の[担当表・配分手順](operating-decisions-2026-10-13.ja.md)に従います。引き継ぎは**差分・成果物参照（パス/SHA/diff）・構造化要約**を中心とし、会話履歴全体の複製や再送は禁止します（「直近Nターン」の一律義務化は行わず、タスクに必要な最小限を渡す）。
+
+失敗時は原因を分類して記録します：
+- **権限拒否 (authorization)**: 即時停止 (fail-closed)。別ID・別経路・未認可パラメータでの迂回再試行は禁止。
+- **環境エラー (environment) / タイムアウト (timeout) / 品質未達 (quality)**: 1回で原因と成果物を保存し、認可済みの代替1候補を検討（最大1回の代替。承認なき無制限リトライは禁止）。不可なら `blocked` / 本人handoff待ちとし、Codexの全文代行に自動で戻しません。
+
+## テンプレートの使い分け基準
+
+- **短い進捗受渡し（4項目）**: 同一環境内の定常進捗報告、単一ファイル修正、タイポ修正、調査要約など、低リスクかつ安全境界を跨がない作業。
+- **Evidence manifest**: モデル間・provider間のエスカレーションやハンドオフ、外部サービスへの出力、認証や権限に関わる操作、承認ゲート通過、handoff失敗・例外の記録、複数段階パイプライン。
 
 ## 短い進捗受渡し
 
@@ -37,7 +46,7 @@ goal / completion criteria:
 small input / revision:
 worker / one authorized alternative:
 planned budget / work limit:
-capacity pool / session-weekly observation time / reset time: 不明は unknown
+capacity pool / subscription quota observation (window, time, reset; 不明は unknown) / api usage & charges (取得時のみ記録、サブスク枠と混算しない):
 handoff failure / exception reason:
 authorization stage / decision / evidence reference: 観測できなければ unknown
 input data class / approved destination: 原則として公開・合成データを使用
