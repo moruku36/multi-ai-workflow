@@ -1,0 +1,7 @@
+flowchart TB
+  O["本人：方針・最終承認"] --> D["Dottie：調整<br/>Codex：引き継ぎ・結果確認"]
+  D --> F["Antigravity / Gemini 3.8 Flash<br/>主要な実装担当"]
+  F --> M["MiMo V2.6 Pro / Open WebUI<br/>手動レビュー：運用中<br/>技術文書・セキュリティ分析：検討中"]
+  M --> T["テスト・検証<br/>本人の最終承認"]
+  F -. "難所のみ" .-> H["Claude Code<br/>Sonnet 5.5 / Opus 5.5"]
+  H -. "解決後Flashへ復帰" .-> F
