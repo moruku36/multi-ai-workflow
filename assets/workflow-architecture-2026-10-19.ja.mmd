@@ -3,5 +3,5 @@ flowchart TB
   D --> F["Antigravity / Gemini 3.8 Flash<br/>主要な実装担当"]
   F --> M["MiMo V2.6 Pro / Open WebUI<br/>手動レビュー：運用中<br/>技術文書・セキュリティ分析：検討中"]
   M --> T["テスト・検証<br/>本人の最終承認"]
-  F -. "難所のみ" .-> H["Claude Code<br/>Sonnet 5.5 / Opus 5.5"]
-  H -. "解決後Flashへ復帰" .-> F
+  F -. "難所またはFlash利用枠不足" .-> H["Claude Code：Sonnet 5.5 / Opus 5.5<br/>Gemini 4 Argon（枠があれば）"]
+  H -. "Flashが利用可能なら復帰" .-> F

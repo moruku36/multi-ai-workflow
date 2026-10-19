@@ -3,5 +3,5 @@ flowchart TB
   D --> F["Antigravity: Gemini 3.8 Flash<br/>Primary implementation"]
   F --> M["MiMo V2.6 Pro via Open WebUI<br/>Manual review: active<br/>Docs and security analysis: proposed"]
   M --> T["Tests, independent checks<br/>Owner acceptance"]
-  F -. "hard problems only" .-> H["Claude Code<br/>Sonnet 5.5 or bounded Opus 5.5"]
-  H -. "return to Flash" .-> F
+  F -. "hard problems or Flash quota exhausted" .-> H["Claude Code: Sonnet 5.5 / bounded Opus 5.5<br/>Gemini 4 Argon: quota permitting"]
+  H -. "return to Flash when available" .-> F
