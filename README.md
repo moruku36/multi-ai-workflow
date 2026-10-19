@@ -4,7 +4,7 @@
 
 Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
 
-![Current Multi-AI workflow: owner → Dottie coordination (Codex for handoff & result checks only) → Gemini 3.8 Flash primary implementation → independent manual review via MiMo V2.6 Pro in existing Open WebUI → tests & owner acceptance; higher models used manually for hard problems.](assets/workflow-architecture.en.svg)
+![Multi-AI workflow: Dottie coordination; Gemini 3.8 Flash primary implementation; Claude Code Sonnet 5.5 or bounded Opus 5.5 for hard problems; MiMo V2.6 Pro manual review plus proposed documentation and security analysis; tests and owner acceptance.](assets/workflow-architecture.en.svg)
 
 [Open the full-size SVG](assets/workflow-architecture.en.svg).
 
@@ -43,6 +43,8 @@ Public, evidence-aware guidance for coordinating research, implementation, revie
 **LiteLLM gateway — future option, NOT an approved deployment:** An optional OpenAI-compatible proxy could centralize access for Open WebUI, n8n and authorized agents to MiMo, a future DeepSeek API, and other separately provisioned endpoints (including local model servers). Potential value: per-client keys/usage budgets, observability, fallback and supported routing. It **does not provide model subscriptions, API credits or agent orchestration**, and task-aware model selection would require explicit upstream selection or extra classification logic.
 
 **Why defer:** An extra service adds configuration, credentials, updates, security exposure, observability and incident-recovery work to an already complex environment. Prefer retaining the existing direct MiMo→Open WebUI workflow for now. Reconsider only when multiple active endpoints/clients create a measurable management problem. Before any pilot: compare direct connection vs gateway maintenance burden, check version/security advisories, validate local-only access, secret management, failure behavior, rate limits, usage/cost reporting, and rollback. DeepSeek selection or migration is likewise **undecided**; benchmark identical real tasks first. Nothing here modifies production configuration, incurs charges or adds credentials.
+
+Mermaid source for the Pele-format architecture SVG: [`assets/workflow-architecture-2026-10-19.mmd`](assets/workflow-architecture-2026-10-19.mmd). Labels updated 2026-10-19; proposed MiMo uses are not live automation.
 
 ## Daybreak models and authorized OSS security review (2026-10-16)
 
