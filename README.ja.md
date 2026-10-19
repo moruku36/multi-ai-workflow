@@ -4,7 +4,7 @@
 
 ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
 
-![現行の Multi-AI ワークフロー：本人 → Dottie 調整（Codex は受け渡し・結果確認のみ） → Gemini 3.8 Flash 主体の実作業 → 既存 Open WebUI の MiMo V2.6 Pro による独立手動レビュー → テストと本人承認。難所のみ手動で上位モデルを使用。](assets/workflow-architecture.ja.svg)
+![Multi-AI構成：Dottie調整、Gemini 3.8 Flashを主実装、難所はClaude CodeのSonnet 5.5／Opus 5.5、MiMo V2.6 Proは手動レビューに加えて文書・診断分析の活用を検討、テストと本人承認。](assets/workflow-architecture.ja.svg)
 
 [SVG を拡大して見る](assets/workflow-architecture.ja.svg)。
 
@@ -43,6 +43,8 @@ ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装
 **LiteLLMゲートウェイ：今後の改修候補、導入未決定。** Open WebUI、n8n、認可済みAIエージェントから、MiMo、将来契約する場合のDeepSeek、その他個別に利用可能なAPIやローカルLLMへ共通入口を提供する案。クライアント別認証・利用量／予算管理、監視、フォールバック、対応するルーティングを集約できる可能性がある。ただしLiteLLM自体はモデル利用権・APIクレジット・エージェントの実行制御を提供しない。用途に応じた自動選択には呼び出し元の明示的指定や別途分類ロジックが必要。
 
 **保留理由と判断基準：** 現行環境だけでも複雑であり、ゲートウェイを追加するとサービス運用・設定・認証情報・アップデート・セキュリティ・障害復旧の負荷が増える。当面はMiMo→Open WebUIの直接接続を維持。複数API・複数クライアントの管理負担が実測で問題になった場合に再検討する。PoC前には直接接続との運用コスト比較、修正版・脆弱性情報、LAN内限定アクセス、秘密情報管理、障害時動作、制限・課金可視化、ロールバックを確認。DeepSeekへの移行判断も**未決定**とし、同じ実タスクで品質・時間・費用を比較する。本追記による稼働環境変更・新規契約・課金・認証情報追加は行わない。
+
+Mermaid source for the Pele-format architecture SVG: [`assets/workflow-architecture-2026-10-19.mmd`](assets/workflow-architecture-2026-10-19.mmd). Labels updated 2026-10-19; proposed MiMo uses are not live automation.
 
 ## Daybreak対象モデルと認可されたOSSセキュリティレビュー（2026-10-16）
 
