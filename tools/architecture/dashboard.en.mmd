@@ -1,0 +1,8 @@
+flowchart TB
+    H["Scheduled job<br/>handoff only"] -.-> I["Diff inbox<br/>unapplied changes"]
+    I --> M["Match task, purpose and<br/>latest owner instruction"]
+    M --> U["Authorized updater<br/>Codex on current direct request"]
+    U --> B["Private Windows board<br/>canonical record"]
+    U --> E["Backup, read-back<br/>and receipt"]
+    E --> B
+    B -. "separate sync; verify independently" .-> P["Public or local view<br/>not the canonical record"]

@@ -2,6 +2,12 @@
 
 [English](dots-codexbar-orchestration.md) | [日本語](dots-codexbar-orchestration.ja.md)
 
+## Current boundary — 2026-10-22
+
+dot checks the owner's latest task direction and coordinates an authorized worker in Windows or cloud, then verifies returned evidence before reporting. The dashboard's private Windows board is canonical. Its diff inbox, updater, backup/read-back/receipt, and public or local views are distinct stages. The usual Antigravity updater was unavailable on this date; following owner-directed reassignment, Codex completed a direct, temporary board update through the normal Backlog CLI. The saved scheduled job still hands off only; no automatic Codex application or public-view synchronization is established by that update.
+
+See the [workflow and dashboard diagrams](../README.md#current-operation--2026-10-22). The 2026-10-05 observation below remains a dated record.
+
 > Status snapshot: 2026-10-05. Manual quota review is in use; live quota ingestion and fully automatic dispatch are unverified.
 
 This document separates PM coordination from capacity tooling and reusable engineering handoffs. Dottie is the PM. AI Governance Control provides a minimal handoff/artifact/evidence layer. AIteamBridge is a separate local capacity/router/transport implementation project. They are complementary components, not competing claims of a complete autonomous orchestrator.

@@ -2,6 +2,12 @@
 
 [English](ai-team.md) | [日本語](ai-team.ja.md)
 
+## Current assignment and verification — 2026-10-22
+
+dot scopes and assigns the owner's task, verifies the returned result, tests, PR and CI, and reports to the owner for acceptance. Task direction and connection availability decide the worker and Windows or cloud environment. Claude implementation followed by independent Codex verification is one pattern; an explicit owner assignment can instead make Codex responsible for implementation, tests and PR. Preserve separate-provider review where available. Do not infer universal model priority or live automation from the dated role table below.
+
+Public code and synthetic tests are kept apart from private real data. An environment failure may be addressed only through another permitted and independently authorized route; an authorization denial is not bypassed.
+
 > Operating snapshot: 2026-10-13 (dated; the table below is partly updated by the 2026-10-15 section); model names are owner-reported labels
 
 ## Limited final escalation — 2026-10-15
