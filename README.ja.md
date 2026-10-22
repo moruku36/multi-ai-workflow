@@ -60,7 +60,7 @@ dotが本人の依頼を整理し、認可済みの適切な担当を選び、�
 
 **保留理由と判断基準：** 現行環境だけでも複雑であり、ゲートウェイを追加するとサービス運用・設定・認証情報・アップデート・セキュリティ・障害復旧の負荷が増える。当面はMiMo→Open WebUIの直接接続を維持。複数API・複数クライアントの管理負担が実測で問題になった場合に再検討する。PoC前には直接接続との運用コスト比較、修正版・脆弱性情報、LAN内限定アクセス、秘密情報管理、障害時動作、制限・課金可視化、ロールバックを確認。DeepSeekへの移行判断も**未決定**とし、同じ実タスクで品質・時間・費用を比較する。本追記による稼働環境変更・新規契約・課金・認証情報追加は行わない。
 
-Mermaid source for the Pele-format architecture SVG: [`assets/workflow-architecture-2026-10-19.mmd`](assets/workflow-architecture-2026-10-19.mmd). Labels updated 2026-10-19; proposed MiMo uses are not live automation.
+2026-10-19時点の構成図のMermaid原本：[`assets/workflow-architecture-2026-10-19.ja.mmd`](assets/workflow-architecture-2026-10-19.ja.mmd)。2026-10-19にラベルを更新した記録であり、MiMoの追加用途が実稼働したことは示しません。
 
 ## Daybreak対象モデルと認可されたOSSセキュリティレビュー（2026-10-16）
 
