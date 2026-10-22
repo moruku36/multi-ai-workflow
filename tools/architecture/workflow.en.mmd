@@ -1,9 +1,7 @@
 flowchart TB
     O["Owner<br/>direction"] --> D["dot<br/>scope, assign, check results"]
-    D --> C["Claude or another authorized worker<br/>implementation and tests"]
-    D --> X["Codex, when explicitly directed<br/>implementation, tests and PR"]
-    C --> V["Independent Codex verification<br/>where selected"]
-    X --> R["Separate-provider review<br/>where available"]
+    D --> W["Task-selected worker<br/>Claude or other authorized tool;<br/>Codex when owner directs"]
+    W --> I["Implementation, tests and PR<br/>as assigned"]
+    I --> V["Independent verification<br/>Codex for Claude work;<br/>another provider for Codex work<br/>where available"]
     V --> G["Evidence gate<br/>tests, PR and current-head CI"]
-    R --> G
     G --> F["dot reports to owner<br/>owner accepts"]

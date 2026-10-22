@@ -6,6 +6,8 @@ Public guidance for coordinating implementation, review and reporting across aut
 
 ## Current operation — 2026-10-22
 
+This is an owner-reported manual operating snapshot. Repository checks verify these documents and diagrams, not private board contents or live model services.
+
 dot clarifies the owner's request, chooses an appropriate authorized worker, checks results, tests, PRs and CI, then reports back. The owner makes final decisions and accepts the result. Worker and execution environment depend on the task, the owner's latest instruction and available connections; Windows and cloud work are both possible. Public source or synthetic tests stay separate from private real data.
 
 - Some tasks use Claude for implementation and Codex for independent verification. When the owner explicitly assigns a task to Codex, Codex can implement, test and prepare the PR. There is no universal Claude-first or Gemini-first rule.

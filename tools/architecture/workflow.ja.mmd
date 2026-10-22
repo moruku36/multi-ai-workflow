@@ -1,9 +1,7 @@
 flowchart TB
     O["本人<br/>方針"] --> D["dot<br/>整理・依頼・結果確認"]
-    D --> C["Claudeなど認可済み担当<br/>実装・テスト"]
-    D --> X["本人が明示した場合のCodex<br/>実装・テスト・PR"]
-    C --> V["必要に応じCodexで独立検証"]
-    X --> R["利用可能なら別providerでレビュー"]
+    D --> W["案件で選ぶ担当<br/>Claudeなど認可済みツール／<br/>本人が明示した場合のCodex"]
+    W --> I["指定範囲の実装・テスト・PR"]
+    I --> V["独立検証<br/>Claude実装はCodex、<br/>Codex実装は別provider<br/>利用可能な場合"]
     V --> G["根拠の確認<br/>テスト・PR・現headのCI"]
-    R --> G
     G --> F["dotが本人へ報告<br/>本人が受入"]
