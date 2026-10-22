@@ -1,7 +1,7 @@
 flowchart TB
-    O["Product Owner<br/>direction & final acceptance"] --> D["Dottie coordination<br/>Codex: handoff & result checks only"]
-    D --> F["Antigravity · Gemini 3.8 Flash<br/>primary implementation"]
-    F --> R["Independent manual review<br/>MiMo V2.6 Pro<br/>active in existing Open WebUI"]
-    R --> G["Tests & checks<br/>owner approval → deliverable"]
-    F -. "hard problems only · manual" .-> H["Higher-tier model<br/>as needed for hard problems"]
-    H -. "return to Flash" .-> F
+    O["Owner<br/>direction"] --> D["dot<br/>scope, assign, check results"]
+    D --> W["Task-selected worker<br/>Claude or other authorized tool;<br/>Codex when owner directs"]
+    W --> I["Implementation, tests and PR<br/>as assigned"]
+    I --> V["Independent verification<br/>Codex for Claude work;<br/>another provider for Codex work<br/>where available"]
+    V --> G["Evidence gate<br/>tests, PR and current-head CI"]
+    G --> F["dot reports to owner<br/>owner accepts"]

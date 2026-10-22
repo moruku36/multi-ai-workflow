@@ -2,6 +2,12 @@
 
 [English](dots-codexbar-orchestration.md) | [日本語](dots-codexbar-orchestration.ja.md)
 
+## 現在の境界 — 2026-10-22
+
+dotは本人の最新指示を照合し、Windowsまたはクラウドの認可済み担当へ依頼し、根拠を確認して報告します。ダッシュボードの正本はWindowsの非公開ボードです。差分inbox、更新担当、バックアップ・読戻し・receipt、公開／ローカル画面は別の段階です。この日は通常のAntigravity更新担当が利用不能となり、本人の担当変更指示を経て、Codexが通常のBacklog CLIで直接依頼による一時的な正本更新を完了しました。保存済み定期ジョブは受け渡し専用のままで、自動のCodex適用や公開画面との同期は確認されていません。
+
+[案件とダッシュボードの図](../README.ja.md#現在の運用--2026-10-22)を参照してください。以下の2026-10-05の観測は日付付き記録として残します。
+
 > 2026-10-05時点。quotaは手動確認であり、live quota取得や完全自動dispatchは未検証です。
 
 この文書ではPM調整、capacity観測、再利用可能なhandoffの役割を区別します。DottieはPM、AI Governance Controlは薄いhandoff/artifact/evidence層、AIteamBridgeはcapacity/router/transportを扱う別のローカル開発プロジェクトです。3つは相互補完的で、完全自動orchestratorが重複しているわけではありません。

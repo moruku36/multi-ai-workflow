@@ -2,15 +2,33 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-Public, evidence-aware guidance for coordinating research, implementation, review, writing, and multimodal work across ChatGPT, Codex, Claude Code, Gemini/Antigravity, and Qwen. Model names below are owner-reported operating labels, not claims about API IDs or runtime identity.
+Public guidance for coordinating implementation, review and reporting across authorized tools. The model names in dated sections are owner-reported operating labels, not verified service specifications or runtime identities.
 
-![Multi-AI workflow: Dottie coordination; Gemini 3.8 Flash primary implementation; Claude Code Sonnet 5.5 / bounded Opus 5.5 or Gemini 4 Argon for hard problems or Flash quota exhaustion; MiMo V2.6 Pro manual review plus proposed documentation and security analysis; tests and owner acceptance.](assets/workflow-architecture.en.svg)
+## Current operation — 2026-10-22
 
-[Open the full-size SVG](assets/workflow-architecture.en.svg).
+This is an owner-reported manual operating snapshot. Repository checks verify these documents and diagrams, not private board contents or live model services.
 
-> [!NOTE]
-> **Current manual operation vs. unverified automation scope:**
-> The diagram illustrates the owner's active manual workflow: Owner direction → Dottie coordination (Codex for handoff and result verification only) → Antigravity Gemini 3.8 Flash primary implementation → manual switching to Claude Code (Sonnet 5.5 / bounded Opus 5.5) or Gemini 4 Argon for blockers or Flash quota exhaustion, returning to Flash when available → independent manual review via MiMo V2.6 Pro in an existing Open WebUI deployment → tests and owner acceptance. Automated routing, automatic dispatch, automated API calls, and automatic merge are unverified and not deployed. To avoid confusion with historical records below (such as the 2026-10-15 API candidate planning), the diagram reflects the active manual workflow.
+dot clarifies the owner's request, chooses an appropriate authorized worker, checks results, tests, PRs and CI, then reports back. The owner makes final decisions and accepts the result. Worker and execution environment depend on the task, the owner's latest instruction and available connections; Windows and cloud work are both possible. Public source or synthetic tests stay separate from private real data.
+
+- Some tasks use Claude for implementation and Codex for independent verification. When the owner explicitly assigns a task to Codex, Codex can implement, test and prepare the PR. There is no universal Claude-first or Gemini-first rule.
+- If a Windows CLI route fails due to an environment issue, use only an independently authorized GUI route or a public-code cloud check that is permitted for that task. Preserve security controls; an authorization denial is a stop, not a fallback trigger.
+- The dashboard's private Windows board is canonical. A diff inbox is a handoff, not an applied update. The updater matches task, purpose and latest owner direction, keeps unique IDs and source timestamps, and verifies backup, read-back and receipt before calling an item done. Public or local views require a separate sync check.
+- Antigravity is the usual updater design. It was unavailable on 2026-10-22; after owner-directed changes of worker, Codex completed a direct, temporary board update through the normal Backlog CLI. The saved scheduled handoff remains handoff-only and has not become automatic Codex application.
+- MiMo, Qwen and other flows retain the statuses shown in their dated public records. No new live operation is inferred from this update.
+
+### Task and review flow
+
+![Task-directed workflow: dot coordinates authorized implementation, independent verification, evidence checks and owner acceptance.](assets/workflow-architecture.en.svg)
+
+[Full-size SVG](assets/workflow-architecture.en.svg) · [Mermaid source](tools/architecture/workflow.en.mmd)
+
+### Dashboard record boundary
+
+![Private Windows board, diff inbox, authorized updater, receipt and separate public-view sync.](assets/dashboard-boundary.en.svg)
+
+[Full-size SVG](assets/dashboard-boundary.en.svg) · [Mermaid source](tools/architecture/dashboard.en.mmd) · [Rebuild instructions](tools/architecture/README.md)
+
+The sections below are dated decisions and observations. Where their assignment or runtime claims conflict with this 2026-10-22 snapshot, use this snapshot; recheck current availability before acting.
 
 ## Model & Efficiency Operational Policy — Gemini 3.8 Flash Baseline, Escalation & Return (2026-10-19 Update)
 
@@ -44,7 +62,7 @@ Public, evidence-aware guidance for coordinating research, implementation, revie
 
 **Why defer:** An extra service adds configuration, credentials, updates, security exposure, observability and incident-recovery work to an already complex environment. Prefer retaining the existing direct MiMo→Open WebUI workflow for now. Reconsider only when multiple active endpoints/clients create a measurable management problem. Before any pilot: compare direct connection vs gateway maintenance burden, check version/security advisories, validate local-only access, secret management, failure behavior, rate limits, usage/cost reporting, and rollback. DeepSeek selection or migration is likewise **undecided**; benchmark identical real tasks first. Nothing here modifies production configuration, incurs charges or adds credentials.
 
-Mermaid source for the Pele-format architecture SVG: [`assets/workflow-architecture-2026-10-19.mmd`](assets/workflow-architecture-2026-10-19.mmd). Labels updated 2026-10-19; proposed MiMo uses are not live automation.
+Historical Mermaid source for the 2026-10-19 architecture diagram: [`assets/workflow-architecture-2026-10-19.mmd`](assets/workflow-architecture-2026-10-19.mmd). Labels updated 2026-10-19; proposed MiMo uses are not live automation.
 
 ## Daybreak models and authorized OSS security review (2026-10-16)
 

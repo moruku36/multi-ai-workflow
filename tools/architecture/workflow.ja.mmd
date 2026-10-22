@@ -1,7 +1,7 @@
 flowchart TB
-    O["本人<br/>方針・最終承認"] --> D["Dottie 調整<br/>Codexは受け渡し・結果確認のみ"]
-    D --> F["Antigravity · Gemini 3.8 Flash<br/>主体の実作業"]
-    F --> R["独立手動レビュー<br/>MiMo V2.6 Pro<br/>既存 Open WebUI で実利用"]
-    R --> G["テスト・各種確認<br/>本人承認 → 成果物"]
-    F -. "難所のみ・手動" .-> H["上位モデル<br/>難所のみ必要な場合"]
-    H -. "Flash に復帰" .-> F
+    O["本人<br/>方針"] --> D["dot<br/>整理・依頼・結果確認"]
+    D --> W["案件で選ぶ担当<br/>Claudeなど認可済みツール／<br/>本人が明示した場合のCodex"]
+    W --> I["指定範囲の実装・テスト・PR"]
+    I --> V["独立検証<br/>Claude実装はCodex、<br/>Codex実装は別provider<br/>利用可能な場合"]
+    V --> G["根拠の確認<br/>テスト・PR・現headのCI"]
+    G --> F["dotが本人へ報告<br/>本人が受入"]

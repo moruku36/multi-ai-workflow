@@ -1,16 +1,34 @@
 # Multi-AI Workflow Architecture
 
-[English](README.md) | [Japanese](README.ja.md)
+[English](README.md) | [日本語](README.ja.md)
 
-ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装、レビュー、文書作成、マルチモーダル作業の進め方を、公開可能な範囲でまとめます。モデル名は本人の運用上の表記であり、API IDや実行時モデルの確認を意味しません。
+認可済みのツール間で実装、検証、報告を調整するための公開資料です。日付付きの節にあるモデル名は本人の運用上の呼称であり、サービスの提供仕様や実行時のモデルIDを確認したものではありません。
 
-![Multi-AI構成：Dottie調整、Gemini 3.8 Flashを主実装、難所またはFlash利用枠不足時はClaude CodeのSonnet 5.5／Opus 5.5かGemini 4 Argon、MiMo V2.6 Proは手動レビューに加えて文書・診断分析の活用を検討、テストと本人承認。](assets/workflow-architecture.ja.svg)
+## 現在の運用 — 2026-10-22
 
-[SVG を拡大して見る](assets/workflow-architecture.ja.svg)。
+これは本人申告に基づく手動運用の状態です。リポジトリ内の確認は文書と図を対象とし、非公開正本の内容やモデルサービスの稼働を検証するものではありません。
 
-> [!NOTE]
-> **現行手動運用と自動化の未検証範囲：**
-> 上図は本人の最新手動運用（本人方針 → Dottie 調整〈Codex は受け渡し・結果確認のみ〉 → Antigravity Gemini 3.8 Flash 実作業 → 難所またはFlash利用枠不足時はClaude Code（Sonnet 5.5／Opus 5.5）かGemini 4 Argonに手動切替し、利用可能ならFlashへ復帰 → 既存 Open WebUI で実利用中の MiMo V2.6 Pro による独立手動レビュー → テスト・本人承認）を示しています。自動配線・自動振分け・自動 API 呼出・自動マージ等の自動化機能は未検証・未導入です。後述の過去記録（2026-10-15 時点の API 展開検討等）にある「候補／未展開」記述と混同しないよう、図は現行の手動運用体制を表しています。
+dotが本人の依頼を整理し、認可済みの適切な担当を選び、結果・テスト・PR・CIを確認して本人に報告します。最終判断と受入は本人が行います。担当と実行環境は案件、本人の最新指示、接続状況により選び、Windowsとクラウドを使い分けます。公開ソースや合成テストは非公開の実データと分離します。
+
+- Claudeで実装しCodexで独立検証する案件があります。本人がCodexを明示した案件では、Codexが実装・テスト・PR準備まで進めます。全案件にClaude先行やGemini先行を固定しません。
+- Windows CLIが環境上の問題で止まった場合も、案件ごとに独立して認可されたGUI経路や公開コードのクラウド検証だけを使います。セキュリティ制限を維持し、権限拒否を別経路で回避しません。
+- ダッシュボードの正本はWindowsの非公開ボードです。差分inboxは受け渡しであり、適用済みではありません。更新担当はタスク名・目的・本人の最新指示を照合し、一意IDと元日時を保ち、バックアップ・読戻し・receiptを確認してから完了扱いにします。公開・ローカル画面との同期は別に確認します。
+- 通常設計の更新担当はAntigravityです。2026-10-22は利用不能となり、本人の担当変更指示を経て、Codexが直接依頼による一時的な正本更新を通常のBacklog CLIで完了しました。保存済みの定期handoff指示は受け渡し専用のままで、Codexによる自動適用へ移っていません。
+- MiMo、Qwenなどは日付付きの公開記録にある状態を維持します。この更新だけで新たな実稼働は認定しません。
+
+### 案件と検証の流れ
+
+![dotが認可済みの実装、独立検証、根拠確認、本人受入を調整する案件フロー。](assets/workflow-architecture.ja.svg)
+
+[SVGを拡大](assets/workflow-architecture.ja.svg) · [Mermaid原本](tools/architecture/workflow.ja.mmd)
+
+### ダッシュボードの正本境界
+
+![Windowsの非公開正本、差分inbox、認可された更新担当、receipt、公開画面への別工程の同期。](assets/dashboard-boundary.ja.svg)
+
+[SVGを拡大](assets/dashboard-boundary.ja.svg) · [Mermaid原本](tools/architecture/dashboard.ja.mmd) · [再生成手順](tools/architecture/README.md)
+
+以下は日付付きの判断と観測の記録です。担当や稼働状態がこの2026-10-22の記述と異なる場合は、この節を参照し、実行時の利用可否を改めて確認してください。
 
 ## モデル・効率化運用方針 — Gemini 3.8 Flash ベースと昇格・復帰（2026-10-19更新）
 
@@ -44,7 +62,7 @@ ChatGPT, Codex, Claude Code, Gemini/Antigravity, Qwenを使った調査、実装
 
 **保留理由と判断基準：** 現行環境だけでも複雑であり、ゲートウェイを追加するとサービス運用・設定・認証情報・アップデート・セキュリティ・障害復旧の負荷が増える。当面はMiMo→Open WebUIの直接接続を維持。複数API・複数クライアントの管理負担が実測で問題になった場合に再検討する。PoC前には直接接続との運用コスト比較、修正版・脆弱性情報、LAN内限定アクセス、秘密情報管理、障害時動作、制限・課金可視化、ロールバックを確認。DeepSeekへの移行判断も**未決定**とし、同じ実タスクで品質・時間・費用を比較する。本追記による稼働環境変更・新規契約・課金・認証情報追加は行わない。
 
-Mermaid source for the Pele-format architecture SVG: [`assets/workflow-architecture-2026-10-19.mmd`](assets/workflow-architecture-2026-10-19.mmd). Labels updated 2026-10-19; proposed MiMo uses are not live automation.
+2026-10-19時点の構成図のMermaid原本：[`assets/workflow-architecture-2026-10-19.ja.mmd`](assets/workflow-architecture-2026-10-19.ja.mmd)。2026-10-19にラベルを更新した記録であり、MiMoの追加用途が実稼働したことは示しません。
 
 ## Daybreak対象モデルと認可されたOSSセキュリティレビュー（2026-10-16）
 
