@@ -150,6 +150,10 @@ Keep **verified/merged**, **local/offline**, **runtime pending**, and **proposal
 
 This is a public repository. Do not include private conversations, personal or family details, credentials, login destinations, quota images, exact account balances, or logs containing them. Describe only general operating constraints. Do not add services, incur charges, generate API keys, change application execution configuration, or bypass security controls as part of documentation work.
 
+## Future study: Agent KV cache control
+
+A [study proposal based on Cache Engineering for Agents](docs/cache-engineering-future-study.md) separates provider prompt caching, summarization and direct KV control. AKV adoption, measured savings and code changes have not occurred.
+
 ## Repository map
 
 - `README.md` / `README.ja.md`: English and Japanese overview
