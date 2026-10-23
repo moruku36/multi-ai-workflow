@@ -4,7 +4,7 @@
 
 **Status: proposal, not implemented.** This document does not claim that the current workflow uses AKV, has achieved a cost saving, or can perform KV operations through any provider API.
 
-[Cache Engineering for Agents (arXiv:2610.28577v1)](https://arxiv.org/html/2610.28577v1) proposes `drop` and `repos` operations over KV state without editing the text trajectory. The companion survey note planned in the research repository records the authors' evidence and its limits. We have not checked the author code or ported it here.
+[Cache Engineering for Agents (arXiv:2610.28577v1)](https://arxiv.org/html/2610.28577v1) proposes `drop` and `repos` operations over KV state without editing the text trajectory. The companion survey in the research repository records the authors' evidence and its limits. We have not checked the author code or ported it here.
 
 This could apply to long tool-using trajectories on a serving backend under our control. Provider prompt caching, text summarization, and direct KV operations are separate mechanisms. The cache-hit hypothesis in the existing [MiMo efficiency review](reports/2026-10-19-mimo-efficiency-review.md) also needs separate measurement.
 
