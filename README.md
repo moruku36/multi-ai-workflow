@@ -4,6 +4,10 @@
 
 Public guidance for coordinating implementation, review and reporting across authorized tools. The model names in dated sections are owner-reported operating labels, not verified service specifications or runtime identities.
 
+## Proposed communication and quality foundation — 2026-10-26
+
+**Design for discussion, not deployed.** The [Mailbox-first roadmap](docs/mailbox-quality-roadmap-2026-10-26.md) ([日本語](docs/mailbox-quality-roadmap-2026-10-26.ja.md)) separates deterministic tests/Ruff/Semgrep CE, bounded worker communication, ordinary OpenCodeReview + MiMo API review, and exceptional Cloudflare focused audits. Communication acceptance precedes full reviewer integration. A dedicated GitHub + mock round trip and same-journal idle are confirmed; real AI adapters and multi-AI orchestration remain unfinished. Existing required tests and human acceptance remain. No installation, API call, credentials, scheduling or auto-merge is enabled by this proposal.
+
 ## Current operation — 2026-10-22
 
 This is an owner-reported manual operating snapshot. Repository checks verify these documents and diagrams, not private board contents or live model services.
