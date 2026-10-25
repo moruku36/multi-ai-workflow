@@ -4,6 +4,10 @@
 
 認可済みのツール間で実装、検証、報告を調整するための公開資料です。日付付きの節にあるモデル名は本人の運用上の呼称であり、サービスの提供仕様や実行時のモデルIDを確認したものではありません。
 
+## 通信・品質基盤の設計案 — 2026-10-26
+
+**相談用の設計・未導入。** [Mailbox を土台にした段階導入案](docs/mailbox-quality-roadmap-2026-10-26.ja.md)（[English](docs/mailbox-quality-roadmap-2026-10-26.md)）では、決定的な tests / Ruff / Semgrep CE、範囲を限った worker 通信、通常の OpenCodeReview + MiMo API review、高リスク時だけの Cloudflare focused audit を分離します。本格 reviewer 接続は通信基盤の受入後です。GitHub + mock 専用試験の一往復と同一 journal idle は確認済みですが、実 AI adapter は未実装、複数 AI orchestration は未完成です。既存の必須テストと人の受入を維持し、この提案で導入・API 呼出・認証追加・定期実行・自動マージは開始しません。
+
 ## 現在の運用 — 2026-10-22
 
 これは本人申告に基づく手動運用の状態です。リポジトリ内の確認は文書と図を対象とし、非公開正本の内容やモデルサービスの稼働を検証するものではありません。
