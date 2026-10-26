@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.1",
+  "description": "Ground truth metadata for P3 synthetic benchmark (strictly excluded from reviewer inputs)",
+  "samples": {
+    "clean_refactor.patch": {
+      "type": "clean",
+      "target_file": "app/service/data_processor.py",
+      "expected_defects_count": 0,
+      "purpose": "False positive (hallucination / nitpick) measurement",
+      "acceptable_findings": []
+    },
+    "defect_seeded.patch": {
+      "type": "defect_seeded",
+      "target_file": "app/service/file_handler.py",
+      "expected_defects_count": 4,
+      "purpose": "Recall (missed defects) and severity detection measurement",
+      "ground_truth_defects": [
+        {
+          "id": "DEFECT-01",
+          "severity": "CRITICAL",
+          "category": "security/path_traversal",
+          "target_line": 11,
+          "description": "Path traversal vulnerability: user-supplied file path joined without resolution or containment check",
+          "cwe": "CWE-22"
+        },
+        {
+          "id": "DEFECT-02",
+          "severity": "MEDIUM",
+          "category": "reliability/resource_leak",
+          "target_line": 12,
+          "description": "Resource leak: file handle opened without context manager (with open) and never closed",
+          "cwe": "CWE-775"
+        },
+        {
+          "id": "DEFECT-03",
+          "severity": "CRITICAL",
+          "category": "security/code_injection",
+          "target_line": 18,
+          "description": "Arbitrary code execution: eval() used on unsanitized user-supplied expression",
+          "cwe": "CWE-95"
+        },
+        {
+          "id": "DEFECT-04",
+          "severity": "LOW",
+          "category": "reliability/silent_failure",
+          "target_line": 20,
+          "description": "Silent failure: bare except block catches Exception and passes without logging",
+          "cwe": "CWE-391"
+        }
+      ]
+    }
+  }
+}

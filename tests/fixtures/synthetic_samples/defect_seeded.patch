@@ -1,0 +1,24 @@
+diff --git a/app/service/file_handler.py b/app/service/file_handler.py
+--- a/app/service/file_handler.py
++++ b/app/service/file_handler.py
+@@ -7,8 +7,15 @@
+     def __init__(self, base_path: str):
+         self.base_path = Path(base_path)
+ 
+-    def read_safe(self, filename: str) -> str:
+-        target = (self.base_path / filename).resolve()
+-        if not target.is_relative_to(self.base_path):
+-            raise ValueError("Path traversal detected")
+-        return target.read_text(encoding="utf-8")
++    def read_unvalidated(self, user_supplied_name: str) -> str:
++        target_path = self.base_path / user_supplied_name
++        f = open(target_path, "r", encoding="utf-8")
++        content = f.read()
++        return content
++
++    def evaluate_filter(self, filter_expr: str, record: dict) -> bool:
++        try:
++            return bool(eval(filter_expr, {"record": record}))
++        except Exception:
++            pass
++        return False
