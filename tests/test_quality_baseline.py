@@ -137,39 +137,129 @@ class QualityBaselineRegressionTests(unittest.TestCase):
                 f"{did} at line {line_no} does not contain '{anchor}': got '{line_content}'",
             )
 
-    def test_validate_reviewer_output_rejects_missing_keys_or_non_mock(self):
-        # 1. 必須キー欠落
-        bad_output_missing_key = {
+    def test_valid_fixtures_accepted_without_errors(self):
+        # 正常 fixture が正しくバリデーションを通過することの検証
+        fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples" / "mock_reviews"
+
+        clean_data = json.loads((fixtures_dir / "mock_review_clean.json").read_text(encoding="utf-8"))
+        errs_clean = eval_ocr_mimo.validate_reviewer_output(
+            clean_data,
+            expected_sample_file="clean_refactor.patch",
+            expected_target_file="app/service/data_processor.py",
+        )
+        self.assertEqual(errs_clean, [], f"clean fixture should have no errors: {errs_clean}")
+
+        defect_data = json.loads((fixtures_dir / "mock_review_defect.json").read_text(encoding="utf-8"))
+        errs_defect = eval_ocr_mimo.validate_reviewer_output(
+            defect_data,
+            expected_sample_file="defect_seeded.patch",
+            expected_target_file="app/service/file_handler.py",
+        )
+        self.assertEqual(errs_defect, [], f"defect fixture should have no errors: {errs_defect}")
+
+    def test_validate_reviewer_output_rejects_non_dict_top_level(self):
+        self.assertTrue(any("dictionary object" in e for e in eval_ocr_mimo.validate_reviewer_output(["not", "a", "dict"])))
+        self.assertTrue(any("dictionary object" in e for e in eval_ocr_mimo.validate_reviewer_output("string")))
+
+    def test_validate_reviewer_output_rejects_invalid_is_mock(self):
+        base = {
             "schema_version": "1.0.0",
-            # missing is_mock
             "sample_file": "clean_refactor.patch",
             "status": "SUCCESS",
             "findings": [],
         }
-        errs = eval_ocr_mimo.validate_reviewer_output(bad_output_missing_key)
-        self.assertTrue(any("is_mock" in e for e in errs))
+        # 文字列 "true" の拒否
+        errs_str = eval_ocr_mimo.validate_reviewer_output({**base, "is_mock": "true"})
+        self.assertTrue(any("boolean true" in e for e in errs_str))
 
-        # 2. is_mock が False（実AI結果との誤混同防止）
-        bad_output_false_mock = {
-            "schema_version": "1.0.0",
-            "is_mock": False,
-            "sample_file": "clean_refactor.patch",
-            "status": "SUCCESS",
-            "findings": [],
-        }
-        errs = eval_ocr_mimo.validate_reviewer_output(bad_output_false_mock)
-        self.assertTrue(any("is_mock" in e for e in errs))
+        # 数値 1 の拒否
+        errs_num = eval_ocr_mimo.validate_reviewer_output({**base, "is_mock": 1})
+        self.assertTrue(any("boolean true" in e for e in errs_num))
 
-        # 3. findings 内の必須フィールド欠落
-        bad_finding = {
+        # False の拒否
+        errs_false = eval_ocr_mimo.validate_reviewer_output({**base, "is_mock": False})
+        self.assertTrue(any("boolean true" in e for e in errs_false))
+
+        # 欠落の拒否
+        errs_none = eval_ocr_mimo.validate_reviewer_output(base)
+        self.assertTrue(any("boolean true" in e for e in errs_none))
+
+    def test_validate_reviewer_output_rejects_invalid_schema_or_status_or_sample(self):
+        base = {
             "schema_version": "1.0.0",
             "is_mock": True,
             "sample_file": "clean_refactor.patch",
             "status": "SUCCESS",
-            "findings": [{"file": "test.py", "line": 10}],  # missing severity, category
+            "findings": [],
         }
-        errs = eval_ocr_mimo.validate_reviewer_output(bad_finding)
+        # 非対応 schema_version
+        errs_ver = eval_ocr_mimo.validate_reviewer_output({**base, "schema_version": "2.0.0"})
+        self.assertTrue(any("Unsupported schema_version" in e for e in errs_ver))
+
+        # 非成功 status
+        errs_st = eval_ocr_mimo.validate_reviewer_output({**base, "status": "FAILED"})
+        self.assertTrue(any("not a scorable success status" in e for e in errs_st))
+
+        # sample_file 不一致
+        errs_sf = eval_ocr_mimo.validate_reviewer_output(
+            base, expected_sample_file="other_sample.patch"
+        )
+        self.assertTrue(any("sample_file mismatch" in e for e in errs_sf))
+
+    def test_validate_reviewer_output_rejects_invalid_finding_fields(self):
+        base = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+        }
+        target = "app/service/file_handler.py"
+
+        # 1. file 不一致
+        bad_file = {**base, "findings": [{"file": "wrong_file.py", "line": 10, "severity": "LOW", "category": "sec/x"}]}
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_file, expected_target_file=target)
+        self.assertTrue(any("file' mismatch" in e for e in errs))
+
+        # 2. line が bool (True)
+        bad_line_bool = {**base, "findings": [{"file": target, "line": True, "severity": "LOW", "category": "sec/x"}]}
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_line_bool, expected_target_file=target)
+        self.assertTrue(any("excluding booleans" in e for e in errs))
+
+        # 3. line が 0 または負数
+        bad_line_zero = {**base, "findings": [{"file": target, "line": 0, "severity": "LOW", "category": "sec/x"}]}
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_line_zero, expected_target_file=target)
+        self.assertTrue(any("positive integer" in e for e in errs))
+
+        # 4. severity が不正
+        bad_sev = {**base, "findings": [{"file": target, "line": 10, "severity": "INFORMATIONAL", "category": "sec/x"}]}
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_sev, expected_target_file=target)
         self.assertTrue(any("severity" in e for e in errs))
+
+        # 5. category が不正（スラッシュ区切りなし）
+        bad_cat = {**base, "findings": [{"file": target, "line": 10, "severity": "LOW", "category": "nosep"}]}
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_cat, expected_target_file=target)
+        self.assertTrue(any("category" in e for e in errs))
+
+    def test_execution_metadata_omitted_normalizes_to_unknown(self):
+        # execution_metadata が省略された場合、エラーにならず全項目が unknown に正規化されること
+        minimal_output = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "clean_refactor.patch",
+            "status": "SUCCESS",
+            "findings": [],
+        }
+        errs = eval_ocr_mimo.validate_reviewer_output(minimal_output)
+        self.assertEqual(errs, [])
+
+        score = eval_ocr_mimo.score_review_findings(
+            "clean_refactor.patch",
+            minimal_output,
+            {"expected_defects_count": 0, "ground_truth_defects": []},
+        )
+        obs = score["observed_execution"]
+        for k in ["latency_sec", "input_tokens", "output_tokens", "cost_usd", "model_id"]:
+            self.assertEqual(obs[k], "unknown", f"{k} should be normalized to unknown, not 0")
 
     def test_scoring_categorizes_matched_duplicate_missed_pending(self):
         fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples"
@@ -182,20 +272,15 @@ class QualityBaselineRegressionTests(unittest.TestCase):
         score = eval_ocr_mimo.score_review_findings("defect_seeded.patch", mock_data, sample_meta)
         m = score["metrics"]
 
-        # 期待値: 3 matched, 1 duplicate, 1 missed, 1 pending
         self.assertEqual(m["matched_defects"], 3)
         self.assertEqual(m["duplicate_findings"], 1)
         self.assertEqual(m["missed_defects"], 1)
         self.assertEqual(m["pending_human_review"], 1)
         self.assertTrue(m["human_verification_required"])
-        # usage / cost / latency が未取得なら unknown
         self.assertEqual(score["observed_execution"]["latency_sec"], "unknown")
-        self.assertEqual(score["observed_execution"]["input_tokens"], "unknown")
-        self.assertEqual(score["observed_execution"]["output_tokens"], "unknown")
         self.assertEqual(score["observed_execution"]["cost_usd"], "unknown")
 
     def test_scoring_divergent_content_on_same_line_marked_pending(self):
-        # 行番号は11でDEFECT-01(Path traversal)と一致するが、内容が全く無関係な場合
         divergent_review = {
             "schema_version": "1.0.0",
             "is_mock": True,
@@ -220,7 +305,6 @@ class QualityBaselineRegressionTests(unittest.TestCase):
         score = eval_ocr_mimo.score_review_findings("defect_seeded.patch", divergent_review, sample_meta)
         m = score["metrics"]
 
-        # 行番号一致だけで正解にせず、pending_human_review に分類されること
         self.assertEqual(m["matched_defects"], 0)
         self.assertEqual(m["pending_human_review"], 1)
         self.assertEqual(m["missed_defects"], 4)
@@ -231,7 +315,6 @@ class QualityBaselineRegressionTests(unittest.TestCase):
             tmp_root = Path(tmpdir)
             fdir = tmp_root / "tests" / "fixtures" / "synthetic_samples"
             fdir.mkdir(parents=True)
-            # マニフェストだけ用意し、mock_reviews は用意しない
             manifest = {
                 "samples": {
                     "clean_refactor.patch": {"type": "clean"},

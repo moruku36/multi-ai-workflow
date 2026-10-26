@@ -39,7 +39,7 @@
 - **厳格化基準**:
   - 必須テストスイートの欠落、または実行テスト数 0 件の場合は成功扱いとせず直ちに FAIL とする。
   - スキップ件数（`tests_skipped`）を分離して明示。
-  - テストおよびfixtureの整合性を検証する小さな回帰テスト (`tests/test_quality_baseline.py`, 11件) を配備・全件パス。
+  - テストおよびfixtureの整合性を検証する小さな回帰テスト (`tests/test_quality_baseline.py`, 16件) を配備・全件パス。
 
 ### 1.3 初回試行パイロットリポジトリの提案
 
@@ -107,7 +107,14 @@
 レビュアー結果の受入れスキーマと採点ロジックをオフラインで実装完了。
 実AIの品質評価ではなく、受入れ・採点アルゴリズムの検証として模擬（mock）結果 fixture (`tests/fixtures/synthetic_samples/mock_reviews/`) を用いて検証。
 
-- **受入れ最小形式**: `schema_version`, `is_mock: true`（実AI結果との誤認防止）, `sample_file`, `status`, `findings`（`file`, `line`, `severity`, `category` 必須）。
+- **受入れ形式**:
+  - 最上位: 辞書（dict）必須。
+  - `is_mock`: 真偽値の `true` のみ許可（文字列 `"true"` や数値 `1` は拒否）。
+  - `schema_version`: 対応版 (`1.0.0`) のみ許可。
+  - `status`: 採点可能な成功状態 (`SUCCESS`) のみ許可。
+  - `sample_file`: 採点対象パッチと一致すること。
+  - `findings`: 各要素が辞書であり、`file`（対象ファイル一致）、`line`（bool を除く正の整数）、`severity`（CRITICAL/MAJOR/MEDIUM/LOW）、`category`（`namespace/name` 形式）を必須検査。
+  - `execution_metadata`: 省略可能。省略時または未取得時は `latency_sec`, `input_tokens`, `output_tokens`, `cost_usd`, `model_id` を一律 `unknown` へ正規化（欠測を `0` にはしない）。
 - **採点ルール**:
   1. **指摘の一致 (Matched)**: 行番号の一致に加え、カテゴリや内容が合致している場合のみ一致と判定。
   2. **重複指摘 (Duplicate)**: 同一欠陥に対して複数の指摘がなされた場合、重複として分離記録。
@@ -157,5 +164,5 @@ Cloudflare の `security-audit-skill` は全PRに一律適用するゼロトー�
 
 ## 5. 現在の状態と次フェーズへの引き継ぎ
 
-- **現在のステータス**: P1 最小整備完了、P3 合成サンプル・入力準備および受入れ・採点オフライン検証完了（オフライン dry-run 検証済み、回帰テスト 11 件全件合格）。
+- **現在のステータス**: P1 最小整備完了、P3 合成サンプル・入力準備および厳格受入れ・採点オフライン検証完了（オフライン dry-run 検証済み、回帰テスト 16 件全件合格）。
 - **停止条件**: 本フェーズの目標を達成したため、自動でマージや次フェーズ（実通信、P2、P4）へ進まず停止。

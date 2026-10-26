@@ -39,7 +39,7 @@ Executes check-only verification without auto-fixing or full reformatting.
 - **Strict Quality Criteria**:
   - Missing required suites or 0 executed tests are treated as immediate FAIL.
   - Test skips (`tests_skipped`) are tracked and reported separately.
-  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 11 tests) verifies runner and fixture integrity.
+  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 16 tests) verifies runner and fixture integrity.
 
 ### 1.3 Proposal for Initial Pilot Repository
 
@@ -106,7 +106,14 @@ The evaluation will record the following metrics independently:
 The reviewer output ingestion schema and scoring logic have been implemented offline.
 This verifies the evaluation pipeline using mock fixtures (`tests/fixtures/synthetic_samples/mock_reviews/`) without claiming AI evaluation results.
 
-- **Minimal Ingestion Schema**: `schema_version`, `is_mock: true` (preventing confusion with real AI outputs), `sample_file`, `status`, `findings` (with required `file`, `line`, `severity`, `category`).
+- **Ingestion Schema**:
+  - Top level: Dictionary object required.
+  - `is_mock`: Boolean `true` only (strings such as `"true"` or numbers like `1` are rejected).
+  - `schema_version`: Supported version (`1.0.0`) only.
+  - `status`: Scorable success status (`SUCCESS`) only.
+  - `sample_file`: Must match the evaluation sample patch.
+  - `findings`: List of dicts, with `file` (matching target), `line` (positive int, booleans excluded), `severity` (CRITICAL/MAJOR/MEDIUM/LOW), and `category` (`namespace/name` pattern).
+  - `execution_metadata`: Optional. When omitted or null, `latency_sec`, `input_tokens`, `output_tokens`, `cost_usd`, and `model_id` normalize to `unknown` (missing data is never converted to `0`).
 - **Scoring Rules**:
   1. **Matched Findings**: Strict line match combined with category/content keyword match.
   2. **Duplicate Findings**: Multiple findings targeting the same ground truth defect are segregated as duplicates.
@@ -156,5 +163,5 @@ Upon user authorization, live testing can proceed under the following constraint
 
 ## 5. Current State & Handoff
 
-- **Status**: P1 minimal setup completed; P3 synthetic preparation and offline scoring verified (offline dry-run verified, 11 regression tests passing).
+- **Status**: P1 minimal setup completed; P3 synthetic preparation and offline scoring verified (offline dry-run verified, 16 regression tests passing).
 - **Handoff**: Stopping execution without automatic merge or proceeding to subsequent phases (P2 live communication or P4 integration).

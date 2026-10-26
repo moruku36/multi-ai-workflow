@@ -14,9 +14,16 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
+
+
+SUPPORTED_SCHEMA_VERSIONS = {"1.0.0"}
+ALLOWED_REVIEW_STATUSES = {"SUCCESS"}
+ALLOWED_SEVERITIES = {"CRITICAL", "MAJOR", "MEDIUM", "LOW"}
+CATEGORY_PATTERN = re.compile(r"^[a-z0-9_-]+/[a-z0-9_-]+$")
 
 
 def load_manifest(manifest_path: Path) -> dict:
@@ -86,33 +93,101 @@ def build_ocr_simulation_payload(patch_info: dict, model_id: str = "mimo-v2.6-pr
     }
 
 
-def validate_reviewer_output(review_data: dict) -> list[str]:
+def validate_reviewer_output(
+    review_data: any,
+    expected_sample_file: str | None = None,
+    expected_target_file: str | None = None,
+) -> list[str]:
     """
     Reviewerから受信したJSONデータの形式を厳格に検査する。
-    必須キー欠落や空データ、不正形式を検知しエラーリストを返す。
+    1. 最上位は dict であること。
+    2. is_mock は真偽値 True のみ（文字列 'true' や数値 1 は拒否）。
+    3. schema_version は対応版 (1.0.0)、status は採点可能な成功状態 (SUCCESS)。
+    4. sample_file は採点対象パッチと一致すること。
+    5. 各 finding は dict であり、file は対象ファイルと一致、line は正の整数（bool 除外）、
+       severity と category は定めた形式・値であること。
+    6. execution_metadata は省略可能（省略時は unknown へ正規化）。存在するなら dict であること。
     """
     errors = []
-    required_keys = ["schema_version", "is_mock", "sample_file", "status", "findings"]
-    for k in required_keys:
-        if k not in review_data:
-            errors.append(f"Missing required key in reviewer output: '{k}'")
 
-    if not review_data.get("is_mock", False):
-        errors.append("Field 'is_mock' must be true for mock evaluation fixtures (distinguishing from real AI)")
+    # 1. 最上位チェック
+    if not isinstance(review_data, dict):
+        return ["Reviewer output must be a JSON dictionary object"]
 
+    # 2. is_mock チェック（真偽値 True のみ許可、型強制や bool 以外の真偽表現は拒否）
+    is_mock = review_data.get("is_mock")
+    if type(is_mock) is not bool or is_mock is not True:
+        errors.append(
+            f"Field 'is_mock' must be boolean true (got {type(is_mock).__name__}: {is_mock!r})"
+        )
+
+    # 3. schema_version チェック
+    schema_ver = review_data.get("schema_version")
+    if schema_ver not in SUPPORTED_SCHEMA_VERSIONS:
+        errors.append(
+            f"Unsupported schema_version: {schema_ver!r} (supported: {sorted(SUPPORTED_SCHEMA_VERSIONS)})"
+        )
+
+    # 4. status チェック（採点可能な成功状態のみ）
+    status = review_data.get("status")
+    if status not in ALLOWED_REVIEW_STATUSES:
+        errors.append(
+            f"Reviewer status {status!r} is not a scorable success status (allowed: {sorted(ALLOWED_REVIEW_STATUSES)})"
+        )
+
+    # 5. sample_file チェック
+    sample_file = review_data.get("sample_file")
+    if not isinstance(sample_file, str) or not sample_file.strip():
+        errors.append("Field 'sample_file' must be a non-empty string")
+    elif expected_sample_file and sample_file != expected_sample_file:
+        errors.append(
+            f"sample_file mismatch: expected {expected_sample_file!r}, got {sample_file!r}"
+        )
+
+    # 6. execution_metadata チェック（省略可能、指定時は dict）
+    if "execution_metadata" in review_data and review_data["execution_metadata"] is not None:
+        if not isinstance(review_data["execution_metadata"], dict):
+            errors.append("Field 'execution_metadata' must be a dictionary when provided")
+
+    # 7. findings チェック
     findings = review_data.get("findings")
     if not isinstance(findings, list):
-        errors.append("Field 'findings' must be a list")
+        errors.append("Field 'findings' must be a list of finding objects")
     else:
         for idx, f in enumerate(findings):
             if not isinstance(f, dict):
-                errors.append(f"Finding at index {idx} is not a dictionary")
+                errors.append(f"Finding at index {idx} must be a dictionary object")
                 continue
-            for fk in ["file", "line", "severity", "category"]:
-                if fk not in f:
-                    errors.append(f"Finding at index {idx} missing required key: '{fk}'")
-            if "line" in f and not isinstance(f["line"], int):
-                errors.append(f"Finding at index {idx} 'line' must be an integer")
+
+            # 7.1 file チェック
+            f_file = f.get("file")
+            if not isinstance(f_file, str) or not f_file.strip():
+                errors.append(f"Finding [{idx}] 'file' must be a non-empty string")
+            elif expected_target_file and f_file != expected_target_file:
+                errors.append(
+                    f"Finding [{idx}] 'file' mismatch: expected {expected_target_file!r}, got {f_file!r}"
+                )
+
+            # 7.2 line チェック（bool を除く正の整数）
+            f_line = f.get("line")
+            if type(f_line) is not int or isinstance(f_line, bool) or f_line <= 0:
+                errors.append(
+                    f"Finding [{idx}] 'line' must be a positive integer excluding booleans (got {f_line!r})"
+                )
+
+            # 7.3 severity チェック
+            f_sev = f.get("severity")
+            if f_sev not in ALLOWED_SEVERITIES:
+                errors.append(
+                    f"Finding [{idx}] 'severity' {f_sev!r} invalid (allowed: {sorted(ALLOWED_SEVERITIES)})"
+                )
+
+            # 7.4 category チェック
+            f_cat = f.get("category")
+            if not isinstance(f_cat, str) or not CATEGORY_PATTERN.match(f_cat):
+                errors.append(
+                    f"Finding [{idx}] 'category' {f_cat!r} invalid (must match pattern 'namespace/name')"
+                )
 
     return errors
 
@@ -122,6 +197,7 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
     Reviewerの指摘とGround Truth（正解データ）を突合・採点する。
     行番号一致だけで機械的に正解とせず、カテゴリや内容が異なる場合は「判定保留（人による確認要）」とする。
     重複指摘や見逃しも個別に集計する。
+    execution_metadata は省略時 unknown へ正規化し、欠測を 0 にはしない。
     """
     gt_defects = sample_meta.get("ground_truth_defects", [])
     findings = review_data.get("findings", [])
@@ -132,13 +208,12 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
     unmatched_records = []
     gt_matched_map: dict[str, list[dict]] = {d["id"]: [] for d in gt_defects}
 
-    # 1. 各指摘について、どの正解欠陥に該当するか判定
+    # 各指摘について、どの正解欠陥に該当するか判定
     for f in findings:
         f_line = f.get("line")
         f_cat = f.get("category", "").lower()
         f_msg = (f.get("message", "") + " " + f.get("rationale", "")).lower()
 
-        # 1. まず行番号の完全一致を最優先で探索
         assigned_gt = None
         exact_gt_matches = [gt for gt in gt_defects if gt["target_line"] == f_line]
 
@@ -151,7 +226,7 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
             if cat_match:
                 assigned_gt = target_gt
             else:
-                # 行番号は一致しているがカテゴリ・説明が不一致 -> 行番号だけで正解にせず保留
+                # 行番号は一致しているがカテゴリ・説明が不一致 -> 保留
                 pending_records.append({
                     "finding": f,
                     "candidate_gt": target_gt["id"],
@@ -159,7 +234,6 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
                 })
                 assigned_gt = "PENDING"
         else:
-            # 2. 完全一致がない場合のみ、近接行（±2行以内）を保留候補として探索
             near_gts = [gt for gt in gt_defects if abs(f_line - gt["target_line"]) <= 2]
             if near_gts:
                 pending_records.append({
@@ -190,21 +264,30 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
         else:
             unmatched_records.append(f)
 
-    # 2. 見逃し（MISSED）の算出
+    # 見逃し（MISSED）の算出
     missed_records = [
         gt for gt in gt_defects if len(gt_matched_map[gt["id"]]) == 0
     ]
 
-    # メタデータからの usage / latency / cost 抽出（未取得時は unknown）
-    meta = review_data.get("execution_metadata", {})
-    latency = meta.get("latency_sec")
-    in_tok = meta.get("input_tokens")
-    out_tok = meta.get("output_tokens")
-    cost = meta.get("cost_usd")
+    # メタデータからの usage / latency / cost 抽出（省略・未取得時は unknown へ正規化、欠測を 0 にしない）
+    raw_meta = review_data.get("execution_metadata")
+    if not isinstance(raw_meta, dict):
+        raw_meta = {}
+
+    def normalize_metric(val):
+        return val if val is not None else "unknown"
+
+    observed_execution = {
+        "model_id": normalize_metric(raw_meta.get("model_id")),
+        "latency_sec": normalize_metric(raw_meta.get("latency_sec")),
+        "input_tokens": normalize_metric(raw_meta.get("input_tokens")),
+        "output_tokens": normalize_metric(raw_meta.get("output_tokens")),
+        "cost_usd": normalize_metric(raw_meta.get("cost_usd")),
+    }
 
     return {
         "sample_file": sample_name,
-        "is_mock": review_data.get("is_mock", True),
+        "is_mock": True,
         "total_ground_truth_defects": len(gt_defects),
         "total_reviewer_findings": len(findings),
         "metrics": {
@@ -215,13 +298,7 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
             "unmatched_findings": len(unmatched_records),
             "human_verification_required": len(pending_records) > 0 or len(findings) > 0,
         },
-        "observed_execution": {
-            "model_id": meta.get("model_id", "unknown"),
-            "latency_sec": latency if latency is not None else "unknown",
-            "input_tokens": in_tok if in_tok is not None else "unknown",
-            "output_tokens": out_tok if out_tok is not None else "unknown",
-            "cost_usd": cost if cost is not None else "unknown",
-        },
+        "observed_execution": observed_execution,
         "details": {
             "matched": matched_records,
             "duplicates": duplicate_records,
@@ -234,28 +311,42 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
 
 def evaluate_mock_reviews(fixtures_dir: Path) -> dict:
     """
-    mock_reviews ディレクトリ配下の模擬結果を取り込み、採点・集計する。
+    mock_reviews ディレクトリ配下の模擬結果を取り込み、厳格検査・採点・集計する。
+    不正入力は検査エラーとして採点から除外する。
     """
     manifest_path = fixtures_dir / "synthetic_samples_manifest.json"
     manifest = load_manifest(manifest_path)
     mock_dir = fixtures_dir / "mock_reviews"
 
     mock_map = {
-        "clean_refactor.patch": mock_dir / "mock_review_clean.json",
-        "defect_seeded.patch": mock_dir / "mock_review_defect.json",
+        "clean_refactor.patch": {
+            "path": mock_dir / "mock_review_clean.json",
+            "target_file": "app/service/data_processor.py",
+        },
+        "defect_seeded.patch": {
+            "path": mock_dir / "mock_review_defect.json",
+            "target_file": "app/service/file_handler.py",
+        },
     }
 
     scoring_results = []
     errors = []
 
-    for sample_name, mock_path in mock_map.items():
+    for sample_name, spec in mock_map.items():
+        mock_path = spec["path"]
+        target_file = spec["target_file"]
+
         if not mock_path.exists():
             errors.append(f"Mock review file missing: {mock_path.name}")
             continue
 
         try:
             review_data = json.loads(mock_path.read_text(encoding="utf-8"))
-            val_errors = validate_reviewer_output(review_data)
+            val_errors = validate_reviewer_output(
+                review_data,
+                expected_sample_file=sample_name,
+                expected_target_file=target_file,
+            )
             if val_errors:
                 errors.extend([f"{mock_path.name}: {ve}" for ve in val_errors])
                 continue
