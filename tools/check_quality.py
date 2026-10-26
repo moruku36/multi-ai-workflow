@@ -97,7 +97,6 @@ def check_existing_unittests(repo_root: Path) -> dict:
                 capture_output=True,
                 text=True,
             )
-            # 標準エラー出力から "Ran X tests" および "skipped=Y" を抽出
             ran_count = 0
             skipped_count = 0
             for line in res.stderr.splitlines():
@@ -112,7 +111,6 @@ def check_existing_unittests(repo_root: Path) -> dict:
             total_ran += ran_count
             total_skipped += skipped_count
 
-            # 0件実行、またはプロセス失敗は不可
             suite_passed = (res.returncode == 0) and (ran_count > 0)
             if not suite_passed:
                 failures += 1
@@ -175,6 +173,23 @@ def check_fixtures_integrity(repo_root: Path) -> dict:
                     errors.append(f"Sample patch file missing: {name}")
                 elif sample_file.stat().st_size == 0:
                     errors.append(f"Sample patch file is empty: {name}")
+
+            # mock_reviews の整合性検査
+            mock_dir = fixtures_dir / "mock_reviews"
+            if not mock_dir.exists():
+                errors.append("mock_reviews directory missing")
+            else:
+                for mock_name in ["mock_review_clean.json", "mock_review_defect.json"]:
+                    mp = mock_dir / mock_name
+                    if not mp.exists():
+                        errors.append(f"Mock review file missing: {mock_name}")
+                    else:
+                        try:
+                            m_data = json.loads(mp.read_text(encoding="utf-8"))
+                            if not m_data.get("is_mock", False):
+                                errors.append(f"{mock_name} must have 'is_mock: true'")
+                        except Exception as me:
+                            errors.append(f"Invalid JSON in {mock_name}: {me}")
         except Exception as e:
             errors.append(f"Invalid JSON manifest: {e}")
 
