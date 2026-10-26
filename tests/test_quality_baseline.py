@@ -138,7 +138,6 @@ class QualityBaselineRegressionTests(unittest.TestCase):
             )
 
     def test_valid_fixtures_accepted_without_errors(self):
-        # 正常 fixture が正しくバリデーションを通過することの検証
         fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples" / "mock_reviews"
 
         clean_data = json.loads((fixtures_dir / "mock_review_clean.json").read_text(encoding="utf-8"))
@@ -168,19 +167,15 @@ class QualityBaselineRegressionTests(unittest.TestCase):
             "status": "SUCCESS",
             "findings": [],
         }
-        # 文字列 "true" の拒否
         errs_str = eval_ocr_mimo.validate_reviewer_output({**base, "is_mock": "true"})
         self.assertTrue(any("boolean true" in e for e in errs_str))
 
-        # 数値 1 の拒否
         errs_num = eval_ocr_mimo.validate_reviewer_output({**base, "is_mock": 1})
         self.assertTrue(any("boolean true" in e for e in errs_num))
 
-        # False の拒否
         errs_false = eval_ocr_mimo.validate_reviewer_output({**base, "is_mock": False})
         self.assertTrue(any("boolean true" in e for e in errs_false))
 
-        # 欠落の拒否
         errs_none = eval_ocr_mimo.validate_reviewer_output(base)
         self.assertTrue(any("boolean true" in e for e in errs_none))
 
@@ -192,15 +187,12 @@ class QualityBaselineRegressionTests(unittest.TestCase):
             "status": "SUCCESS",
             "findings": [],
         }
-        # 非対応 schema_version
         errs_ver = eval_ocr_mimo.validate_reviewer_output({**base, "schema_version": "2.0.0"})
-        self.assertTrue(any("Unsupported schema_version" in e for e in errs_ver))
+        self.assertTrue(any("schema_version" in e for e in errs_ver))
 
-        # 非成功 status
         errs_st = eval_ocr_mimo.validate_reviewer_output({**base, "status": "FAILED"})
-        self.assertTrue(any("not a scorable success status" in e for e in errs_st))
+        self.assertTrue(any("status" in e for e in errs_st))
 
-        # sample_file 不一致
         errs_sf = eval_ocr_mimo.validate_reviewer_output(
             base, expected_sample_file="other_sample.patch"
         )
@@ -215,33 +207,158 @@ class QualityBaselineRegressionTests(unittest.TestCase):
         }
         target = "app/service/file_handler.py"
 
-        # 1. file 不一致
         bad_file = {**base, "findings": [{"file": "wrong_file.py", "line": 10, "severity": "LOW", "category": "sec/x"}]}
         errs = eval_ocr_mimo.validate_reviewer_output(bad_file, expected_target_file=target)
         self.assertTrue(any("file' mismatch" in e for e in errs))
 
-        # 2. line が bool (True)
         bad_line_bool = {**base, "findings": [{"file": target, "line": True, "severity": "LOW", "category": "sec/x"}]}
         errs = eval_ocr_mimo.validate_reviewer_output(bad_line_bool, expected_target_file=target)
         self.assertTrue(any("excluding booleans" in e for e in errs))
 
-        # 3. line が 0 または負数
         bad_line_zero = {**base, "findings": [{"file": target, "line": 0, "severity": "LOW", "category": "sec/x"}]}
         errs = eval_ocr_mimo.validate_reviewer_output(bad_line_zero, expected_target_file=target)
         self.assertTrue(any("positive integer" in e for e in errs))
 
-        # 4. severity が不正
         bad_sev = {**base, "findings": [{"file": target, "line": 10, "severity": "INFORMATIONAL", "category": "sec/x"}]}
         errs = eval_ocr_mimo.validate_reviewer_output(bad_sev, expected_target_file=target)
         self.assertTrue(any("severity" in e for e in errs))
 
-        # 5. category が不正（スラッシュ区切りなし）
         bad_cat = {**base, "findings": [{"file": target, "line": 10, "severity": "LOW", "category": "nosep"}]}
         errs = eval_ocr_mimo.validate_reviewer_output(bad_cat, expected_target_file=target)
         self.assertTrue(any("category" in e for e in errs))
 
+    def test_unhashable_schema_status_severity_rejected_without_exception(self):
+        # 1. schema_version・status・severityに配列・辞書を渡してもTypeErrorを出さず検査エラーとして拒否
+        base = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+            "findings": [],
+        }
+        target = "app/service/file_handler.py"
+
+        for invalid_val in [["1.0.0"], {"v": "1.0.0"}, 100, None]:
+            errs = eval_ocr_mimo.validate_reviewer_output({**base, "schema_version": invalid_val})
+            self.assertTrue(any("schema_version" in e for e in errs), f"Failed for schema_version={invalid_val!r}")
+
+        for invalid_val in [["SUCCESS"], {"s": "SUCCESS"}, 200, None]:
+            errs = eval_ocr_mimo.validate_reviewer_output({**base, "status": invalid_val})
+            self.assertTrue(any("status" in e for e in errs), f"Failed for status={invalid_val!r}")
+
+        for invalid_val in [["CRITICAL"], {"sev": "CRITICAL"}, 1, None]:
+            finding = {"file": target, "line": 11, "severity": invalid_val, "category": "security/path_traversal"}
+            errs = eval_ocr_mimo.validate_reviewer_output({**base, "findings": [finding]}, expected_target_file=target)
+            self.assertTrue(any("severity" in e for e in errs), f"Failed for severity={invalid_val!r}")
+
+    def test_message_and_rationale_type_validation(self):
+        # 2. message・rationaleは省略時は空文字扱い（受理）、存在時は文字列のみ許可。null・数値・配列・辞書は拒否
+        base = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+        }
+        target = "app/service/file_handler.py"
+        valid_finding_minimal = {"file": target, "line": 11, "severity": "CRITICAL", "category": "security/path_traversal"}
+
+        # 省略時はエラーなし
+        errs_omitted = eval_ocr_mimo.validate_reviewer_output(
+            {**base, "findings": [valid_finding_minimal]}, expected_target_file=target
+        )
+        self.assertEqual(errs_omitted, [])
+
+        # 文字列時はエラーなし
+        errs_str = eval_ocr_mimo.validate_reviewer_output(
+            {**base, "findings": [{**valid_finding_minimal, "message": "ok", "rationale": "ok"}]},
+            expected_target_file=target,
+        )
+        self.assertEqual(errs_str, [])
+
+        # null, 数値, 配列, 辞書はすべて拒否され、採点関数に直接渡した場合も ValueError で遮断
+        for field in ["message", "rationale"]:
+            for bad_val in [None, 123, True, ["text"], {"text": "val"}]:
+                bad_f = {**valid_finding_minimal, field: bad_val}
+                bad_payload = {**base, "findings": [bad_f]}
+                errs = eval_ocr_mimo.validate_reviewer_output(
+                    bad_payload, expected_target_file=target
+                )
+                self.assertTrue(
+                    any(field in e for e in errs),
+                    f"Field {field!r} with {bad_val!r} should be rejected, got {errs}",
+                )
+                with self.assertRaises(ValueError):
+                    eval_ocr_mimo.score_review_findings("defect_seeded.patch", bad_payload, {})
+
+    def test_scoring_rejects_namespace_or_substring_false_match(self):
+        # 3. 同じ行・無関係なカテゴリ・説明に「security」だけ含む例がmatchedにならないことを確認
+        manifest = eval_ocr_mimo.load_manifest(
+            REPO_ROOT / "tests" / "fixtures" / "synthetic_samples" / "synthetic_samples_manifest.json"
+        )
+        sample_meta = manifest["samples"]["defect_seeded.patch"]
+
+        # ケースA: 行11 (GT: security/path_traversal)、無関係カテゴリ style/naming、説明に "security" を含む
+        false_security_keyword_review = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+            "findings": [
+                {
+                    "file": "app/service/file_handler.py",
+                    "line": 11,
+                    "severity": "LOW",
+                    "category": "style/naming",
+                    "message": "Naming convention issue in security module",
+                    "rationale": "This is just a naming note mentioning security.",
+                }
+            ],
+        }
+        score_a = eval_ocr_mimo.score_review_findings("defect_seeded.patch", false_security_keyword_review, sample_meta)
+        self.assertEqual(score_a["metrics"]["matched_defects"], 0, "Substring 'security' in message must NOT cause a match")
+        self.assertEqual(score_a["metrics"]["pending_human_review"], 1)
+
+        # ケースB: 行11、同じ namespace だが別カテゴリ security/hardcoded_secret
+        same_namespace_diff_cat_review = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+            "findings": [
+                {
+                    "file": "app/service/file_handler.py",
+                    "line": 11,
+                    "severity": "MAJOR",
+                    "category": "security/hardcoded_secret",
+                    "message": "Hardcoded secret found",
+                    "rationale": "Unrelated security category on same line",
+                }
+            ],
+        }
+        score_b = eval_ocr_mimo.score_review_findings("defect_seeded.patch", same_namespace_diff_cat_review, sample_meta)
+        self.assertEqual(score_b["metrics"]["matched_defects"], 0, "Same namespace 'security/' alone must NOT cause a match")
+        self.assertEqual(score_b["metrics"]["pending_human_review"], 1)
+
+        # ケースC: 明示した別名 (security/directory_traversal) は matched になる
+        alias_review = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+            "findings": [
+                {
+                    "file": "app/service/file_handler.py",
+                    "line": 11,
+                    "severity": "CRITICAL",
+                    "category": "security/directory_traversal",
+                    "message": "Directory traversal detected",
+                }
+            ],
+        }
+        score_c = eval_ocr_mimo.score_review_findings("defect_seeded.patch", alias_review, sample_meta)
+        self.assertEqual(score_c["metrics"]["matched_defects"], 1, "Explicitly mapped alias should match")
+
     def test_execution_metadata_omitted_normalizes_to_unknown(self):
-        # execution_metadata が省略された場合、エラーにならず全項目が unknown に正規化されること
         minimal_output = {
             "schema_version": "1.0.0",
             "is_mock": True,

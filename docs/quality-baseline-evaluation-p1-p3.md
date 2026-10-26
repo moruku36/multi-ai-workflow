@@ -39,7 +39,7 @@ Executes check-only verification without auto-fixing or full reformatting.
 - **Strict Quality Criteria**:
   - Missing required suites or 0 executed tests are treated as immediate FAIL.
   - Test skips (`tests_skipped`) are tracked and reported separately.
-  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 16 tests) verifies runner and fixture integrity.
+  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 19 tests) verifies runner and fixture integrity.
 
 ### 1.3 Proposal for Initial Pilot Repository
 
@@ -109,16 +109,16 @@ This verifies the evaluation pipeline using mock fixtures (`tests/fixtures/synth
 - **Ingestion Schema**:
   - Top level: Dictionary object required.
   - `is_mock`: Boolean `true` only (strings such as `"true"` or numbers like `1` are rejected).
-  - `schema_version`: Supported version (`1.0.0`) only.
-  - `status`: Scorable success status (`SUCCESS`) only.
+  - `schema_version`: Type-checked (string) and validated against supported version (`1.0.0`) only (lists/dicts rejected without exception).
+  - `status`: Type-checked (string) and validated against scorable success status (`SUCCESS`) only.
   - `sample_file`: Must match the evaluation sample patch.
-  - `findings`: List of dicts, with `file` (matching target), `line` (positive int, booleans excluded), `severity` (CRITICAL/MAJOR/MEDIUM/LOW), and `category` (`namespace/name` pattern).
+  - `findings`: List of dicts, with `file` (matching target), `line` (positive int, booleans excluded), `severity` (type-checked string in CRITICAL/MAJOR/MEDIUM/LOW), and `category` (`namespace/name` pattern). `message` and `rationale` are optional (normalized to empty string when omitted) and must be strings when present (`null`, numbers, arrays, and dicts are rejected).
   - `execution_metadata`: Optional. When omitted or null, `latency_sec`, `input_tokens`, `output_tokens`, `cost_usd`, and `model_id` normalize to `unknown` (missing data is never converted to `0`).
 - **Scoring Rules**:
-  1. **Matched Findings**: Strict line match combined with category/content keyword match.
+  1. **Matched Findings**: Strict line match combined with exact canonical category match or explicitly defined alias (`CATEGORY_ALIASES`) only (namespace-only or message substring matches are never mechanically scored as matched).
   2. **Duplicate Findings**: Multiple findings targeting the same ground truth defect are segregated as duplicates.
   3. **Missed Defects**: Ground truth defects with no corresponding reviewer finding.
-  4. **Pending Human Review**: Line matches with divergent category/content or near-line observations (within ±2 lines) are held as pending human review rather than mechanically scored as correct.
+  4. **Pending Human Review**: Line matches with non-matching categories or near-line observations (within ±2 lines) are held as pending human review rather than mechanically scored as correct.
   5. **Unobserved Metrics**: Execution metrics (latency, token usage, cost) remain `unknown` in mock fixtures, preserving live test boundaries.
 
 ---
@@ -163,5 +163,5 @@ Upon user authorization, live testing can proceed under the following constraint
 
 ## 5. Current State & Handoff
 
-- **Status**: P1 minimal setup completed; P3 synthetic preparation and offline scoring verified (offline dry-run verified, 16 regression tests passing).
+- **Status**: P1 minimal setup completed; P3 synthetic preparation and offline scoring verified (offline dry-run verified, 19 regression tests passing).
 - **Handoff**: Stopping execution without automatic merge or proceeding to subsequent phases (P2 live communication or P4 integration).

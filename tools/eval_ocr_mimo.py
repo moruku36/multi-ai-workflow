@@ -25,6 +25,26 @@ ALLOWED_REVIEW_STATUSES = {"SUCCESS"}
 ALLOWED_SEVERITIES = {"CRITICAL", "MAJOR", "MEDIUM", "LOW"}
 CATEGORY_PATTERN = re.compile(r"^[a-z0-9_-]+/[a-z0-9_-]+$")
 
+# 正規カテゴリに対する明示的な別名対応マップ（部分文字列やnamespaceのみの一致は不許可）
+CATEGORY_ALIASES: dict[str, set[str]] = {
+    "security/path_traversal": {"security/path_traversal", "security/directory_traversal"},
+    "reliability/resource_leak": {"reliability/resource_leak", "reliability/unclosed_resource"},
+    "security/code_injection": {"security/code_injection", "security/eval_injection", "security/rce"},
+    "reliability/silent_failure": {"reliability/silent_failure", "reliability/empty_except"},
+}
+
+
+def is_category_match(finding_cat: str, gt_cat: str) -> bool:
+    """
+    正規カテゴリの完全一致、または明示した別名対応のみを機械的一致と判定する。
+    namespaceのみの一致や説明文の部分文字列では一致としない。
+    """
+    f_norm = finding_cat.strip().lower()
+    gt_norm = gt_cat.strip().lower()
+    if f_norm == gt_norm:
+        return True
+    return f_norm in CATEGORY_ALIASES.get(gt_norm, set())
+
 
 def load_manifest(manifest_path: Path) -> dict:
     if not manifest_path.exists():
@@ -102,11 +122,12 @@ def validate_reviewer_output(
     Reviewerから受信したJSONデータの形式を厳格に検査する。
     1. 最上位は dict であること。
     2. is_mock は真偽値 True のみ（文字列 'true' や数値 1 は拒否）。
-    3. schema_version は対応版 (1.0.0)、status は採点可能な成功状態 (SUCCESS)。
+    3. schema_version・status は文字列型を確認した上で許可値と照合（配列・辞書でも例外を出さず拒否）。
     4. sample_file は採点対象パッチと一致すること。
     5. 各 finding は dict であり、file は対象ファイルと一致、line は正の整数（bool 除外）、
-       severity と category は定めた形式・値であること。
-    6. execution_metadata は省略可能（省略時は unknown へ正規化）。存在するなら dict であること。
+       severity・category は型確認後に定めた形式・値を検査。
+    6. message・rationale は省略時は空文字として許容、存在時は文字列のみ許可（null・数値・配列・辞書は拒否）。
+    7. execution_metadata は省略可能（省略時は unknown へ正規化）。存在するなら dict であること。
     """
     errors = []
 
@@ -114,23 +135,23 @@ def validate_reviewer_output(
     if not isinstance(review_data, dict):
         return ["Reviewer output must be a JSON dictionary object"]
 
-    # 2. is_mock チェック（真偽値 True のみ許可、型強制や bool 以外の真偽表現は拒否）
+    # 2. is_mock チェック（真偽値 True のみ許可）
     is_mock = review_data.get("is_mock")
     if type(is_mock) is not bool or is_mock is not True:
         errors.append(
             f"Field 'is_mock' must be boolean true (got {type(is_mock).__name__}: {is_mock!r})"
         )
 
-    # 3. schema_version チェック
+    # 3. schema_version チェック（型確認後に集合照合し、unhashable型でも例外を防いでエラー記録）
     schema_ver = review_data.get("schema_version")
-    if schema_ver not in SUPPORTED_SCHEMA_VERSIONS:
+    if not isinstance(schema_ver, str) or schema_ver not in SUPPORTED_SCHEMA_VERSIONS:
         errors.append(
-            f"Unsupported schema_version: {schema_ver!r} (supported: {sorted(SUPPORTED_SCHEMA_VERSIONS)})"
+            f"Unsupported or invalid schema_version: {schema_ver!r} (supported: {sorted(SUPPORTED_SCHEMA_VERSIONS)})"
         )
 
-    # 4. status チェック（採点可能な成功状態のみ）
+    # 4. status チェック（型確認後に集合照合）
     status = review_data.get("status")
-    if status not in ALLOWED_REVIEW_STATUSES:
+    if not isinstance(status, str) or status not in ALLOWED_REVIEW_STATUSES:
         errors.append(
             f"Reviewer status {status!r} is not a scorable success status (allowed: {sorted(ALLOWED_REVIEW_STATUSES)})"
         )
@@ -175,9 +196,9 @@ def validate_reviewer_output(
                     f"Finding [{idx}] 'line' must be a positive integer excluding booleans (got {f_line!r})"
                 )
 
-            # 7.3 severity チェック
+            # 7.3 severity チェック（型確認後に集合照合）
             f_sev = f.get("severity")
-            if f_sev not in ALLOWED_SEVERITIES:
+            if not isinstance(f_sev, str) or f_sev not in ALLOWED_SEVERITIES:
                 errors.append(
                     f"Finding [{idx}] 'severity' {f_sev!r} invalid (allowed: {sorted(ALLOWED_SEVERITIES)})"
                 )
@@ -189,16 +210,30 @@ def validate_reviewer_output(
                     f"Finding [{idx}] 'category' {f_cat!r} invalid (must match pattern 'namespace/name')"
                 )
 
+            # 7.5 message・rationale チェック（省略時は許可、存在時は文字列のみ許可。null/数値/配列/辞書は拒否）
+            for text_field in ("message", "rationale"):
+                if text_field in f:
+                    t_val = f[text_field]
+                    if not isinstance(t_val, str):
+                        errors.append(
+                            f"Finding [{idx}] '{text_field}' must be a string when present (got {type(t_val).__name__}: {t_val!r})"
+                        )
+
     return errors
 
 
 def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict) -> dict:
     """
     Reviewerの指摘とGround Truth（正解データ）を突合・採点する。
-    行番号一致だけで機械的に正解とせず、カテゴリや内容が異なる場合は「判定保留（人による確認要）」とする。
-    重複指摘や見逃しも個別に集計する。
-    execution_metadata は省略時 unknown へ正規化し、欠測を 0 にはしない。
+    不正入力が直接渡された場合は採点へ流さず ValueError で拒否する。
+    正規カテゴリの完全一致または明示した別名対応のみを機械的一致とし、
+    行番号一致でもカテゴリが異なる場合は説明文の部分文字列に関わらず「判定保留（人による確認要）」とする。
+    execution_metadata は省略時 unknown へ正規化し、欠測を 0 にしない。
     """
+    val_errors = validate_reviewer_output(review_data, expected_sample_file=sample_name)
+    if val_errors:
+        raise ValueError(f"Cannot score invalid reviewer output: {'; '.join(val_errors)}")
+
     gt_defects = sample_meta.get("ground_truth_defects", [])
     findings = review_data.get("findings", [])
 
@@ -210,9 +245,11 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
 
     # 各指摘について、どの正解欠陥に該当するか判定
     for f in findings:
-        f_line = f.get("line")
-        f_cat = f.get("category", "").lower()
-        f_msg = (f.get("message", "") + " " + f.get("rationale", "")).lower()
+        f_line = f["line"]
+        f_cat = f["category"].lower()
+        # 省略時は空文字として正規化（validate_reviewer_output により存在時は str が保証済み）
+        _f_message = f.get("message", "")
+        _f_rationale = f.get("rationale", "")
 
         assigned_gt = None
         exact_gt_matches = [gt for gt in gt_defects if gt["target_line"] == f_line]
@@ -220,17 +257,17 @@ def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict
         if exact_gt_matches:
             target_gt = exact_gt_matches[0]
             gt_cat = target_gt["category"].lower()
-            cat_match = (f_cat in gt_cat) or (gt_cat in f_cat) or any(
-                word in f_msg for word in gt_cat.split("/")
-            )
-            if cat_match:
+            if is_category_match(f_cat, gt_cat):
                 assigned_gt = target_gt
             else:
-                # 行番号は一致しているがカテゴリ・説明が不一致 -> 保留
+                # 行番号は一致しているが正規カテゴリ・別名に不一致 -> 説明文の部分文字列では正解にせず保留
                 pending_records.append({
                     "finding": f,
                     "candidate_gt": target_gt["id"],
-                    "reason": f"Line {f_line} matches but category/content diverges (finding: '{f_cat}', gt: '{gt_cat}')",
+                    "reason": (
+                        f"Line {f_line} matches but category '{f_cat}' is not an exact or aliased match "
+                        f"for '{gt_cat}'; requires human confirmation"
+                    ),
                 })
                 assigned_gt = "PENDING"
         else:
