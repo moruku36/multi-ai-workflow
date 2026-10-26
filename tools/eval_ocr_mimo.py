@@ -2,9 +2,9 @@
 """
 tools/eval_ocr_mimo.py
 
-P3 合成サンプルおよび入力準備用ドライランツール。
-※本ツールは「合成サンプルと評価入力の準備」であり、Alibaba OCR CLI 自体の統合や
-実 MiMo API 接続を行うものではありません。
+P3 合成サンプルおよび入力準備・オフライン評価受入＆採点ツール。
+※本ツールは「合成サンプルと評価入力の準備、および模擬結果の受入れと採点ロジック検証」であり、
+Alibaba OCR CLI 自体の統合や実 MiMo API 接続を行うものではありません。
 外部APIは一切呼び出さず、完全オフラインで動作します。
 正解データ（Ground Truth）はレビュアー入力から完全に除外されます。
 """
@@ -67,7 +67,6 @@ def build_ocr_simulation_payload(patch_info: dict, model_id: str = "mimo-v2.6-pr
         "Output structured findings with file, line number, severity (CRITICAL, MAJOR, MEDIUM, LOW), and clear rationale."
     )
 
-    # 差分の本文のみを渡す（Ground Truth やヒントは一切渡さない）
     user_content = (
         f"Review the following Git diff for repository security and reliability defects:\n\n"
         f"```diff\n{patch_info['raw_patch']}\n```"
@@ -84,6 +83,198 @@ def build_ocr_simulation_payload(patch_info: dict, model_id: str = "mimo-v2.6-pr
         "temperature": 0.1,
         "max_tokens": 1024,
         "estimated_prompt_tokens": estimated_prompt_tokens,
+    }
+
+
+def validate_reviewer_output(review_data: dict) -> list[str]:
+    """
+    Reviewerから受信したJSONデータの形式を厳格に検査する。
+    必須キー欠落や空データ、不正形式を検知しエラーリストを返す。
+    """
+    errors = []
+    required_keys = ["schema_version", "is_mock", "sample_file", "status", "findings"]
+    for k in required_keys:
+        if k not in review_data:
+            errors.append(f"Missing required key in reviewer output: '{k}'")
+
+    if not review_data.get("is_mock", False):
+        errors.append("Field 'is_mock' must be true for mock evaluation fixtures (distinguishing from real AI)")
+
+    findings = review_data.get("findings")
+    if not isinstance(findings, list):
+        errors.append("Field 'findings' must be a list")
+    else:
+        for idx, f in enumerate(findings):
+            if not isinstance(f, dict):
+                errors.append(f"Finding at index {idx} is not a dictionary")
+                continue
+            for fk in ["file", "line", "severity", "category"]:
+                if fk not in f:
+                    errors.append(f"Finding at index {idx} missing required key: '{fk}'")
+            if "line" in f and not isinstance(f["line"], int):
+                errors.append(f"Finding at index {idx} 'line' must be an integer")
+
+    return errors
+
+
+def score_review_findings(sample_name: str, review_data: dict, sample_meta: dict) -> dict:
+    """
+    Reviewerの指摘とGround Truth（正解データ）を突合・採点する。
+    行番号一致だけで機械的に正解とせず、カテゴリや内容が異なる場合は「判定保留（人による確認要）」とする。
+    重複指摘や見逃しも個別に集計する。
+    """
+    gt_defects = sample_meta.get("ground_truth_defects", [])
+    findings = review_data.get("findings", [])
+
+    matched_records = []
+    duplicate_records = []
+    pending_records = []
+    unmatched_records = []
+    gt_matched_map: dict[str, list[dict]] = {d["id"]: [] for d in gt_defects}
+
+    # 1. 各指摘について、どの正解欠陥に該当するか判定
+    for f in findings:
+        f_line = f.get("line")
+        f_cat = f.get("category", "").lower()
+        f_msg = (f.get("message", "") + " " + f.get("rationale", "")).lower()
+
+        # 1. まず行番号の完全一致を最優先で探索
+        assigned_gt = None
+        exact_gt_matches = [gt for gt in gt_defects if gt["target_line"] == f_line]
+
+        if exact_gt_matches:
+            target_gt = exact_gt_matches[0]
+            gt_cat = target_gt["category"].lower()
+            cat_match = (f_cat in gt_cat) or (gt_cat in f_cat) or any(
+                word in f_msg for word in gt_cat.split("/")
+            )
+            if cat_match:
+                assigned_gt = target_gt
+            else:
+                # 行番号は一致しているがカテゴリ・説明が不一致 -> 行番号だけで正解にせず保留
+                pending_records.append({
+                    "finding": f,
+                    "candidate_gt": target_gt["id"],
+                    "reason": f"Line {f_line} matches but category/content diverges (finding: '{f_cat}', gt: '{gt_cat}')",
+                })
+                assigned_gt = "PENDING"
+        else:
+            # 2. 完全一致がない場合のみ、近接行（±2行以内）を保留候補として探索
+            near_gts = [gt for gt in gt_defects if abs(f_line - gt["target_line"]) <= 2]
+            if near_gts:
+                pending_records.append({
+                    "finding": f,
+                    "candidate_gt": near_gts[0]["id"],
+                    "reason": f"Line {f_line} is near GT line {near_gts[0]['target_line']} (within ±2 lines); requires human confirmation",
+                })
+                assigned_gt = "PENDING"
+
+        if assigned_gt == "PENDING":
+            continue
+        elif assigned_gt is not None:
+            gt_id = assigned_gt["id"]
+            if len(gt_matched_map[gt_id]) == 0:
+                gt_matched_map[gt_id].append(f)
+                matched_records.append({
+                    "ground_truth_id": gt_id,
+                    "target_line": assigned_gt["target_line"],
+                    "finding": f,
+                })
+            else:
+                gt_matched_map[gt_id].append(f)
+                duplicate_records.append({
+                    "ground_truth_id": gt_id,
+                    "target_line": assigned_gt["target_line"],
+                    "duplicate_finding": f,
+                })
+        else:
+            unmatched_records.append(f)
+
+    # 2. 見逃し（MISSED）の算出
+    missed_records = [
+        gt for gt in gt_defects if len(gt_matched_map[gt["id"]]) == 0
+    ]
+
+    # メタデータからの usage / latency / cost 抽出（未取得時は unknown）
+    meta = review_data.get("execution_metadata", {})
+    latency = meta.get("latency_sec")
+    in_tok = meta.get("input_tokens")
+    out_tok = meta.get("output_tokens")
+    cost = meta.get("cost_usd")
+
+    return {
+        "sample_file": sample_name,
+        "is_mock": review_data.get("is_mock", True),
+        "total_ground_truth_defects": len(gt_defects),
+        "total_reviewer_findings": len(findings),
+        "metrics": {
+            "matched_defects": len(matched_records),
+            "duplicate_findings": len(duplicate_records),
+            "missed_defects": len(missed_records),
+            "pending_human_review": len(pending_records),
+            "unmatched_findings": len(unmatched_records),
+            "human_verification_required": len(pending_records) > 0 or len(findings) > 0,
+        },
+        "observed_execution": {
+            "model_id": meta.get("model_id", "unknown"),
+            "latency_sec": latency if latency is not None else "unknown",
+            "input_tokens": in_tok if in_tok is not None else "unknown",
+            "output_tokens": out_tok if out_tok is not None else "unknown",
+            "cost_usd": cost if cost is not None else "unknown",
+        },
+        "details": {
+            "matched": matched_records,
+            "duplicates": duplicate_records,
+            "missed": missed_records,
+            "pending": pending_records,
+            "unmatched": unmatched_records,
+        },
+    }
+
+
+def evaluate_mock_reviews(fixtures_dir: Path) -> dict:
+    """
+    mock_reviews ディレクトリ配下の模擬結果を取り込み、採点・集計する。
+    """
+    manifest_path = fixtures_dir / "synthetic_samples_manifest.json"
+    manifest = load_manifest(manifest_path)
+    mock_dir = fixtures_dir / "mock_reviews"
+
+    mock_map = {
+        "clean_refactor.patch": mock_dir / "mock_review_clean.json",
+        "defect_seeded.patch": mock_dir / "mock_review_defect.json",
+    }
+
+    scoring_results = []
+    errors = []
+
+    for sample_name, mock_path in mock_map.items():
+        if not mock_path.exists():
+            errors.append(f"Mock review file missing: {mock_path.name}")
+            continue
+
+        try:
+            review_data = json.loads(mock_path.read_text(encoding="utf-8"))
+            val_errors = validate_reviewer_output(review_data)
+            if val_errors:
+                errors.extend([f"{mock_path.name}: {ve}" for ve in val_errors])
+                continue
+
+            sample_meta = manifest.get("samples", {}).get(sample_name, {})
+            score = score_review_findings(sample_name, review_data, sample_meta)
+            scoring_results.append(score)
+        except Exception as e:
+            errors.append(f"{mock_path.name} failed to process: {e}")
+
+    passed = (len(errors) == 0) and (len(scoring_results) == len(mock_map))
+
+    return {
+        "evaluation_type": "OFFLINE_MOCK_SCORING",
+        "mock_disclaimer": "This report evaluates MOCK fixtures only to verify scoring and ingestion algorithms. Does NOT measure real AI model quality.",
+        "status": "PASSED" if passed else "FAILED",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "errors": errors,
+        "scoring_results": scoring_results,
     }
 
 
@@ -130,15 +321,19 @@ def evaluate_dry_run(fixtures_dir: Path) -> dict:
 
     passed = (len(errors) == 0) and (len(results) > 0)
 
+    # 模擬結果の受入れ・採点も同時に実行
+    mock_eval = evaluate_mock_reviews(fixtures_dir)
+
     return {
         "evaluation_phase": "P3_SYNTHETIC_PREPARATION_DRY_RUN",
         "ocr_tool_integration_status": "NOT_INTEGRATED (Input preparation and simulation only)",
         "api_authorized": False,
-        "status": "PASSED" if passed else "FAILED",
+        "status": "PASSED" if (passed and mock_eval["status"] == "PASSED") else "FAILED",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "samples_evaluated": len(results),
-        "errors": errors,
+        "errors": errors + mock_eval.get("errors", []),
         "results": results,
+        "mock_evaluation": mock_eval,
         "unimplemented_items": [
             "Alibaba OCR fixed version pinning and CLI binary installation",
             "Standalone MiMo API live network connection",
@@ -165,9 +360,10 @@ def evaluate_dry_run(fixtures_dir: Path) -> dict:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="P3 Synthetic Samples & Input Preparation Runner (Dry-run by default)")
+    parser = argparse.ArgumentParser(description="P3 Synthetic Samples, Input Preparation & Mock Scoring Runner")
     parser.add_argument("--authorize-live-call", action="store_true", help="Authorize actual MiMo API invocation (requires prior explicit approval)")
     parser.add_argument("--json", action="store_true", help="Output JSON results")
+    parser.add_argument("--score-mock-only", action="store_true", help="Only run mock scoring verification")
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
@@ -176,6 +372,22 @@ def main():
     if args.authorize_live_call:
         print("[ABORTED] Live API calls are NOT authorized in this phase. Run in dry-run mode.", file=sys.stderr)
         sys.exit(1)
+
+    if args.score_mock_only:
+        mock_eval = evaluate_mock_reviews(fixtures_dir)
+        if args.json:
+            print(json.dumps(mock_eval, indent=2, ensure_ascii=False))
+        else:
+            print(f"=== P3 Mock Scoring Verification: {mock_eval['status']} ===")
+            print(f"Note: {mock_eval['mock_disclaimer']}\n")
+            for res in mock_eval["scoring_results"]:
+                print(f"- Sample: {res['sample_file']} (GT: {res['total_ground_truth_defects']}, Findings: {res['total_reviewer_findings']})")
+                m = res["metrics"]
+                print(f"  Matched: {m['matched_defects']}, Duplicates: {m['duplicate_findings']}, Missed: {m['missed_defects']}")
+                print(f"  Pending Human Review: {m['pending_human_review']}, Unmatched: {m['unmatched_findings']}")
+                print(f"  Human Verification Required: {m['human_verification_required']}")
+                print(f"  Usage: tokens={res['observed_execution']['input_tokens']}/{res['observed_execution']['output_tokens']}, cost={res['observed_execution']['cost_usd']}, latency={res['observed_execution']['latency_sec']}")
+        sys.exit(0 if mock_eval["status"] == "PASSED" else 1)
 
     eval_result = evaluate_dry_run(fixtures_dir)
 
@@ -199,6 +411,22 @@ def main():
             print(f"  Expected Defects (Ground Truth): {res['ground_truth_expected_defects']}")
             print(f"  Estimated Prompt Tokens: ~{res['estimated_prompt_tokens']}")
             print(f"  Live API Called: {res['live_api_called']}")
+
+        print("\n=== Offline Mock Review Scoring Results (Simulated) ===")
+        mock_eval = eval_result.get("mock_evaluation", {})
+        print(f"Mock Scoring Status: {mock_eval.get('status')}")
+        print(f"Note: {mock_eval.get('mock_disclaimer')}")
+        for res in mock_eval.get("scoring_results", []):
+            print(f"\n  * {res['sample_file']}:")
+            m = res["metrics"]
+            print(f"    - Ground Truth: {res['total_ground_truth_defects']}, Reviewer Findings: {res['total_reviewer_findings']}")
+            print(f"    - Matched Defects:    {m['matched_defects']}")
+            print(f"    - Duplicate Findings: {m['duplicate_findings']}")
+            print(f"    - Missed Defects:     {m['missed_defects']}")
+            print(f"    - Pending Human Review: {m['pending_human_review']}")
+            print(f"    - Unmatched:          {m['unmatched_findings']}")
+            print(f"    - Human Verification Required: {m['human_verification_required']}")
+            print(f"    - Execution Metrics:  tokens={res['observed_execution']['input_tokens']}, cost={res['observed_execution']['cost_usd']}, latency={res['observed_execution']['latency_sec']}")
 
         print("\n--- Unimplemented Items (Explicitly Left for Future) ---")
         for item in eval_result["unimplemented_items"]:

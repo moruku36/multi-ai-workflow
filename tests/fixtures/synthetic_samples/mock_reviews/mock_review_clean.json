@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "is_mock": true,
+  "mock_note": "Simulated reviewer output for clean_refactor.patch. Used strictly for offline evaluation scoring verification.",
+  "sample_file": "clean_refactor.patch",
+  "target_file": "app/service/data_processor.py",
+  "status": "SUCCESS",
+  "execution_metadata": {
+    "model_id": "mimo-v2.6-pro",
+    "latency_sec": null,
+    "input_tokens": null,
+    "output_tokens": null,
+    "cost_usd": null
+  },
+  "findings": []
+}

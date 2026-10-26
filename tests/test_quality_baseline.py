@@ -79,7 +79,6 @@ class QualityBaselineRegressionTests(unittest.TestCase):
         fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples"
         sources_dir = fixtures_dir / "sources"
 
-        # 1. Clean patch apply check
         clean_before = sources_dir / "clean" / "before"
         clean_patch = fixtures_dir / "clean_refactor.patch"
         res_clean = subprocess.run(
@@ -94,7 +93,6 @@ class QualityBaselineRegressionTests(unittest.TestCase):
             f"clean_refactor.patch failed git apply --check: {res_clean.stderr}",
         )
 
-        # 2. Defect patch apply check
         defect_before = sources_dir / "defect" / "before"
         defect_patch = fixtures_dir / "defect_seeded.patch"
         res_defect = subprocess.run(
@@ -138,6 +136,112 @@ class QualityBaselineRegressionTests(unittest.TestCase):
                 line_content,
                 f"{did} at line {line_no} does not contain '{anchor}': got '{line_content}'",
             )
+
+    def test_validate_reviewer_output_rejects_missing_keys_or_non_mock(self):
+        # 1. 必須キー欠落
+        bad_output_missing_key = {
+            "schema_version": "1.0.0",
+            # missing is_mock
+            "sample_file": "clean_refactor.patch",
+            "status": "SUCCESS",
+            "findings": [],
+        }
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_output_missing_key)
+        self.assertTrue(any("is_mock" in e for e in errs))
+
+        # 2. is_mock が False（実AI結果との誤混同防止）
+        bad_output_false_mock = {
+            "schema_version": "1.0.0",
+            "is_mock": False,
+            "sample_file": "clean_refactor.patch",
+            "status": "SUCCESS",
+            "findings": [],
+        }
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_output_false_mock)
+        self.assertTrue(any("is_mock" in e for e in errs))
+
+        # 3. findings 内の必須フィールド欠落
+        bad_finding = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "clean_refactor.patch",
+            "status": "SUCCESS",
+            "findings": [{"file": "test.py", "line": 10}],  # missing severity, category
+        }
+        errs = eval_ocr_mimo.validate_reviewer_output(bad_finding)
+        self.assertTrue(any("severity" in e for e in errs))
+
+    def test_scoring_categorizes_matched_duplicate_missed_pending(self):
+        fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples"
+        mock_defect_path = fixtures_dir / "mock_reviews" / "mock_review_defect.json"
+        mock_data = json.loads(mock_defect_path.read_text(encoding="utf-8"))
+
+        manifest = eval_ocr_mimo.load_manifest(fixtures_dir / "synthetic_samples_manifest.json")
+        sample_meta = manifest["samples"]["defect_seeded.patch"]
+
+        score = eval_ocr_mimo.score_review_findings("defect_seeded.patch", mock_data, sample_meta)
+        m = score["metrics"]
+
+        # 期待値: 3 matched, 1 duplicate, 1 missed, 1 pending
+        self.assertEqual(m["matched_defects"], 3)
+        self.assertEqual(m["duplicate_findings"], 1)
+        self.assertEqual(m["missed_defects"], 1)
+        self.assertEqual(m["pending_human_review"], 1)
+        self.assertTrue(m["human_verification_required"])
+        # usage / cost / latency が未取得なら unknown
+        self.assertEqual(score["observed_execution"]["latency_sec"], "unknown")
+        self.assertEqual(score["observed_execution"]["input_tokens"], "unknown")
+        self.assertEqual(score["observed_execution"]["output_tokens"], "unknown")
+        self.assertEqual(score["observed_execution"]["cost_usd"], "unknown")
+
+    def test_scoring_divergent_content_on_same_line_marked_pending(self):
+        # 行番号は11でDEFECT-01(Path traversal)と一致するが、内容が全く無関係な場合
+        divergent_review = {
+            "schema_version": "1.0.0",
+            "is_mock": True,
+            "sample_file": "defect_seeded.patch",
+            "status": "SUCCESS",
+            "findings": [
+                {
+                    "file": "app/service/file_handler.py",
+                    "line": 11,
+                    "severity": "LOW",
+                    "category": "style/variable_naming",
+                    "message": "Variable name target_path is not descriptive enough",
+                    "rationale": "Style nitpick unrelated to path traversal",
+                }
+            ],
+        }
+        manifest = eval_ocr_mimo.load_manifest(
+            REPO_ROOT / "tests" / "fixtures" / "synthetic_samples" / "synthetic_samples_manifest.json"
+        )
+        sample_meta = manifest["samples"]["defect_seeded.patch"]
+
+        score = eval_ocr_mimo.score_review_findings("defect_seeded.patch", divergent_review, sample_meta)
+        m = score["metrics"]
+
+        # 行番号一致だけで正解にせず、pending_human_review に分類されること
+        self.assertEqual(m["matched_defects"], 0)
+        self.assertEqual(m["pending_human_review"], 1)
+        self.assertEqual(m["missed_defects"], 4)
+        self.assertTrue(m["human_verification_required"])
+
+    def test_evaluate_mock_reviews_fails_on_missing_fixture(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_root = Path(tmpdir)
+            fdir = tmp_root / "tests" / "fixtures" / "synthetic_samples"
+            fdir.mkdir(parents=True)
+            # マニフェストだけ用意し、mock_reviews は用意しない
+            manifest = {
+                "samples": {
+                    "clean_refactor.patch": {"type": "clean"},
+                    "defect_seeded.patch": {"type": "defect_seeded"},
+                }
+            }
+            (fdir / "synthetic_samples_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+            res = eval_ocr_mimo.evaluate_mock_reviews(fdir)
+            self.assertEqual(res["status"], "FAILED")
+            self.assertTrue(len(res["errors"]) > 0)
 
 
 if __name__ == "__main__":

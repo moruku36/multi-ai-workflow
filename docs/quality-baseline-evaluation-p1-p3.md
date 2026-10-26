@@ -5,10 +5,10 @@
 - Date: 2026-10-26 (JST)
 - Target Repository: `multi-ai-workflow`
 - Canonical Design: `docs/mailbox-quality-roadmap-2026-10-26.ja.md`
-- Working Branch: `feature/quality-baseline-p1-p3`
+- Working Branch: `feature/p3-offline-evaluation-scoring`
 - Goal: Establish the initial phase ("Deterministic Checks -> Alibaba OCR + MiMo API -> Cloudflare Audit for Critical Changes only") to reduce full-text re-reading and redundant reviews by Codex.
-- **Current Scope Clarification**: The current state is strictly "synthetic samples and input preparation", NOT full Alibaba OCR integration. Pinned OCR CLI versions, standalone live connections, and hard billing budget enforcements are intentionally left unimplemented.
-- Scope Boundaries: Focus strictly on P1 minimal setup and P3 evaluation input preparation. No Mailbox adapters, no daemons, no cross-repo deployment, no unapproved package installation, and no external API calls.
+- **Current Scope Clarification**: The current state is strictly "synthetic samples, input preparation, and offline scoring verification", NOT full Alibaba OCR integration. Pinned OCR CLI versions, standalone live connections, and hard billing budget enforcements are intentionally left unimplemented.
+- Scope Boundaries: Focus strictly on P1 minimal setup and P3 evaluation input preparation and scoring. No Mailbox adapters, no daemons, no cross-repo deployment, no unapproved package installation, and no external API calls.
 
 ---
 
@@ -33,13 +33,13 @@ Executes check-only verification without auto-fixing or full reformatting.
 - **Checks Executed**:
   1. Python syntax check (`py_compile.compile` across 16 Python files)
   2. Required test suites execution (`REQUIRED_TEST_SUITES` strictly checks for directory presence, non-zero execution, skipped counts, and failures)
-  3. Fixtures integrity check (validating manifest presence, patch existence, and non-empty files)
+  3. Fixtures integrity check (validating manifest presence, patch existence, non-empty files, and mock_reviews presence)
   4. Documentation formatting check (detecting irregular trailing whitespaces/tabs)
   5. External tool inspection and explicit recording of unverified scope
 - **Strict Quality Criteria**:
   - Missing required suites or 0 executed tests are treated as immediate FAIL.
   - Test skips (`tests_skipped`) are tracked and reported separately.
-  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 6 tests) verifies runner and fixture integrity.
+  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 11 tests) verifies runner and fixture integrity.
 
 ### 1.3 Proposal for Initial Pilot Repository
 
@@ -55,13 +55,15 @@ Executes check-only verification without auto-fixing or full reformatting.
 
 ---
 
-## 2. P3: Synthetic Samples & Input Preparation (Pre-OCR Integration Phase)
+## 2. P3: Synthetic Samples, Input Preparation & Offline Scoring (Pre-OCR Integration Phase)
 
 ### 2.1 Current Scope & Unimplemented Items
 
 - **Current Completed Scope**:
-  - Creation of publicly shareable synthetic patches.
+  - Creation of publicly shareable synthetic patches (generated mechanically from source files).
   - Ground truth metadata definition (strictly excluded from reviewer inputs).
+  - Offline reviewer ingestion schema and scoring engine implementation.
+  - Algorithm validation using simulated mock review fixtures (`tests/fixtures/synthetic_samples/mock_reviews/`).
   - Offline dry-run verification runner (`tools/eval_ocr_mimo.py`).
 - **Items Intentionally Left Unimplemented**:
   - Alibaba OCR official CLI (`ocr`) fixed version pinning and installation.
@@ -98,6 +100,19 @@ The evaluation will record the following metrics independently:
 - **Latency**: Duration in seconds.
 - **Usage & Cost**: Input/output tokens and actual cost in USD/JPY (`UNKNOWN` if unobserved).
 *Note: Upstream's "~1/9 token ratio" is not treated as a guarantee, and zero findings or partial failures will not be treated as success.*
+
+### 2.4 Reviewer Ingestion & Scoring (Offline Mock Verification)
+
+The reviewer output ingestion schema and scoring logic have been implemented offline.
+This verifies the evaluation pipeline using mock fixtures (`tests/fixtures/synthetic_samples/mock_reviews/`) without claiming AI evaluation results.
+
+- **Minimal Ingestion Schema**: `schema_version`, `is_mock: true` (preventing confusion with real AI outputs), `sample_file`, `status`, `findings` (with required `file`, `line`, `severity`, `category`).
+- **Scoring Rules**:
+  1. **Matched Findings**: Strict line match combined with category/content keyword match.
+  2. **Duplicate Findings**: Multiple findings targeting the same ground truth defect are segregated as duplicates.
+  3. **Missed Defects**: Ground truth defects with no corresponding reviewer finding.
+  4. **Pending Human Review**: Line matches with divergent category/content or near-line observations (within ±2 lines) are held as pending human review rather than mechanically scored as correct.
+  5. **Unobserved Metrics**: Execution metrics (latency, token usage, cost) remain `unknown` in mock fixtures, preserving live test boundaries.
 
 ---
 
@@ -141,5 +156,5 @@ Upon user authorization, live testing can proceed under the following constraint
 
 ## 5. Current State & Handoff
 
-- **Status**: P1 minimal setup completed; P3 synthetic preparation completed (offline dry-run verified, 6 regression tests passing).
+- **Status**: P1 minimal setup completed; P3 synthetic preparation and offline scoring verified (offline dry-run verified, 11 regression tests passing).
 - **Handoff**: Stopping execution without automatic merge or proceeding to subsequent phases (P2 live communication or P4 integration).

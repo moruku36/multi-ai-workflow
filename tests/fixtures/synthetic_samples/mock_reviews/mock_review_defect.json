@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "is_mock": true,
+  "mock_note": "Simulated reviewer output for defect_seeded.patch. Used strictly for offline evaluation scoring verification.",
+  "sample_file": "defect_seeded.patch",
+  "target_file": "app/service/file_handler.py",
+  "status": "SUCCESS",
+  "execution_metadata": {
+    "model_id": "mimo-v2.6-pro",
+    "latency_sec": null,
+    "input_tokens": null,
+    "output_tokens": null,
+    "cost_usd": null
+  },
+  "findings": [
+    {
+      "finding_id": "MOCK-FINDING-01",
+      "file": "app/service/file_handler.py",
+      "line": 11,
+      "severity": "CRITICAL",
+      "category": "security/path_traversal",
+      "message": "User-supplied name concatenated to base path without containment check.",
+      "rationale": "Potential CWE-22 path traversal allowing arbitrary file access."
+    },
+    {
+      "finding_id": "MOCK-FINDING-02",
+      "file": "app/service/file_handler.py",
+      "line": 12,
+      "severity": "MEDIUM",
+      "category": "reliability/resource_leak",
+      "message": "File opened directly without using context manager (with open).",
+      "rationale": "File descriptor remains open until GC, potential CWE-775 leak."
+    },
+    {
+      "finding_id": "MOCK-FINDING-03A",
+      "file": "app/service/file_handler.py",
+      "line": 18,
+      "severity": "CRITICAL",
+      "category": "security/code_injection",
+      "message": "Unsafe eval execution on filter_expr.",
+      "rationale": "Remote code execution hazard via CWE-95."
+    },
+    {
+      "finding_id": "MOCK-FINDING-03B",
+      "file": "app/service/file_handler.py",
+      "line": 18,
+      "severity": "CRITICAL",
+      "category": "security/code_injection",
+      "message": "Direct eval invocation without safe namespace restrictions.",
+      "rationale": "Duplicate observation of CWE-95 on the same line."
+    },
+    {
+      "finding_id": "MOCK-FINDING-05",
+      "file": "app/service/file_handler.py",
+      "line": 21,
+      "severity": "LOW",
+      "category": "logic/fallback_value",
+      "message": "Default False return may hide filter evaluation failure.",
+      "rationale": "Ambiguous behavior: line is near exception handler but reports logic fallback, requiring human verification."
+    }
+  ]
+}
