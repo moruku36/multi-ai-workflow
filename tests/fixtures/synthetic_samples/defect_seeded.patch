@@ -2,7 +2,7 @@ diff --git a/app/service/file_handler.py b/app/service/file_handler.py
 index 3333333..4444444 100644
 --- a/app/service/file_handler.py
 +++ b/app/service/file_handler.py
-@@ -10,8 +10,25 @@ class FileHandler:
+@@ -10,8 +10,21 @@ class FileHandler:
      def __init__(self, base_path: str):
          self.base_path = Path(base_path)
  
@@ -12,18 +12,14 @@ index 3333333..4444444 100644
 -            raise ValueError("Path traversal detected")
 -        return target.read_text(encoding="utf-8")
 +    def read_unvalidated(self, user_supplied_name: str) -> str:
-+        # DEFECT 1: Path Traversal vulnerability (missing path validation / containment check)
 +        target_path = self.base_path / user_supplied_name
 +        f = open(target_path, "r", encoding="utf-8")
-+        # DEFECT 2: Resource Leak (open without context manager / unclosed file descriptor)
 +        content = f.read()
 +        return content
 +
 +    def evaluate_filter(self, filter_expr: str, record: dict) -> bool:
-+        # DEFECT 3: Remote Code Execution via unsafe eval on external input
 +        try:
 +            return bool(eval(filter_expr, {"record": record}))
 +        except Exception:
-+            # DEFECT 4: Silent Failure (swallowing all exceptions without logging or re-raising)
 +            pass
 +        return False

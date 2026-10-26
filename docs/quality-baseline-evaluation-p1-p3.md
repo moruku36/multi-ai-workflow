@@ -1,4 +1,4 @@
-# Quality Baseline P1 Minimal Setup & P3 Standalone Evaluation Preparation Report
+# Quality Baseline P1 Minimal Setup & P3 Evaluation Preparation Report
 
 [English](quality-baseline-evaluation-p1-p3.md) | [日本語](quality-baseline-evaluation-p1-p3.ja.md)
 
@@ -7,7 +7,8 @@
 - Canonical Design: `docs/mailbox-quality-roadmap-2026-10-26.ja.md`
 - Working Branch: `feature/quality-baseline-p1-p3`
 - Goal: Establish the initial phase ("Deterministic Checks -> Alibaba OCR + MiMo API -> Cloudflare Audit for Critical Changes only") to reduce full-text re-reading and redundant reviews by Codex.
-- Scope Boundaries: Focus strictly on P1 minimal setup and P3 evaluation preparation. No Mailbox adapters, no daemons, no cross-repo deployment, no unapproved package installation, and no external API calls.
+- **Current Scope Clarification**: The current state is strictly "synthetic samples and input preparation", NOT full Alibaba OCR integration. Pinned OCR CLI versions, standalone live connections, and hard billing budget enforcements are intentionally left unimplemented.
+- Scope Boundaries: Focus strictly on P1 minimal setup and P3 evaluation input preparation. No Mailbox adapters, no daemons, no cross-repo deployment, no unapproved package installation, and no external API calls.
 
 ---
 
@@ -30,16 +31,15 @@ Executes check-only verification without auto-fixing or full reformatting.
 
 - **Command**: `python tools/check_quality.py` (or `--json`)
 - **Checks Executed**:
-  1. Python syntax check (`py_compile.compile` across 14 Python files)
-  2. Existing unittest execution (3 suites, 88 tests total)
-  3. Documentation formatting check (detecting irregular trailing whitespaces/tabs)
-  4. External tool inspection and explicit recording of unverified scope
-- **Execution Result**:
-  - `overall_status`: **PASSED**
-  - Python Syntax: OK (14 files)
-  - Unittests: OK (88 tests run, 0 failures, 0 errors)
-  - Doc Format: OK (47 files)
-  - Tool Status: Accurately detected `ruff` (MISSING) and `semgrep` (MISSING), recording reason for skipping.
+  1. Python syntax check (`py_compile.compile` across 16 Python files)
+  2. Required test suites execution (`REQUIRED_TEST_SUITES` strictly checks for directory presence, non-zero execution, skipped counts, and failures)
+  3. Fixtures integrity check (validating manifest presence, patch existence, and non-empty files)
+  4. Documentation formatting check (detecting irregular trailing whitespaces/tabs)
+  5. External tool inspection and explicit recording of unverified scope
+- **Strict Quality Criteria**:
+  - Missing required suites or 0 executed tests are treated as immediate FAIL.
+  - Test skips (`tests_skipped`) are tracked and reported separately.
+  - Dedicated regression test suite (`tests/test_quality_baseline.py`, 6 tests) verifies runner and fixture integrity.
 
 ### 1.3 Proposal for Initial Pilot Repository
 
@@ -55,37 +55,38 @@ Executes check-only verification without auto-fixing or full reformatting.
 
 ---
 
-## 2. P3: Alibaba OCR + MiMo API Standalone Evaluation Preparation
+## 2. P3: Synthetic Samples & Input Preparation (Pre-OCR Integration Phase)
 
-### 2.1 Alibaba OCR Specifications & Operating Model
+### 2.1 Current Scope & Unimplemented Items
 
-- **Overview**: Alibaba `open-code-review` (CLI: `ocr`, Apache-2.0). Combines a deterministic Go engineering pipeline with LLM agents. Tracks Git diffs at exact line level to avoid line drift.
-- **Standalone + MiMo Setup**:
-  - Uses Xiaomi MiMo API (OpenAI-compatible endpoint) as the review inference backend.
-  - **Distinction from Codex Delegation**: Configured as an independent standalone route rather than relying on Codex session quotas or host agent delegation.
-- **Cost & Quota Boundaries**:
-  - Upstream's "~1/9 token ratio" is treated strictly as an unverified author reference, not as a local performance guarantee.
-  - `max-token-budget` is not treated as a strict billing ceiling; external boundaries (max calls, token limits, timeouts, hard cost ceilings) must enforce execution safety.
-  - Zero findings or partial failures are not treated as success.
+- **Current Completed Scope**:
+  - Creation of publicly shareable synthetic patches.
+  - Ground truth metadata definition (strictly excluded from reviewer inputs).
+  - Offline dry-run verification runner (`tools/eval_ocr_mimo.py`).
+- **Items Intentionally Left Unimplemented**:
+  - Alibaba OCR official CLI (`ocr`) fixed version pinning and installation.
+  - Standalone live network connection to MiMo API.
+  - Hardware-enforced billing/token budget ceiling (requires external proxy/credential limits).
 
 ### 2.2 Synthetic Samples & Ground Truth
 
 To prevent leaking private code, credentials, or personal information, synthetic patches are stored in `tests/fixtures/synthetic_samples/`:
 
 1. **Clean Sample (`clean_refactor.patch`)**:
-   - Refactor: Type annotations, list comprehension, built-in `sum()`.
+   - Refactor: Preserves exact semantics without behavior alterations (type annotations, list comprehension equivalence).
    - Purpose: Measure False Positives (hallucination / excessive nitpicking).
    - Expected Defects: **0**
 2. **Defect-Seeded Sample (`defect_seeded.patch`)**:
-   - Four distinct seeded defects:
-     - DEFECT-01: Path Traversal (`target_path = self.base_path / user_supplied_name`, CWE-22, CRITICAL)
-     - DEFECT-02: Resource Leak (unclosed `open()`, CWE-775, MEDIUM)
-     - DEFECT-03: Arbitrary Code Execution (`eval(filter_expr)`, CWE-95, CRITICAL)
-     - DEFECT-04: Silent Failure (`except Exception: pass`, CWE-391, LOW)
+   - Natural diff free of any hint comments (`DEFECT` or answer annotations removed):
+     - Line 11: Path Traversal (`target_path = self.base_path / user_supplied_name`, CWE-22, CRITICAL)
+     - Line 12: Resource Leak (unclosed `open()`, CWE-775, MEDIUM)
+     - Line 18: Arbitrary Code Execution (`eval(filter_expr)`, CWE-95, CRITICAL)
+     - Line 20: Silent Failure (`except Exception: pass`, CWE-391, LOW)
    - Purpose: Measure Recall (missed defect rate), severity scoring, and actionable findings.
    - Expected Defects: **4**
 3. **Ground Truth Manifest (`synthetic_samples_manifest.json`)**:
    - Structured metadata defining line numbers, CWEs, and severity.
+   - **Crucial**: Strictly excluded from reviewer input prompts; used exclusively for offline evaluation.
 
 ### 2.3 Evaluation Metrics Recording Framework
 
@@ -96,6 +97,7 @@ The evaluation will record the following metrics independently:
 - **Coverage Scope**: Evaluated vs. excluded file boundaries.
 - **Latency**: Duration in seconds.
 - **Usage & Cost**: Input/output tokens and actual cost in USD/JPY (`UNKNOWN` if unobserved).
+*Note: Upstream's "~1/9 token ratio" is not treated as a guarantee, and zero findings or partial failures will not be treated as success.*
 
 ---
 
@@ -131,6 +133,7 @@ Upon user authorization, live testing can proceed under the following constraint
   - Cost ceiling: **$0.10 USD**
 - **Safety Guards**:
   - Synthetic test patches only; zero private repository data.
+  - Ground truth metadata strictly excluded from reviewer input.
   - No API keys or secrets printed, logged, or committed.
   - Immediate fail-closed stop on authorization refusal or unexpected error.
 
@@ -138,5 +141,5 @@ Upon user authorization, live testing can proceed under the following constraint
 
 ## 5. Current State & Handoff
 
-- **Status**: P1 minimal setup completed; P3 standalone evaluation preparation completed (offline dry-run verified).
+- **Status**: P1 minimal setup completed; P3 synthetic preparation completed (offline dry-run verified, 6 regression tests passing).
 - **Handoff**: Stopping execution without automatic merge or proceeding to subsequent phases (P2 live communication or P4 integration).

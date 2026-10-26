@@ -2,7 +2,7 @@ diff --git a/app/service/data_processor.py b/app/service/data_processor.py
 index 1111111..2222222 100644
 --- a/app/service/data_processor.py
 +++ b/app/service/data_processor.py
-@@ -1,15 +1,18 @@
+@@ -1,15 +1,11 @@
 -def process_records(items):
 -    results = []
 -    for item in items:
@@ -12,18 +12,13 @@ index 1111111..2222222 100644
 +from __future__ import annotations
 +from typing import Any
 +
-+def process_records(items: list[dict[str, Any]]) -> list[int]:
-+    """Process active items and scale their numeric values."""
-+    return [
-+        int(item["value"]) * 2
-+        for item in items
-+        if item.get("active") and "value" in item
-+    ]
++def process_records(items: list[dict[str, Any]]) -> list[Any]:
++    return [item["value"] * 2 for item in items if item.get("active")]
  
- def calculate_total(values: list[int]) -> int:
+-def calculate_total(values):
 -    total = 0
 -    for v in values:
 -        total += v
 -    return total
-+    """Compute sum of values."""
++def calculate_total(values: list[int | float]) -> int | float:
 +    return sum(values)

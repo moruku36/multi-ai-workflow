@@ -14,11 +14,19 @@ import argparse
 import json
 import os
 import py_compile
+import re
 import subprocess
 import sys
 import time
-import unittest
 from pathlib import Path
+
+
+# 必須とされるテストスイート相対パス（存在しない、または実行件数0件の場合はFAILとする）
+REQUIRED_TEST_SUITES = [
+    "configs/openwebui-local-memory-0.11.4",
+    "configs/openwebui-local-memory-0.11.4/confirmed-memory-tool",
+    "configs/openwebui-local-memory-0.11.4/public-template/context-guard",
+]
 
 
 def get_git_head(repo_root: Path) -> str:
@@ -38,8 +46,7 @@ def get_git_head(repo_root: Path) -> str:
 def check_python_syntax(repo_root: Path) -> dict:
     start_time = time.time()
     py_files: list[Path] = []
-    # multi-ai-workflow 配下の .py ファイルを探索
-    for pattern in ["configs/**/*.py", "tools/**/*.py"]:
+    for pattern in ["configs/**/*.py", "tools/**/*.py", "tests/**/*.py"]:
         for p in repo_root.glob(pattern):
             if ".venv" not in p.parts and "__pycache__" not in p.parts:
                 py_files.append(p)
@@ -54,7 +61,7 @@ def check_python_syntax(repo_root: Path) -> dict:
     return {
         "check": "python_syntax",
         "command": "py_compile.compile",
-        "passed": len(errors) == 0,
+        "passed": len(errors) == 0 and len(py_files) > 0,
         "files_checked": len(py_files),
         "errors": errors,
         "duration_sec": round(time.time() - start_time, 3),
@@ -63,23 +70,26 @@ def check_python_syntax(repo_root: Path) -> dict:
 
 def check_existing_unittests(repo_root: Path) -> dict:
     start_time = time.time()
-    test_dirs = [
-        repo_root / "configs" / "openwebui-local-memory-0.11.4",
-        repo_root / "configs" / "openwebui-local-memory-0.11.4" / "confirmed-memory-tool",
-        repo_root / "configs" / "openwebui-local-memory-0.11.4" / "public-template" / "context-guard",
-    ]
-
     total_ran = 0
+    total_skipped = 0
     failures = 0
     errors = 0
     details = []
 
-    for td in test_dirs:
+    for req_rel in REQUIRED_TEST_SUITES:
+        td = repo_root / req_rel
         if not td.exists():
+            failures += 1
+            details.append({
+                "directory": req_rel,
+                "passed": False,
+                "error": "Required test suite directory is missing",
+                "tests_run": 0,
+                "tests_skipped": 0,
+            })
             continue
-        rel_dir = str(td.relative_to(repo_root))
+
         try:
-            # 各テストスイートは該当ディレクトリをCWDとして実行
             cmd = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"]
             res = subprocess.run(
                 cmd,
@@ -87,39 +97,92 @@ def check_existing_unittests(repo_root: Path) -> dict:
                 capture_output=True,
                 text=True,
             )
-            passed = res.returncode == 0
-            # 標準エラー出力から "Ran X tests" を抽出
+            # 標準エラー出力から "Ran X tests" および "skipped=Y" を抽出
             ran_count = 0
+            skipped_count = 0
             for line in res.stderr.splitlines():
                 if line.startswith("Ran ") and "tests" in line:
                     parts = line.split()
                     if len(parts) >= 2 and parts[1].isdigit():
                         ran_count = int(parts[1])
+                skip_match = re.search(r"skipped=(\d+)", line)
+                if skip_match:
+                    skipped_count = int(skip_match.group(1))
+
             total_ran += ran_count
-            if not passed:
+            total_skipped += skipped_count
+
+            # 0件実行、またはプロセス失敗は不可
+            suite_passed = (res.returncode == 0) and (ran_count > 0)
+            if not suite_passed:
                 failures += 1
+
             details.append({
-                "directory": rel_dir,
-                "passed": passed,
+                "directory": req_rel,
+                "passed": suite_passed,
                 "tests_run": ran_count,
+                "tests_skipped": skipped_count,
                 "returncode": res.returncode,
+                "zero_tests_flag": ran_count == 0,
                 "output_tail": res.stderr.strip()[-300:] if res.stderr else "",
             })
         except Exception as e:
             errors += 1
             details.append({
-                "directory": rel_dir,
+                "directory": req_rel,
                 "passed": False,
                 "error": str(e),
+                "tests_run": 0,
+                "tests_skipped": 0,
             })
 
+    all_passed = (failures == 0) and (errors == 0) and (total_ran > 0)
     return {
         "check": "existing_unittests",
         "command": "python -m unittest discover -s tests -p 'test_*.py'",
-        "passed": failures == 0 and errors == 0,
+        "passed": all_passed,
         "total_tests_run": total_ran,
+        "total_tests_skipped": total_skipped,
         "suites_checked": len(details),
+        "required_suites_count": len(REQUIRED_TEST_SUITES),
         "details": details,
+        "duration_sec": round(time.time() - start_time, 3),
+    }
+
+
+def check_fixtures_integrity(repo_root: Path) -> dict:
+    start_time = time.time()
+    fixtures_dir = repo_root / "tests" / "fixtures" / "synthetic_samples"
+    manifest_path = fixtures_dir / "synthetic_samples_manifest.json"
+
+    errors = []
+    samples_checked = 0
+
+    if not fixtures_dir.exists():
+        errors.append("Fixtures directory does not exist: tests/fixtures/synthetic_samples")
+    elif not manifest_path.exists():
+        errors.append("Synthetic samples manifest missing: synthetic_samples_manifest.json")
+    else:
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            samples = manifest.get("samples", {})
+            if not samples:
+                errors.append("Manifest contains no samples")
+            for name, meta in samples.items():
+                samples_checked += 1
+                sample_file = fixtures_dir / name
+                if not sample_file.exists():
+                    errors.append(f"Sample patch file missing: {name}")
+                elif sample_file.stat().st_size == 0:
+                    errors.append(f"Sample patch file is empty: {name}")
+        except Exception as e:
+            errors.append(f"Invalid JSON manifest: {e}")
+
+    return {
+        "check": "fixtures_integrity",
+        "passed": len(errors) == 0 and samples_checked > 0,
+        "samples_checked": samples_checked,
+        "errors": errors,
         "duration_sec": round(time.time() - start_time, 3),
     }
 
@@ -135,18 +198,15 @@ def check_doc_formatting(repo_root: Path) -> dict:
         try:
             content = f.read_text(encoding="utf-8", errors="ignore")
             lines = content.splitlines()
-            has_tw = any(line.endswith(" ") or line.endswith("\t") for line in lines)
-            if has_tw:
-                # Markdownでは改行目的で末尾スペース2つを使うことがあるため、3つ以上またはタブを警告対象とする
-                abnormal = [
-                    i + 1 for i, line in enumerate(lines)
-                    if line.endswith("   ") or line.endswith("\t")
-                ]
-                if abnormal:
-                    trailing_whitespace_files.append({
-                        "file": str(f.relative_to(repo_root)),
-                        "lines": abnormal[:5],
-                    })
+            abnormal = [
+                i + 1 for i, line in enumerate(lines)
+                if line.endswith("   ") or line.endswith("\t")
+            ]
+            if abnormal:
+                trailing_whitespace_files.append({
+                    "file": str(f.relative_to(repo_root)),
+                    "lines": abnormal[:5],
+                })
         except Exception:
             pass
 
@@ -166,7 +226,6 @@ def inspect_external_tools() -> dict:
     for tool in tools:
         found = False
         path = ""
-        # which / where check
         cmd = ["where", tool] if os.name == "nt" else ["which", tool]
         try:
             res = subprocess.run(cmd, capture_output=True, text=True)
@@ -192,10 +251,11 @@ def run_all_checks(repo_root: Path) -> dict:
 
     syntax = check_python_syntax(repo_root)
     unittests = check_existing_unittests(repo_root)
+    fixtures = check_fixtures_integrity(repo_root)
     docs = check_doc_formatting(repo_root)
     tools = inspect_external_tools()
 
-    all_passed = syntax["passed"] and unittests["passed"]
+    all_passed = syntax["passed"] and unittests["passed"] and fixtures["passed"]
 
     return {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -205,6 +265,7 @@ def run_all_checks(repo_root: Path) -> dict:
         "results": {
             "python_syntax": syntax,
             "existing_unittests": unittests,
+            "fixtures_integrity": fixtures,
             "doc_formatting": docs,
             "tool_inspection": tools,
         },
@@ -212,7 +273,8 @@ def run_all_checks(repo_root: Path) -> dict:
             "Ruff lint / format check (Ruff not installed in multi-ai-workflow environment)",
             "Semgrep CE security check (Semgrep not installed in multi-ai-workflow environment)",
             "Pele diagram rebuild (pele dependency requires offline npm ci)",
-            "Alibaba OCR + MiMo API Review (Pending P3 authorization and credential budget definition)",
+            "Alibaba OCR tool integration & pinned version (Pending standalone setup)",
+            "MiMo API live invocation & cost ceiling enforcement (Pending authorization and quota boundaries)",
             "Cloudflare security audit skill (Reserved for high-risk auth/boundary changes)",
         ],
     }
@@ -233,9 +295,12 @@ def main():
         print(f"Status: {report['overall_status']}")
         print(f"Duration: {report['total_duration_sec']}s\n")
         print("Checks:")
-        print(f"  - Python Syntax: {'OK' if report['results']['python_syntax']['passed'] else 'FAIL'} ({report['results']['python_syntax']['files_checked']} files)")
-        print(f"  - Unittests:     {'OK' if report['results']['existing_unittests']['passed'] else 'FAIL'} ({report['results']['existing_unittests']['total_tests_run']} tests)")
-        print(f"  - Doc Format:    {'OK' if report['results']['doc_formatting']['passed'] else 'WARN'} ({report['results']['doc_formatting']['files_checked']} files)")
+        print(f"  - Python Syntax:      {'OK' if report['results']['python_syntax']['passed'] else 'FAIL'} ({report['results']['python_syntax']['files_checked']} files)")
+        u_res = report['results']['existing_unittests']
+        print(f"  - Unittests:          {'OK' if u_res['passed'] else 'FAIL'} ({u_res['total_tests_run']} ran, {u_res['total_tests_skipped']} skipped across {u_res['suites_checked']} suites)")
+        f_res = report['results']['fixtures_integrity']
+        print(f"  - Fixtures Integrity: {'OK' if f_res['passed'] else 'FAIL'} ({f_res['samples_checked']} samples verified)")
+        print(f"  - Doc Format:         {'OK' if report['results']['doc_formatting']['passed'] else 'WARN'} ({report['results']['doc_formatting']['files_checked']} files)")
         print("\nExternal Tools in PATH:")
         for t, v in report["results"]["tool_inspection"]["tools"].items():
             print(f"  - {t:<8}: {'AVAILABLE' if v['available'] else 'MISSING'} ({v['note']})")

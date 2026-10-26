@@ -6,7 +6,8 @@
 - 対象リポジトリ: `multi-ai-workflow`
 - 設計正本: `docs/mailbox-quality-roadmap-2026-10-26.ja.md`
 - 作業ブランチ: `feature/quality-baseline-p1-p3`
-- 目標: 「機械的検査 → Alibaba OCR + MiMo API → 重要変更のみCloudflare監査」の役割分担により、Codexによる全文再読・重複レビューを削減する基盤の第一歩（P1最小整備およびP3単独評価準備）。
+- 目標: 「機械的検査 → Alibaba OCR + MiMo API → 重要変更のみCloudflare監査」の役割分担により、Codexによる全文再読・重複レビューを削減する基盤の第一歩（P1最小整備およびP3合成サンプル・入力準備）。
+- **現状の位置づけ**: 現状は「合成サンプルと評価入力の準備」であり、Alibaba OCR 本体の統合ではありません。OCRの固定バージョン選定、CLIインストール、standalone実接続、API予算のハードウェア強制は未実装です。
 - 制約遵守: Mailboxアダプター・常駐化・全リポジトリ展開は作成せず、新規パッケージの無断インストールや外部通信を行わない。
 
 ---
@@ -30,16 +31,15 @@
 
 - **実行コマンド**: `python tools/check_quality.py` (または `--json`)
 - **検査項目**:
-  1. Python構文検査 (`py_compile.compile`, 14ファイル対象)
-  2. 既存unittestの一括実行 (3スイート、88テスト対象)
-  3. ドキュメント書式整合性検査 (タブ混入・不正規末尾空白の検出)
-  4. 外部ツール検知と未検証範囲（Unverified Scope）の明示
-- **実行結果**:
-  - `overall_status`: **PASSED**
-  - Python Syntax: OK (14 files)
-  - Unittests: OK (88 tests run, 0 failures, 0 errors)
-  - Doc Format: OK (47 files)
-  - 未導入ツール: `ruff` (MISSING), `semgrep` (MISSING) を検知し、スキップ理由を記録。
+  1. Python構文検査 (`py_compile.compile`, 16ファイル対象)
+  2. 必須テストスイート実行 (`REQUIRED_TEST_SUITES` の存在・0件実行・スキップ・失敗を厳格判定)
+  3. Fixture整合性検査 (manifest存在・パッチ欠落・空ファイルを検知)
+  4. ドキュメント書式整合性検査 (タブ混入・不正規末尾空白の検出)
+  5. 外部ツール検知と未検証範囲（Unverified Scope）の明示
+- **厳格化基準**:
+  - 必須テストスイートの欠落、または実行テスト数 0 件の場合は成功扱いとせず直ちに FAIL とする。
+  - スキップ件数（`tests_skipped`）を分離して明示。
+  - テストおよびfixtureの整合性を検証する小さな回帰テスト (`tests/test_quality_baseline.py`, 6件) を配備・全件パス。
 
 ### 1.3 初回試行パイロットリポジトリの提案
 
@@ -55,38 +55,39 @@
 
 ---
 
-## 2. P3: Alibaba OCR + MiMo API 単独評価の準備
+## 2. P3: 合成サンプルと評価入力の準備（OCR統合前の前段準備）
 
-### 2.1 Alibaba OCR の仕様と運用形態の明確化
+### 2.1 現状のスコープと未実装事項
 
-- **ツール概要**: Alibaba 製 `open-code-review` (CLI: `ocr`, Apache-2.0)。Go言語による決定論的エンジニアリングパイプラインとLLMエージェントを組み合わせたハイブリッド構造。Git diffを行レベルで追従し、行番号のズレを防ぐ。
-- **Standalone + MiMo 構成**:
-  - 通常レビューの推論バックエンドとして Xiaomi MiMo API（OpenAI互換エンドポイント）を指定して実行する。
-  - **Codex delegation との明確な区別**: Codex のホストセッションやクォータを間接消費し続ける委託経路ではなく、独立した API エンドポイント（MiMo）へ接続する standalone 構成とする。
-- **課金・クォータの境界**:
-  - 作者ベンチマークの「トークン約 1/9」は参考値であり、実環境の削減率や品質保証とは扱わない。
-  - `max-token-budget` を厳密な課金上限とは扱わず、ラッパー外側で「最大呼出回数」「入出力トークン上限」「タイムアウト」「実費上限」を強制する。
-  - 指摘ゼロや部分失敗を安易に「合格」と判定しない。
+- **現状のスコープ**:
+  - 公開可能な合成パッチの作成
+  - 正解データ（Ground Truth）の定義（※レビュアー入力からは完全除外）
+  - オフラインでのドライラン検証 (`tools/eval_ocr_mimo.py`)
+- **意図的に未実装として残す項目**:
+  - Alibaba OCR 公式 CLI（`ocr`）の固定バージョン選定およびバイナリ導入
+  - Standalone MiMo API への実ネットワーク接続
+  - API 課金・トークン予算の強制機構（外側プロキシや認証認可によるハードリミット）
 
 ### 2.2 合成評価サンプルと Ground Truth
 
-実リポジトリの非公開コード・個人情報・秘密の送信を防止するため、合成テストパッチ（公開可能な最小差分）を用意。
+実リポジトリの非公開コード・個人情報・秘密の送信を防止するため、合成テストパッチを用意。
 
 保存先: `tests/fixtures/synthetic_samples/`
 1. **正常例 (`clean_refactor.patch`)**:
-   - 内容: 型ヒント追加、内包表記リファクタリング、組み込み `sum()` 活用。
-   - 目的: False Positive（誤検知・過剰な文句・ハルシネーション）の計測。
+   - 内容: 動作（セマンティクス）を完全に変更しない純粋なリファクタリング（型ヒント付与、内包表記による等価な記述）。
+   - 目的: False Positive（誤検知・過剰な指摘・ハルシネーション）の計測。
    - 期待欠陥数: **0件**
 2. **欠陥例 (`defect_seeded.patch`)**:
-   - 内容: 4つの明確な既知の欠陥を意図的に埋め込み。
-     - DEFECT-01: Path Traversal (`target_path = self.base_path / user_supplied_name`, CWE-22, CRITICAL)
-     - DEFECT-02: Resource Leak (`open()` の非クローズ・`with` 未使用, CWE-775, MEDIUM)
-     - DEFECT-03: 任意コード実行 (`eval(filter_expr)`, CWE-95, CRITICAL)
-     - DEFECT-04: 例外の完全黙殺 (`except Exception: pass`, CWE-391, LOW)
+   - 内容: `DEFECT` や答えを示すヒントコメントを一切排除した自然なコード差分。
+     - 行 11: Path Traversal (`target_path = self.base_path / user_supplied_name`, CWE-22, CRITICAL)
+     - 行 12: Resource Leak (`open()` の非クローズ・`with` 未使用, CWE-775, MEDIUM)
+     - 行 18: 任意コード実行 (`eval(filter_expr)`, CWE-95, CRITICAL)
+     - 行 20: 例外の完全黙殺 (`except Exception: pass`, CWE-391, LOW)
    - 目的: Recall（見逃し率）、深刻度判定精度、有用な指摘（Actionable Findings）の計測。
    - 期待欠陥数: **4件**
-3. **メタデータマニフェスト (`synthetic_samples_manifest.json`)**:
-   - 正解データ（Ground Truth）の行番号、CWE、重大度を定義。
+3. **正解データマニフェスト (`synthetic_samples_manifest.json`)**:
+   - 正解データの行番号・CWE・重大度を定義。
+   - **重要**: 正解データはレビュー入力プロンプトには絶対に含めず、ローカル評価・検証でのみ使用。
 
 ### 2.3 評価メトリクスの記録基準
 
@@ -97,6 +98,7 @@
 - **Coverage Scope**: 検査対象ファイルおよび除外ファイル範囲
 - **Latency**: 実行所要時間（秒）
 - **Usage & Cost**: 入力トークン数、出力トークン数、推定実費（USD/JPY、未取得時は `UNKNOWN`）
+※作者ベンチマーク「約1/9」は保証値と扱わない。指摘ゼロや部分失敗を合格扱いしない。
 
 ---
 
@@ -132,6 +134,7 @@ Cloudflare の `security-audit-skill` は全PRに一律適用するゼロトー�
   - 実費上限: **$0.10 USD**
 - **安全境界**:
   - 送信データは `tests/fixtures/synthetic_samples/` の合成パッチのみに限定。
+  - 正解データ（Ground Truth）は入力に含めない。
   - APIキー等の秘密値は画面表示、ログ出力、コミットを一切行わない。
   - 不明なエラーや権限拒否が発生した場合は即時停止（fail-closed）。
 
@@ -139,5 +142,5 @@ Cloudflare の `security-audit-skill` は全PRに一律適用するゼロトー�
 
 ## 5. 現在の状態と次フェーズへの引き継ぎ
 
-- **現在のステータス**: P1 最小整備完了、P3 単独評価準備完了（API未呼出・dry-run検証済み）。
+- **現在のステータス**: P1 最小整備完了、P3 合成サンプル・入力準備完了（オフライン dry-run 検証済み、回帰テスト 6 件全件合格）。
 - **停止条件**: 本フェーズの目標を達成したため、自動でマージや次フェーズ（実通信、P2、P4）へ進まず停止。
