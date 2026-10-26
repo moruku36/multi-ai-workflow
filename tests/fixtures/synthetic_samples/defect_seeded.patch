@@ -1,8 +1,7 @@
 diff --git a/app/service/file_handler.py b/app/service/file_handler.py
-index 3333333..4444444 100644
 --- a/app/service/file_handler.py
 +++ b/app/service/file_handler.py
-@@ -10,8 +10,21 @@ class FileHandler:
+@@ -7,8 +7,15 @@
      def __init__(self, base_path: str):
          self.base_path = Path(base_path)
  

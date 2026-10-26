@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-# テスト対象モジュールのインポート
-import sys
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
@@ -54,7 +54,6 @@ class QualityBaselineRegressionTests(unittest.TestCase):
     def test_unittests_fails_on_missing_required_suite(self):
         original_suites = check_quality.REQUIRED_TEST_SUITES
         try:
-            # 存在しない架空の必須スイートを設定
             check_quality.REQUIRED_TEST_SUITES = ["configs/non_existent_suite"]
             res = check_quality.check_existing_unittests(REPO_ROOT)
             self.assertFalse(res["passed"])
@@ -71,22 +70,74 @@ class QualityBaselineRegressionTests(unittest.TestCase):
         payload = eval_ocr_mimo.build_ocr_simulation_payload(patch_info)
 
         user_content = payload["messages"][1]["content"]
-        # Ground truth の注釈やID、CWE番号がプロンプトに含まれていないことを検証
         for defect in defect_meta.get("ground_truth_defects", []):
             self.assertNotIn(defect["id"], user_content)
             self.assertNotIn(defect["cwe"], user_content)
             self.assertNotIn(defect["description"], user_content)
 
-    def test_clean_patch_semantic_equivalence(self):
-        # 正常例パッチにDEFECTなどの不正キーワードが含まれず、正当なdiff形式であることを検証
+    def test_patches_apply_cleanly_to_sources(self):
         fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples"
-        clean_content = (fixtures_dir / "clean_refactor.patch").read_text(encoding="utf-8")
-        defect_content = (fixtures_dir / "defect_seeded.patch").read_text(encoding="utf-8")
+        sources_dir = fixtures_dir / "sources"
 
-        self.assertNotIn("DEFECT", clean_content)
-        self.assertNotIn("DEFECT", defect_content)
-        self.assertTrue(clean_content.startswith("diff --git"))
-        self.assertTrue(defect_content.startswith("diff --git"))
+        # 1. Clean patch apply check
+        clean_before = sources_dir / "clean" / "before"
+        clean_patch = fixtures_dir / "clean_refactor.patch"
+        res_clean = subprocess.run(
+            ["git", "apply", "--check", str(clean_patch)],
+            cwd=clean_before,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            res_clean.returncode,
+            0,
+            f"clean_refactor.patch failed git apply --check: {res_clean.stderr}",
+        )
+
+        # 2. Defect patch apply check
+        defect_before = sources_dir / "defect" / "before"
+        defect_patch = fixtures_dir / "defect_seeded.patch"
+        res_defect = subprocess.run(
+            ["git", "apply", "--check", str(defect_patch)],
+            cwd=defect_before,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            res_defect.returncode,
+            0,
+            f"defect_seeded.patch failed git apply --check: {res_defect.stderr}",
+        )
+
+    def test_ground_truth_target_lines_match_seeded_defects(self):
+        fixtures_dir = REPO_ROOT / "tests" / "fixtures" / "synthetic_samples"
+        manifest_path = fixtures_dir / "synthetic_samples_manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+        after_code_file = (
+            fixtures_dir / "sources" / "defect" / "after" / "app" / "service" / "file_handler.py"
+        )
+        after_lines = after_code_file.read_text(encoding="utf-8").splitlines()
+
+        expected_anchors = {
+            "DEFECT-01": "self.base_path / user_supplied_name",
+            "DEFECT-02": "open(target_path,",
+            "DEFECT-03": "eval(filter_expr,",
+            "DEFECT-04": "pass",
+        }
+
+        defects = manifest["samples"]["defect_seeded.patch"]["ground_truth_defects"]
+        for defect in defects:
+            did = defect["id"]
+            line_no = defect["target_line"]
+            self.assertLessEqual(line_no, len(after_lines), f"{did} line out of bounds")
+            line_content = after_lines[line_no - 1]
+            anchor = expected_anchors[did]
+            self.assertIn(
+                anchor,
+                line_content,
+                f"{did} at line {line_no} does not contain '{anchor}': got '{line_content}'",
+            )
 
 
 if __name__ == "__main__":
