@@ -4,6 +4,10 @@
 
 認可済みのツール間で実装、検証、報告を調整するための公開資料です。日付付きの節にあるモデル名は本人の運用上の呼称であり、サービスの提供仕様や実行時のモデルIDを確認したものではありません。
 
+## ラウンジ連携 — 2026-10-28
+
+Dots と Muse は非公開の受渡し窓口を介して各 AI を利用します。Claude は両者への返答を確認済みで、他の経路にはそれぞれ確認済み・未完成の段階があります。[日付付き状況と残る確認](docs/lounge-status-2026-10-28.ja.md)（[English](docs/lounge-status-2026-10-28.md)）を参照してください。完全な自律オーケストレーションを意味しません。
+
 ## 通信・品質基盤の設計案 — 2026-10-26
 
 **相談用の設計・未導入。** [Mailbox を土台にした段階導入案](docs/mailbox-quality-roadmap-2026-10-26.ja.md)（[English](docs/mailbox-quality-roadmap-2026-10-26.md)）では、決定的な tests / Ruff / Semgrep CE、範囲を限った worker 通信、通常の OpenCodeReview + MiMo API review、高リスク時だけの Cloudflare focused audit を分離します。本格 reviewer 接続は通信基盤の受入後です。GitHub + mock 専用試験の一往復と同一 journal idle は確認済みですが、実 AI adapter は未実装、複数 AI orchestration は未完成です。既存の必須テストと人の受入を維持し、この提案で導入・API 呼出・認証追加・定期実行・自動マージは開始しません。
