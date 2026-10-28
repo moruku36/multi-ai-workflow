@@ -4,6 +4,10 @@
 
 Public guidance for coordinating implementation, review and reporting across authorized tools. The model names in dated sections are owner-reported operating labels, not verified service specifications or runtime identities.
 
+## Lounge collaboration — 2026-10-28
+
+Dots and Muse use a private handoff lounge to reach selected AI workers. Claude has replied to both agents; other routes have distinct verified and unfinished stages. See the [dated status and remaining checks](docs/lounge-status-2026-10-28.md) ([日本語](docs/lounge-status-2026-10-28.ja.md)). This is not a claim of complete autonomous orchestration.
+
 ## Proposed communication and quality foundation — 2026-10-26
 
 **Design for discussion, not deployed.** The [Mailbox-first roadmap](docs/mailbox-quality-roadmap-2026-10-26.md) ([日本語](docs/mailbox-quality-roadmap-2026-10-26.ja.md)) separates deterministic tests/Ruff/Semgrep CE, bounded worker communication, ordinary OpenCodeReview + MiMo API review, and exceptional Cloudflare focused audits. Communication acceptance precedes full reviewer integration. A dedicated GitHub + mock round trip and same-journal idle are confirmed; real AI adapters and multi-AI orchestration remain unfinished. Existing required tests and human acceptance remain. No installation, API call, credentials, scheduling or auto-merge is enabled by this proposal.
