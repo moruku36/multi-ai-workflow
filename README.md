@@ -84,6 +84,8 @@ flowchart LR
     class GHOST app
 ```
 
+Larger view: [full-size PNG](assets/network-topology-2026-10-30.png)
+
 ## Latest update — 2026-10-30
 
 - Added the [network topology snapshot](docs/network-topology-2026-10-30.md): the current mesh, with each link marked event-driven, polling or on-demand.

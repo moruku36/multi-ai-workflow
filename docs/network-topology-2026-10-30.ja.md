@@ -87,6 +87,8 @@ flowchart LR
     class GHOST app
 ```
 
+大きく見る：[フルサイズPNG](../assets/network-topology-2026-10-30.ja.png)
+
 ## 接続の一覧
 
 | From → To | 方式 | 間隔／きっかけ | 状態（2026-10-30） |

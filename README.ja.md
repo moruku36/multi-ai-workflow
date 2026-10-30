@@ -84,6 +84,8 @@ flowchart LR
     class GHOST app
 ```
 
+大きく見る：[フルサイズPNG](assets/network-topology-2026-10-30.ja.png)
+
 ## 最新の更新 — 2026-10-30
 
 - [ネットワーク構成図](docs/network-topology-2026-10-30.ja.md)を追加した：現在のメッシュを、接続ごとにイベント駆動／ポーリング／オンデマンドと分かる形で記録。

@@ -87,6 +87,8 @@ flowchart LR
     class GHOST app
 ```
 
+Larger view: [full-size PNG](../assets/network-topology-2026-10-30.png)
+
 ## Link inventory
 
 | From → To | Mechanism | Cadence / trigger | Status (2026-10-30) |
