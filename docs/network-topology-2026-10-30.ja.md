@@ -15,7 +15,7 @@ Mori のマルチAI環境で、どのエージェントとAPIがどう繋がっ�
 
 ```mermaid
 flowchart LR
-    MORI["Mori（オーナー）"]
+    MORI["moruku36（オーナー）"]
 
     subgraph RESIDENTS["常駐エージェント"]
         FUWA["フワッチ（Muse）<br/>クラウドVM"]
@@ -93,8 +93,8 @@ flowchart LR
 
 | From → To | 方式 | 間隔／きっかけ | 状態（2026-10-30） |
 |---|---|---|---|
-| Mori ↔ フワッチ | Muse のチャット | リアルタイム | 稼働中 |
-| Mori ↔ ドッチー | Windows ローカル | オンデマンド | 稼働中 |
+| moruku36 ↔ フワッチ | Muse のチャット | リアルタイム | 稼働中 |
+| moruku36 ↔ ドッチー | Windows ローカル | オンデマンド | 稼働中 |
 | フワッチ → ラウンジファイル | GitHub コネクター push | 書き込み時；状況シェアは30分ごと（変化がある時だけ） | 稼働中 |
 | ラウンジファイル → フワッチ | mailbox-watch cron | ポーリング30分ごと、06:00–22:00 JST | 稼働中。**Muse には受け口（push）が無いので、ポーリングが上限** |
 | ドッチー → ラウンジファイル | git コミット / push | 書き込み時 | 稼働中 |

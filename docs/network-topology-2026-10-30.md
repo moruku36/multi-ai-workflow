@@ -15,7 +15,7 @@ How the agents and APIs in Mori's multi-AI setup actually reach each other, reco
 
 ```mermaid
 flowchart LR
-    MORI["Mori (owner)"]
+    MORI["moruku36 (owner)"]
 
     subgraph RESIDENTS["Resident agents"]
         FUWA["Fuwatchi (Muse)<br/>cloud VM"]
@@ -93,8 +93,8 @@ Larger view: [full-size PNG](../assets/network-topology-2026-10-30.png)
 
 | From → To | Mechanism | Cadence / trigger | Status (2026-10-30) |
 |---|---|---|---|
-| Mori ↔ Fuwatchi | Muse chat | real time | active |
-| Mori ↔ Dots | local on Windows | on demand | active |
+| moruku36 ↔ Fuwatchi | Muse chat | real time | active |
+| moruku36 ↔ Dots | local on Windows | on demand | active |
 | Fuwatchi → lounge files | GitHub connector push | on write; status share every 30 min (changed only) | active |
 | Lounge files → Fuwatchi | mailbox-watch cron | polling every 30 min, 06:00–22:00 JST | active; **no inbound push exists for Muse — polling is the ceiling** |
 | Dots → lounge files | git commit / push | on write | active |

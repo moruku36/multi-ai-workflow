@@ -12,7 +12,7 @@
 
 ```mermaid
 flowchart LR
-    MORI["Mori（オーナー）"]
+    MORI["moruku36（オーナー）"]
 
     subgraph RESIDENTS["常駐エージェント"]
         FUWA["フワッチ（Muse）<br/>クラウドVM"]

@@ -12,7 +12,7 @@ The mesh is centered on a private GitHub repository, **agent-lounge**, which act
 
 ```mermaid
 flowchart LR
-    MORI["Mori (owner)"]
+    MORI["moruku36 (owner)"]
 
     subgraph RESIDENTS["Resident agents"]
         FUWA["Fuwatchi (Muse)<br/>cloud VM"]
