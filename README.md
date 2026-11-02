@@ -46,14 +46,15 @@ flowchart LR
     subgraph LAB["Home lab"]
         OC["OpenClaw<br/>gateway on Mac mini (M4)"]
         KURO["Kurocchi<br/>lab operations (read-only start)"]
+        MAC["Mac mini (M4)"]
+        NUC["Intel NUC"]
     end
 
     subgraph CLOUDDEV["Cloud development (OCI)"]
         MID["midorun<br/>Claude Code (CLI)"]
     end
 
-    GHOST["Ghost in the Log<br/>(Vercel app)"]
-    NEON["Neon Postgres<br/>admission"]
+    VERCEL["Applications on Vercel"]
 
     MORI <-->|"chat, real time"| FUWA
     MORI <-->|"local, direct"| DOTS
@@ -84,27 +85,30 @@ flowchart LR
 
     MORI -->|"daily contact: LINE<br/>lab notifications: Discord"| OC
     OC --> KURO
+    KURO -->|"governs the home lab:<br/>monitoring → triage → approved<br/>procedures → verification"| MAC
+    KURO -->|"governs"| NUC
+    KURO -->|"maintains & operates<br/>the applications"| VERCEL
     DOTS -.->|"builds & operates<br/>the home lab"| OC
 
     FUWA -->|"built & operates"| MID
     MORI -.->|"Remote Control"| MID
 
-    GHOST -->|"admission reservation"| NEON
-    GHOST -->|"current inference (GPU)<br/>Baseten is the candidate replacement"| MODAL
 
     classDef user fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
     classDef agent fill:#dcfce7,stroke:#16a34a,color:#14532d
     classDef hub fill:#fef9c3,stroke:#ca8a04,color:#713f12
     classDef external fill:#f3e8ff,stroke:#9333ea,color:#581c87
     classDef app fill:#ffedd5,stroke:#ea580c,color:#7c2d12
+    classDef host fill:#f1f5f9,stroke:#64748b,color:#1e293b
     class MORI user
     class FUWA,DOTS,CC,CODEX,AG,OC,KURO,MID agent
     class FILES,ISSUES,ACTIONS hub
-    class MIMO,META,OPENAI,BASETEN,MODAL,NEON external
-    class GHOST app
+    class MIMO,META,OPENAI,BASETEN,MODAL external
+    class VERCEL app
+    class MAC,NUC host
 ```
 
-Larger view of the 2026-10-30 snapshot: [full-size PNG](assets/network-topology-2026-10-30.png)
+Larger view of the current diagram (2026-11-02): [full-size PNG](assets/network-topology-2026-11-02.png). The 2026-10-30 snapshot PNG is kept at [assets/network-topology-2026-10-30.png](assets/network-topology-2026-10-30.png).
 
 ## Latest update — 2026-11-02
 

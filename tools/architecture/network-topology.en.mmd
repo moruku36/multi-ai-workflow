@@ -1,0 +1,95 @@
+flowchart LR
+    MORI["moruku36<br/>(owner)"]
+
+    subgraph RESIDENTS["Resident agents"]
+        FUWA["Fuwatchi (Muse)<br/>cloud VM"]
+        DOTS["Dots<br/>Windows resident"]
+        KURO["Kurocchi (OpenClaw)<br/>home-lab operations"]
+    end
+
+    subgraph LOUNGE["agent-lounge (GitHub, private)"]
+        FILES["Mailbox files<br/>to-muse.md / to-dots.md / requests/"]
+        ACTIONS["GitHub Actions<br/>mailbox-notify / event workflows"]
+        ISSUES["Issues<br/>LOUNGE-* intake"]
+    end
+
+    subgraph APIS["API providers (called, never callers)"]
+        MODAL["Modal<br/>Gemma (GPU)"]
+        MIMO["MiMo API"]
+        BASETEN["Baseten API<br/>Muse Spark Open"]
+        META["Meta Model API"]
+        OPENAI["OpenAI API"]
+    end
+
+    subgraph SQUAD["Coding squad (Windows)"]
+        CC["Claude Code"]
+        AG["Antigravity"]
+        CODEX["Codex"]
+    end
+
+    subgraph CLOUDDEV["Cloud development (OCI)"]
+        MID["midorun<br/>Claude Code (CLI)"]
+    end
+
+    subgraph LAB["Home lab"]
+        MAC["Mac mini (M4)"]
+        OC["OpenClaw<br/>gateway"]
+        NUC["Intel NUC"]
+    end
+
+    VERCEL["Applications on Vercel"]
+
+    MORI <-->|"chat, real time"| FUWA
+    MORI <-->|"local, direct"| DOTS
+
+    FUWA -->|"write: connector push<br/>+ status share every 2 hours"| FILES
+    FILES -.->|"read: polling every 30 min<br/>06:00-22:00 JST"| FUWA
+    DOTS -->|"commit / push"| FILES
+    FILES -->|"push event"| ACTIONS
+    ACTIONS -->|"metadata comment<br/>on a fixed issue"| ISSUES
+    ISSUES -->|"issue opened event"| ACTIONS
+    ISSUES -->|"event: GitHub notification<br/>wakes Dots (+ hourly fallback)"| DOTS
+    FUWA -.->|"creates LOUNGE-* issues<br/>on demand"| ISSUES
+
+    ACTIONS -->|"MiMo route: event-driven,<br/>verified"| MIMO
+    ACTIONS -->|"Meta route: one-shot candidate,<br/>fail-closed"| META
+    ACTIONS -->|"OpenAI route: one-shot candidate,<br/>fail-closed"| OPENAI
+    DOTS -.->|"local call, key via 1Password<br/>no lounge route yet"| BASETEN
+    FUWA -.->|"direct connector, on demand"| MIMO
+    FUWA -.->|"direct connector, on demand"| META
+    FUWA -.->|"direct connector, on demand"| BASETEN
+    FUWA -.->|"direct connector, on demand"| OPENAI
+
+    ISSUES -->|"LOUNGE-CLAUDE: direct intake<br/>replies confirmed; wake-up unconfirmed"| CC
+    ISSUES -.->|"LOUNGE-ANTIGRAVITY:<br/>polling every 30 min"| AG
+    ISSUES -->|"LOUNGE-CODEX: relayed by Dots"| CODEX
+
+    FUWA -->|"built & operates"| MID
+    MORI -.->|"Remote Control"| MID
+
+    MORI -->|"daily contact: LINE<br/>lab notifications: Discord"| OC
+    DOTS -.->|"leads home-lab<br/>build & operations"| OC
+    KURO -.->|"runs on the OpenClaw gateway<br/>(Mac mini)"| OC
+    KURO -->|"governs: monitoring → triage<br/>→ approved procedures → verification"| MAC
+    KURO -->|"governs"| NUC
+    KURO -->|"maintains & operates<br/>the applications"| VERCEL
+
+    classDef user fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef agent fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef hub fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    classDef external fill:#f3e8ff,stroke:#9333ea,color:#581c87
+    classDef app fill:#ffedd5,stroke:#ea580c,color:#7c2d12
+    classDef host fill:#f1f5f9,stroke:#64748b,color:#1e293b
+    class MORI user
+    class FUWA,DOTS,KURO,CC,CODEX,AG,OC,MID agent
+    class FILES,ISSUES,ACTIONS hub
+    class MIMO,META,OPENAI,BASETEN,MODAL external
+    class VERCEL app
+    class MAC,NUC host
+
+    style RESIDENTS fill:#fdf4ff,stroke:#d946ef,color:#701a75
+    style LOUNGE fill:#f0fdfa,stroke:#14b8a6,color:#134e4a
+    style APIS fill:#ecfeff,stroke:#06b6d4,color:#164e63
+    style SQUAD fill:#fff7ed,stroke:#fb923c,color:#7c2d12
+    style CLOUDDEV fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
+    style LAB fill:#f0fdf4,stroke:#22c55e,color:#14532d
