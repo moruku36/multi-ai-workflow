@@ -2,6 +2,11 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-11-02 (Asia/Tokyo)
+
+- Brought the bilingual README's current architecture up to the 2026-11-02 state and updated the Mermaid diagram to match: Muse (Fuwatchi) recorded with its direction / design / review / media role; the home lab's Mac mini (M4, arrived 2026-11-01) with OpenClaw as gateway and the read-only-start lab-operations agent Kurocchi (LINE for daily contact, Discord for lab notifications); the OCI cloud development environment midorun running Claude Code, with Claude Code (CLI) decided as the development axis for both the cloud environment and the home lab; Antigravity restricted to the official client on the owner's own devices (not deployed to OCI or OpenClaw); Dots as the home-lab build and operations lead; Fuwatchi's lounge status share at every 2 hours since 2026-11-01.
+- **This repository change is documentation only; the decisions and environment changes above were made and executed outside it on 2026-11-01–02.**
+
 ## 2026-10-16 (Asia/Tokyo)
 
 - Added the bilingual [Daybreak and authorized OSS security review](docs/daybreak-authorized-oss-security-review.md) page: Daybreak Blue/Red per OpenAI's public documentation, models listed in the API guide, naming discrepancies between sources (unresolved), and a proposed operating procedure for authorized OSS review.

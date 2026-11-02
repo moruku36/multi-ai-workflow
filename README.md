@@ -6,9 +6,13 @@ Public guidance for coordinating implementation, review and reporting across aut
 
 This repository is the public record of how one owner runs several AI agents as a single team: who does what, how they hand work to each other, and what has been verified. It starts with the current architecture and the latest update; everything older lives in dated documents below, reachable from the repository map.
 
-## Current architecture — 2026-10-30
+## Current architecture — 2026-11-02
 
-The mesh is centered on a private GitHub repository, **agent-lounge**, which acts as the mailbox and request board between the resident agents. Fuwatchi (Muse) works from the cloud and reaches the lounge by polling; Dots lives on the Windows machine and is woken by GitHub notifications. The Windows coding squad (Claude Code, Codex, Antigravity) takes work through `LOUNGE-*` issues. Model APIs (MiMo, Meta, OpenAI, Baseten) never initiate contact; they are called through GitHub Actions event routes or directly by a resident agent. The full diagram is below; the per-link inventory, cadences and verification status live in the [network topology snapshot](docs/network-topology-2026-10-30.md) ([日本語](docs/network-topology-2026-10-30.ja.md)).
+The mesh is centered on a private GitHub repository, **agent-lounge**, which acts as the mailbox and request board between the resident agents. Fuwatchi (Muse, Meta's personal agent) works from the cloud and reaches the lounge by polling; its role is direction, design, review and confirmation — the owner's daily window and the media desk (articles, videos) — while hands-on writing and building are delegated to connected APIs and other agents. Dots, the OpenAI resident agent on the Windows machine, is woken by GitHub notifications and leads the home-lab build and operations work. The Windows coding squad (Claude Code, Codex, Antigravity) takes work through `LOUNGE-*` issues. Model APIs (MiMo, Meta, OpenAI, Baseten) never initiate contact; they are called through GitHub Actions event routes or directly by a resident agent.
+
+Two environments were added around 2026-11-01–02. The cloud development environment **midorun** on OCI (built 2026-11-01) runs Claude Code, and Claude Code (CLI) is the development axis for both the cloud environment and the home lab (decided 2026-11-02); Anthropic access is API-based as the basic stance. The home lab gained a Mac mini (M4, arrived 2026-11-01) as an experiment host for multiple AIs, with **OpenClaw** (open-source, self-hosted) as its orchestration gateway. The lab-operations agent **Kurocchi** runs on OpenClaw (selected 2026-11-01) and starts read-only: monitoring → triage → approved procedures → verification. The owner's daily contact channel is LINE; lab-operations notifications go to Discord. Antigravity is used only through the official client on the owner's own devices and is not deployed into the OCI environment or OpenClaw (decided 2026-11-02, after public reports of account suspensions tied to third-party OAuth use).
+
+The full diagram is below, reflecting the state as of 2026-11-02. The per-link inventory, cadences and verification status as of 2026-10-30 live in the [network topology snapshot](docs/network-topology-2026-10-30.md) ([日本語](docs/network-topology-2026-10-30.ja.md)).
 
 ```mermaid
 flowchart LR
@@ -39,13 +43,22 @@ flowchart LR
         MODAL["Modal<br/>Gemma (GPU)"]
     end
 
+    subgraph LAB["Home lab"]
+        OC["OpenClaw<br/>gateway on Mac mini (M4)"]
+        KURO["Kurocchi<br/>lab operations (read-only start)"]
+    end
+
+    subgraph CLOUDDEV["Cloud development (OCI)"]
+        MID["midorun<br/>Claude Code (CLI)"]
+    end
+
     GHOST["Ghost in the Log<br/>(Vercel app)"]
     NEON["Neon Postgres<br/>admission"]
 
     MORI <-->|"chat, real time"| FUWA
     MORI <-->|"local, direct"| DOTS
 
-    FUWA -->|"write: connector push<br/>+ status share every 30 min"| FILES
+    FUWA -->|"write: connector push<br/>+ status share every 2 hours"| FILES
     FILES -.->|"read: polling every 30 min<br/>06:00-22:00 JST"| FUWA
 
     DOTS -->|"commit / push"| FILES
@@ -69,6 +82,13 @@ flowchart LR
     FUWA -.->|"direct connector, on demand"| OPENAI
     FUWA -.->|"direct connector, on demand"| MIMO
 
+    MORI -->|"daily contact: LINE<br/>lab notifications: Discord"| OC
+    OC --> KURO
+    DOTS -.->|"builds & operates<br/>the home lab"| OC
+
+    FUWA -->|"built & operates"| MID
+    MORI -.->|"Remote Control"| MID
+
     GHOST -->|"admission reservation"| NEON
     GHOST -->|"current inference (GPU)<br/>Baseten is the candidate replacement"| MODAL
 
@@ -78,15 +98,23 @@ flowchart LR
     classDef external fill:#f3e8ff,stroke:#9333ea,color:#581c87
     classDef app fill:#ffedd5,stroke:#ea580c,color:#7c2d12
     class MORI user
-    class FUWA,DOTS,CC,CODEX,AG agent
+    class FUWA,DOTS,CC,CODEX,AG,OC,KURO,MID agent
     class FILES,ISSUES,ACTIONS hub
     class MIMO,META,OPENAI,BASETEN,MODAL,NEON external
     class GHOST app
 ```
 
-Larger view: [full-size PNG](assets/network-topology-2026-10-30.png)
+Larger view of the 2026-10-30 snapshot: [full-size PNG](assets/network-topology-2026-10-30.png)
 
-## Latest update — 2026-10-30
+## Latest update — 2026-11-02
+
+- **Home lab grows an orchestration layer.** A Mac mini (M4) arrived on 2026-11-01 as an experiment host for multiple AIs. OpenClaw (open-source, self-hosted) is adopted as its orchestration gateway, and the lab-operations agent Kurocchi — selected on 2026-11-01 over Hermes Agent — starts read-only: monitoring → triage → approved procedures → verification. Channels are split: LINE for the owner's daily contact, Discord for lab-operations notifications. Dots leads the home-lab build and operations work.
+- **Development axis decided (2026-11-02).** Claude Code (CLI) is the axis for both the cloud development environment and the home lab. The OCI environment midorun (built 2026-11-01) runs Claude Code; Anthropic access is API-based as the basic stance.
+- **Antigravity policy (2026-11-02).** Antigravity is used only through the official client on the owner's own devices; it is not deployed into the OCI environment or OpenClaw, after public reports of account suspensions tied to third-party OAuth use.
+- **Roles confirmed.** Owner = PMO and final decisions; Fuwatchi (Muse) = direction, design, review and media; Dots = home-lab build and operations; coding execution = Claude Code / Codex and the connected APIs (Meta Model API, MiMo, OpenAI, Baseten, Modal).
+- **Lounge cadence.** Fuwatchi's status share moved to every 2 hours on 2026-11-01; the mailbox watch stays every 30 minutes (06:00–22:00 JST).
+
+## Update — 2026-10-30
 
 - Added the [network topology snapshot](docs/network-topology-2026-10-30.md): the current mesh, with each link marked event-driven, polling or on-demand.
 - Lounge communication cadence shortened: Fuwatchi's mailbox watch and status share now run every 30 minutes (06:00–22:00 JST), down from hourly, to cut lag. Dots remains event-driven with an hourly fallback.

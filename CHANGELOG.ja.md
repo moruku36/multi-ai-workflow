@@ -2,6 +2,11 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-11-02（Asia/Tokyo）
+
+- 日英READMEの「現在の構成」を2026-11-02の状態へ更新し、Mermaid図も合わせた：Muse（フワッチ）を指令・設計・レビュー・メディア担当として明記。ホームラボにMac mini（M4、2026-11-01到着）とOpenClawゲートウェイ、読み取り専用で開始するラボ運用エージェント「クロッチ」（日常の窓口はLINE、ラボ通知はDiscord）。OCIクラウド開発環境midorunでClaude Codeが稼働し、開発の軸はクラウド環境とホームラボのどちらもClaude Code（CLI）に決定。Antigravityは本人の端末の公式クライアントのみ（OCI／OpenClawへは入れない）。ドッチーはホームラボ構築・運用の主担当。フワッチのラウンジ状況シェアは2026-11-01から2時間ごと。
+- **本リポジトリの変更は文書のみ。上記の判断と環境変更は2026-11-01〜02にリポジトリ外で実施されたもの。**
+
 ## 2026-10-16（Asia/Tokyo）
 
 - 日英の[Daybreakと認可されたOSSセキュリティレビュー](docs/daybreak-authorized-oss-security-review.ja.md)を追加：OpenAI公開文書に基づくDaybreak Blue/Red、APIガイド記載のモデル、出典間の名称の違い（未解決）、認可されたOSSレビューの運用手順案。
