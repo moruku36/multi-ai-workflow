@@ -189,6 +189,12 @@ This is a public repository. Do not include private conversations, personal or f
 
 A [study proposal based on Cache Engineering for Agents](docs/cache-engineering-future-study.md) separates provider prompt caching, summarization and direct KV control. AKV adoption, measured savings and code changes have not occurred.
 
+## Future idea — 2026-11-03: Customer-facing work with Claude Duet
+
+Once Claude Duet becomes available in Japan, the idea is to assign sales, consulting and other customer-facing work to it as a group. Its proposed role in the multi-AI workflow is to handle conversations and tasks that call for consideration, politeness and care.
+
+Availability timing in Japan is unconfirmed. This is a future idea, not a change to current responsibilities or execution permissions.
+
 ## Repository map
 
 - `README.md` / `README.ja.md` — this overview: what this is, the current architecture, and the latest update
