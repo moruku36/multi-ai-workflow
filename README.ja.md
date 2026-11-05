@@ -195,6 +195,10 @@ Claude Duetが日本で利用可能になったら、営業・コンサルティ
 
 日本での利用開始時期は未確認であり、現時点では将来のアイデアとして記録する。現在の担当や実行権限を変更するものではない。
 
+## 将来の選択肢：Render Workflows
+
+[Render Workflowsの活用案](docs/render-workflows-proposal.ja.md)に、オンデマンドのマルチAI処理、Vercelとの比較、予算制御、認証、証跡ゲートを記載しています。提案であり、デプロイ済み・受入済みの実行経路ではありません。
+
 ## リポジトリ構成
 
 - [OpenClaw構築メモ](docs/openclaw-build-notes-2026-11-05.ja.md) — 権限境界、確認結果、未検証事項の記録
