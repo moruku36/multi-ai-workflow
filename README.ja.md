@@ -197,6 +197,8 @@ Claude Duetが日本で利用可能になったら、営業・コンサルティ
 
 ## リポジトリ構成
 
+- [OpenClaw構築メモ](docs/openclaw-build-notes-2026-11-05.ja.md) — 権限境界、確認結果、未検証事項の記録
+
 - `README.md` / `README.ja.md` — 本書：概要、現在のアーキテクチャ、最新の更新
 - `docs/network-topology-2026-10-30.md` / `.ja.md` — ネットワーク構成図：誰が誰と、どうやって通信するか（図＋接続一覧）
 - `docs/readme-history-2026-10.md` / `.ja.md` — 本 README にあった日付付き更新（2026-10-13 → 2026-10-26）の全文アーカイブ
