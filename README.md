@@ -195,6 +195,10 @@ Once Claude Duet becomes available in Japan, the idea is to assign sales, consul
 
 Availability timing in Japan is unconfirmed. This is a future idea, not a change to current responsibilities or execution permissions.
 
+## Future option: Render Workflows
+
+[Proposed Render Workflows role](docs/render-workflows-proposal.md) describes on-demand multi-AI jobs, the comparison with Vercel, budget controls, authentication and evidence gates. This is a proposal, not a deployed or accepted execution route.
+
 ## Repository map
 
 - [OpenClaw setup notes (Japanese)](docs/openclaw-build-notes-2026-11-05.ja.md) — dated security boundaries, observations and pending checks
