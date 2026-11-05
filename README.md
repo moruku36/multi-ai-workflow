@@ -197,6 +197,8 @@ Availability timing in Japan is unconfirmed. This is a future idea, not a change
 
 ## Repository map
 
+- [OpenClaw setup notes (Japanese)](docs/openclaw-build-notes-2026-11-05.ja.md) — dated security boundaries, observations and pending checks
+
 - `README.md` / `README.ja.md` — this overview: what this is, the current architecture, and the latest update
 - `docs/network-topology-2026-10-30.md` / `.ja.md` — network topology: who talks to whom, and how (diagram + link inventory)
 - `docs/readme-history-2026-10.md` / `.ja.md` — dated updates formerly kept in this README (2026-10-13 → 2026-10-26), preserved in full
