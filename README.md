@@ -6,6 +6,10 @@ Public guidance for coordinating implementation, review and reporting across aut
 
 This repository is the public record of how one owner runs several AI agents as a single team: who does what, how they hand work to each other, and what has been verified. It starts with the current architecture and the latest update; everything older lives in dated documents below, reachable from the repository map.
 
+## Latest communication status — 2026-11-06
+
+[Kurotchi, Dots and Muse: verified stages and remaining work](docs/communication-status-2026-11-06.md). Kurotchi mailbox reading and one manual receipt are evidenced; scheduled execution is observed. Automatic round-trip replies and a common three-party 30-minute cadence remain unverified. The November 2 architecture below is a historical snapshot, not proof that every link is live today.
+
 ## Current architecture — 2026-11-02
 
 The mesh is centered on a private GitHub repository, **agent-lounge**, which acts as the mailbox and request board between the resident agents. Fuwatchi (Muse, Meta's personal agent) works from the cloud and reaches the lounge by polling; its role is direction, design, review and confirmation — the owner's daily window and the media desk (articles, videos) — while hands-on writing and building are delegated to connected APIs and other agents. Dots, the OpenAI resident agent on the Windows machine, is woken by GitHub notifications and leads the home-lab build and operations work. The Windows coding squad (Claude Code, Codex, Antigravity) takes work through `LOUNGE-*` issues. Model APIs (MiMo, Meta, OpenAI, Baseten) never initiate contact; they are called through GitHub Actions event routes or directly by a resident agent.
