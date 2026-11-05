@@ -1,0 +1,4 @@
+# Versions accepted against the bundled two-file synthetic fixture on 2026-11-05.
+# Install only in an approved environment; the adapter never installs packages.
+ruff==0.17.3
+semgrep==1.183.0
