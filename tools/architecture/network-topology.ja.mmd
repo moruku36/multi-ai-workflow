@@ -1,95 +1,30 @@
-flowchart LR
-    MORI["moruku36<br/>（オーナー）"]
-
-    subgraph RESIDENTS["常駐エージェント"]
-        FUWA["フワッチ（Muse）<br/>クラウドVM"]
-        DOTS["ドッチー（Dots）<br/>Windows常駐"]
-        KURO["クロッチ（OpenClaw）<br/>ホームラボ運用"]
+flowchart TB
+    OWNER["オーナー / 最終判断"]
+    DOTS["ドッチー / OpenAI<br/>作業調整・実装"]
+    MUSE["フワッチ / Muse<br/>クラウド相談・レビュー"]
+    LOUNGE["非公開GitHubラウンジ<br/>相手別メールボックス・依頼"]
+    subgraph MAC["Macラボ：本人提供の観測"]
+        GATE["OpenClaw Gateway<br/>ローカルloopback待受け"]
+        ADAPTER["読取adapter / 定期確認<br/>06:00-22:00 JST、30分ごと"]
+        KURO["クロッチ<br/>隔離環境で手動受領1件"]
+        BROWSER["Dockerブラウザー<br/>人による画面操作を確認"]
     end
-
-    subgraph LOUNGE["agent-lounge（GitHub、非公開）"]
-        FILES["メールボックス<br/>to-muse.md / to-dots.md / requests/"]
-        ACTIONS["GitHub Actions<br/>mailbox-notify / イベント系ワークフロー"]
-        ISSUES["Issues<br/>LOUNGE-* 受付"]
-    end
-
-    subgraph APIS["API群（呼ばれる側、発信しない）"]
-        MODAL["Modal<br/>Gemma（GPU）"]
-        MIMO["MiMo API"]
-        BASETEN["Baseten API<br/>Muse Spark Open"]
-        META["Meta Model API"]
-        OPENAI["OpenAI API"]
-    end
-
-    subgraph SQUAD["コーディング部隊（Windows）"]
-        CC["Claude Code"]
-        AG["Antigravity"]
-        CODEX["Codex"]
-    end
-
-    subgraph CLOUDDEV["クラウド開発（OCI）"]
-        MID["midorun<br/>Claude Code（CLI）"]
-    end
-
-    subgraph LAB["ホームラボ"]
-        MAC["Mac mini（M4）"]
-        OC["OpenClaw<br/>ゲートウェイ"]
-        NUC["Intel NUC"]
-    end
-
-    VERCEL["Vercel上のアプリケーション"]
-
-    MORI <-->|"チャット、リアルタイム"| FUWA
-    MORI <-->|"ローカル、直接"| DOTS
-
-    FUWA -->|"書き込み: コネクター push<br/>＋状況シェア2時間ごと"| FILES
-    FILES -.->|"読み取り: ポーリング30分ごと<br/>06:00-22:00 JST"| FUWA
-    DOTS -->|"コミット / push"| FILES
-    FILES -->|"pushイベント"| ACTIONS
-    ACTIONS -->|"固定Issueへ<br/>メタデータコメント"| ISSUES
-    ISSUES -->|"Issue作成イベント"| ACTIONS
-    ISSUES -->|"イベント: GitHub通知で<br/>ドッチーが起動（補助は毎時確認）"| DOTS
-    FUWA -.->|"LOUNGE-* Issue を<br/>必要時に作成"| ISSUES
-
-    ACTIONS -->|"MiMoルート: イベント駆動、<br/>動作確認済み"| MIMO
-    ACTIONS -->|"Metaルート: ワンショット候補<br/>fail-closed"| META
-    ACTIONS -->|"OpenAIルート: ワンショット候補<br/>fail-closed"| OPENAI
-    DOTS -.->|"ローカル呼び出し、キーは1Password<br/>ラウンジルートはまだ無い"| BASETEN
-    FUWA -.->|"直接コネクター、オンデマンド"| MIMO
-    FUWA -.->|"直接コネクター、オンデマンド"| META
-    FUWA -.->|"直接コネクター、オンデマンド"| BASETEN
-    FUWA -.->|"直接コネクター、オンデマンド"| OPENAI
-
-    ISSUES -->|"LOUNGE-CLAUDE: 直接の受け口<br/>返信実績あり、起こし方は未確認"| CC
-    ISSUES -.->|"LOUNGE-ANTIGRAVITY:<br/>ポーリング30分ごと"| AG
-    ISSUES -->|"LOUNGE-CODEX: ドッチーが中継"| CODEX
-
-    FUWA -->|"構築・運用"| MID
-    MORI -.->|"Remote Control"| MID
-
-    MORI -->|"日常の窓口: LINE<br/>ラボ通知: Discord"| OC
-    DOTS -.->|"ホームラボの<br/>構築・運用（主担当）"| OC
-    KURO -.->|"OpenClawゲートウェイ上で稼働<br/>（Mac mini）"| OC
-    KURO -->|"統括: 監視 → 切り分け<br/>→ 承認済み手順の実行 → 確認"| MAC
-    KURO -->|"統括"| NUC
-    KURO -->|"アプリケーションの<br/>保守・運用"| VERCEL
-
-    classDef user fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
-    classDef agent fill:#dcfce7,stroke:#16a34a,color:#14532d
-    classDef hub fill:#fef9c3,stroke:#ca8a04,color:#713f12
-    classDef external fill:#f3e8ff,stroke:#9333ea,color:#581c87
-    classDef app fill:#ffedd5,stroke:#ea580c,color:#7c2d12
-    classDef host fill:#f1f5f9,stroke:#64748b,color:#1e293b
-    class MORI user
-    class FUWA,DOTS,KURO,CC,CODEX,AG,OC,MID agent
-    class FILES,ISSUES,ACTIONS hub
-    class MIMO,META,OPENAI,BASETEN,MODAL external
-    class VERCEL app
-    class MAC,NUC host
-
-    style RESIDENTS fill:#fdf4ff,stroke:#d946ef,color:#701a75
-    style LOUNGE fill:#f0fdfa,stroke:#14b8a6,color:#134e4a
-    style APIS fill:#ecfeff,stroke:#06b6d4,color:#164e63
-    style SQUAD fill:#fff7ed,stroke:#fb923c,color:#7c2d12
-    style CLOUDDEV fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
-    style LAB fill:#f0fdf4,stroke:#22c55e,color:#14532d
+    WORKERS["開発環境<br/>Claude Code / Codex / 公式Antigravity"]
+    API["オンデマンドのモデルAPI<br/>呼ばれる側、常駐エージェントではない"]
+    FUTURE["構想・未検証<br/>三者の自動往復<br/>Render Workflows"]
+    OWNER --> DOTS
+    OWNER --> MUSE
+    DOTS -->|"既存の状況共有予定：2時間"| LOUNGE
+    LOUNGE -->|"既存の受信確認：毎時"| DOTS
+    MUSE -.->|"既存の状況共有、今回再試験なし"| LOUNGE
+    LOUNGE -.->|"約30分確認という報告"| MUSE
+    LOUNGE -->|"読取・手動受領1件の報告"| ADAPTER
+    ADAPTER --> KURO
+    GATE -->|"ローカルの統括"| KURO
+    GATE -->|"ブラウザー環境"| BROWSER
+    OWNER -->|"人による画面操作の報告"| BROWSER
+    KURO -.->|"自動投稿と相手受領は未検証"| LOUNGE
+    DOTS -.->|"作業受渡し、今回再試験なし"| WORKERS
+    MUSE -.->|"必要時呼出し、経路ごとに検証"| API
+    DOTS -.->|"必要時呼出し、経路ごとに検証"| API
+    LOUNGE -.->|"統合済みの実運用ではない"| FUTURE
