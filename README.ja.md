@@ -6,117 +6,58 @@
 
 このリポジトリは、複数のAIエージェントを1つのチームとして運用する公開記録です。誰が何を担当し、どうやって仕事を受け渡し、何が確認済みなのかを残します。冒頭は現在の構成と最新の更新で、それ以前の内容は下位の日付付きドキュメントに置き、リポジトリ構成から辿れるようにしています。
 
-## 現在のアーキテクチャ — 2026-11-02
+## 現在のアーキテクチャ — 2026-11-06
 
-メッシュの中心は、非公開の GitHub リポジトリ **agent-lounge** です。常駐エージェント同士のメールボックスとリクエストボードの役割を果たします。フワッチ（Muse、Meta のパーソナルエージェント）はクラウド側からポーリングで見に行き、役割は指令・設計・レビュー・確認で、オーナーの日常の窓口とメディア作業（記事・動画）を担います。実際の執筆や構築は、接続済みAPIや他のエージェントに任せます。ドッチーは Windows 側の OpenAI 常駐エージェントで、GitHub 通知をきっかけに起動し、ホームラボの構築・運用を主担当します。Windows のコーディング部隊（Claude Code、Codex、Antigravity）は `LOUNGE-*` Issue 経由で仕事を受けます。モデルAPI（MiMo、Meta、OpenAI、Baseten）は自分からは連絡せず、GitHub Actions のイベントルートか、常駐エージェントからの直接呼び出しで使われます。
+現在の構成は **メールボックスを介した非同期のチーム** です。三者の自律会話が検証済みという意味ではありません。ドッチーは実装・進捗調整、フワッチ（Muse）はクラウド側の相談・設計・レビュー、クロッチ（旧文書のKurocchi）はMac上のOpenClawによるラボ運用を担当します。非公開GitHubラウンジが相手別メールボックスと依頼を保持します。モデルAPIは呼び出される側であり、独立した常駐エージェントではありません。
 
-2026-11-01〜02 にかけて、環境が2つ増えました。OCI のクラウド開発環境 **midorun**（2026-11-01 構築）は Claude Code を動かし、開発の軸はクラウド環境とホームラボのどちらも Claude Code（CLI）です（2026-11-02 決定）。Anthropic の利用は API を基本とします。ホームラボには Mac mini（M4、2026-11-01 到着）が複数の AI を動かす実験場として加わり、統括ゲートウェイは **OpenClaw**（OSS、セルフホスト）です。ラボ運用エージェント **クロッチ** は OpenClaw 上で動き（2026-11-01 に Hermes Agent ではなく OpenClaw 側の構成で選定）、読み取り専用から開始します：監視 → 切り分け → 承認済み手順の実行 → 確認。オーナーの日常の窓口は LINE、ラボ運用の通知は Discord です。Antigravity は本人の端末で公式クライアントを使う形のみとし、OCI 環境にも OpenClaw にも入れません（2026-11-02 決定。第三者 OAuth 利用に伴うアカウント停止の公表事例を受けた判断）。
+**既存の運用と観測段階。** ドッチーの既存予定はMuse宛の状況共有が2時間ごと、受信確認が毎時です。Museには約30分確認という報告がありますが、実ジョブ定義や各便の配送を今回再試験していません。クロッチの受信確認は06:00〜21:30の各30分と22:00（JST）に登録されています。メールボックス読取、別途の手動受領1件、11月5日22:00の自然起動は本人提供の実行結果で確認された段階です。これらは別々の観測であり、自動返信や相手の受領を証明しません。
 
-全体図は下の通りで、2026-11-02 時点の状態を表します。接続ごとの方式・間隔・確認状態の一覧（2026-10-30 時点）は[ネットワーク構成図](docs/network-topology-2026-10-30.ja.md)（[English](docs/network-topology-2026-10-30.md)）にあります。
+**Macとブラウザーの境界。** OpenClaw Gateway/CLI 2026.10.10、Gateway稼働、loopback待受けが報告されています。ブラウザーはDocker環境にあり、その後の本人報告で人による画面接続とクリップボード試験が確認されました。11月5日のビルドのみの記録から前進していますが、自律ブラウザー操作、認証情報の隔離、Docker管理権限の限定は証明していません。OpenShellのプラグイン・workspace準備も、実タスクの制約が強制される証拠ではありません。
+
+**準備・構想段階。** 三者の自動往復、共通の30分送信間隔、オフライン統合harnessの実adapter接続は未検証です。Metaのプラグイン・profile準備は報告されていますが、その構成でのAPI応答は未試験です。Render Workflowsは[PR #40](https://github.com/moruku36/multi-ai-workflow/pull/40)のオンデマンド実行案であり、配備済みの基盤ではありません。Windows/OCIの開発担当やAPI経路は過去の記録に保持し、この断面で稼働状態を再認定しません。
+
+図は論理的な関係であり、物理経路や安全性の認定ではありません。実線は既存の運用関係または限定的な報告観測で、ラベルがその範囲を示します。破線は未検証・今回再試験なし・構想の関係です。どちらも各便の成功を保証しません。
 
 ```mermaid
-flowchart LR
-    MORI["moruku36（オーナー）"]
-
-    subgraph RESIDENTS["常駐エージェント"]
-        FUWA["フワッチ（Muse）<br/>クラウドVM"]
-        DOTS["ドッチー（Dots）<br/>Windows常駐"]
+flowchart TB
+    OWNER["オーナー / 最終判断"]
+    DOTS["ドッチー / OpenAI<br/>作業調整・実装"]
+    MUSE["フワッチ / Muse<br/>クラウド相談・レビュー"]
+    LOUNGE["非公開GitHubラウンジ<br/>相手別メールボックス・依頼"]
+    subgraph MAC["Macラボ：本人提供の観測"]
+        GATE["OpenClaw Gateway<br/>ローカルloopback待受け"]
+        ADAPTER["読取adapter / 定期確認<br/>06:00-22:00 JST、30分ごと"]
+        KURO["クロッチ<br/>隔離環境で手動受領1件"]
+        BROWSER["Dockerブラウザー<br/>人による画面操作を確認"]
     end
-
-    subgraph LOUNGE["agent-lounge（GitHub、非公開）"]
-        FILES["メールボックス<br/>to-muse.md / to-dots.md / requests/"]
-        ISSUES["Issues<br/>LOUNGE-* 受付"]
-        ACTIONS["GitHub Actions<br/>mailbox-notify / イベント系ワークフロー"]
-    end
-
-    subgraph SQUAD["コーディング部隊（Windows）"]
-        CC["Claude Code"]
-        CODEX["Codex"]
-        AG["Antigravity"]
-    end
-
-    subgraph APIS["API群（呼ばれる側、発信しない）"]
-        MIMO["MiMo API"]
-        META["Meta Model API"]
-        OPENAI["OpenAI API"]
-        BASETEN["Baseten API<br/>Muse Spark Open"]
-        MODAL["Modal<br/>Gemma（GPU）"]
-    end
-
-    subgraph LAB["ホームラボ"]
-        OC["OpenClaw<br/>Mac mini（M4）上のゲートウェイ"]
-        KURO["クロッチ<br/>ラボ運用（読み取り専用で開始）"]
-        MAC["Mac mini（M4）"]
-        NUC["Intel NUC"]
-    end
-
-    subgraph CLOUDDEV["クラウド開発（OCI）"]
-        MID["midorun<br/>Claude Code（CLI）"]
-    end
-
-    VERCEL["Vercel上のアプリケーション"]
-
-    MORI <-->|"チャット、リアルタイム"| FUWA
-    MORI <-->|"ローカル、直接"| DOTS
-
-    FUWA -->|"書き込み: コネクター push<br/>＋状況シェア2時間ごと"| FILES
-    FILES -.->|"読み取り: ポーリング30分ごと<br/>06:00-22:00 JST"| FUWA
-
-    DOTS -->|"コミット / push"| FILES
-    FILES -->|"pushイベント"| ACTIONS
-    ACTIONS -->|"固定Issueへ<br/>メタデータコメント"| ISSUES
-    ISSUES -->|"イベント: GitHub通知で<br/>ドッチーが起動（補助は毎時確認）"| DOTS
-
-    FUWA -.->|"LOUNGE-* Issue を<br/>必要時に作成"| ISSUES
-    ISSUES -->|"LOUNGE-CLAUDE: 直接の受け口<br/>返信実績あり、起こし方は未確認"| CC
-    ISSUES -->|"LOUNGE-CODEX: ドッチーが中継"| CODEX
-    ISSUES -.->|"LOUNGE-ANTIGRAVITY:<br/>ポーリング30分ごと"| AG
-
-    ISSUES -->|"Issue作成イベント"| ACTIONS
-    ACTIONS -->|"MiMoルート: イベント駆動、動作確認済み"| MIMO
-    ACTIONS -->|"Metaルート: ワンショット候補<br/>fail-closed"| META
-    ACTIONS -->|"OpenAIルート: ワンショット候補<br/>fail-closed"| OPENAI
-
-    DOTS -.->|"ローカル呼び出し、キーは1Password<br/>ラウンジルートはまだ無い"| BASETEN
-    FUWA -.->|"直接コネクター、オンデマンド"| META
-    FUWA -.->|"直接コネクター、オンデマンド"| BASETEN
-    FUWA -.->|"直接コネクター、オンデマンド"| OPENAI
-    FUWA -.->|"直接コネクター、オンデマンド"| MIMO
-
-    MORI -->|"日常の窓口: LINE<br/>ラボ通知: Discord"| OC
-    OC --> KURO
-    KURO -->|"ホームラボを統括:<br/>監視 → 切り分け → 承認済み手順の実行 → 確認"| MAC
-    KURO -->|"統括"| NUC
-    KURO -->|"アプリケーションの<br/>保守・運用"| VERCEL
-    DOTS -.->|"ホームラボの<br/>構築・運用"| OC
-
-    FUWA -->|"構築・運用"| MID
-    MORI -.->|"Remote Control"| MID
-
-
-    classDef user fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
-    classDef agent fill:#dcfce7,stroke:#16a34a,color:#14532d
-    classDef hub fill:#fef9c3,stroke:#ca8a04,color:#713f12
-    classDef external fill:#f3e8ff,stroke:#9333ea,color:#581c87
-    classDef app fill:#ffedd5,stroke:#ea580c,color:#7c2d12
-    classDef host fill:#f1f5f9,stroke:#64748b,color:#1e293b
-    class MORI user
-    class FUWA,DOTS,CC,CODEX,AG,OC,KURO,MID agent
-    class FILES,ISSUES,ACTIONS hub
-    class MIMO,META,OPENAI,BASETEN,MODAL external
-    class VERCEL app
-    class MAC,NUC host
+    WORKERS["開発環境<br/>Claude Code / Codex / 公式Antigravity"]
+    API["オンデマンドのモデルAPI<br/>呼ばれる側、常駐エージェントではない"]
+    FUTURE["構想・未検証<br/>三者の自動往復<br/>Render Workflows"]
+    OWNER --> DOTS
+    OWNER --> MUSE
+    DOTS -->|"既存の状況共有予定：2時間"| LOUNGE
+    LOUNGE -->|"既存の受信確認：毎時"| DOTS
+    MUSE -.->|"既存の状況共有、今回再試験なし"| LOUNGE
+    LOUNGE -.->|"約30分確認という報告"| MUSE
+    LOUNGE -->|"読取・手動受領1件の報告"| ADAPTER
+    ADAPTER --> KURO
+    GATE -->|"ローカルの統括"| KURO
+    GATE -->|"ブラウザー環境"| BROWSER
+    OWNER -->|"人による画面操作の報告"| BROWSER
+    KURO -.->|"自動投稿と相手受領は未検証"| LOUNGE
+    DOTS -.->|"作業受渡し、今回再試験なし"| WORKERS
+    MUSE -.->|"必要時呼出し、経路ごとに検証"| API
+    DOTS -.->|"必要時呼出し、経路ごとに検証"| API
+    LOUNGE -.->|"統合済みの実運用ではない"| FUTURE
 ```
 
-大きく見る（2026-11-02 時点）：[フルサイズPNG](assets/network-topology-2026-11-02.ja.png)。2026-10-30 時点のスナップショットPNGは [assets/network-topology-2026-10-30.ja.png](assets/network-topology-2026-10-30.ja.png) に残してある。
+[構成と根拠の詳細](docs/network-topology-2026-11-06.ja.md)・[通信の段階](docs/communication-status-2026-11-06.ja.md)・[11月2日の過去構成](docs/architecture-snapshot-2026-11-02.ja.md)。
 
-## 最新の更新 — 2026-11-02
+## 最新の更新 — 2026-11-06
 
-- **ホームラボに統括レイヤーが加わった。** Mac mini（M4）が 2026-11-01 に届き、複数の AI を動かす実験場になった。統括ゲートウェイには OpenClaw（OSS、セルフホスト）を採用し、ラボ運用エージェント「クロッチ」（2026-11-01 に Hermes Agent ではなく OpenClaw 構成で選定）は読み取り専用から開始する：監視 → 切り分け → 承認済み手順の実行 → 確認。窓口は分担し、オーナーの日常の連絡は LINE、ラボ運用の通知は Discord。ホームラボの構築・運用はドッチーが主担当。
-- **開発の軸を決定（2026-11-02）。** クラウド開発環境とホームラボのどちらも、軸は Claude Code（CLI）。OCI 環境 midorun（2026-11-01 構築）で Claude Code が稼働し、Anthropic の利用は API を基本とする。
-- **Antigravity の方針（2026-11-02）。** Antigravity は本人の端末で公式クライアントを使う形のみとし、OCI 環境にも OpenClaw にも入れない。第三者 OAuth 利用に伴うアカウント停止の公表事例を受けた判断。
-- **役割を確認。** オーナー＝PMO・最終判断、フワッチ（Muse）＝指令・設計・レビュー・メディア、ドッチー＝ホームラボの構築・運用、実装の実行＝Claude Code / Codex と接続済み API（Meta Model API、MiMo、OpenAI、Baseten、Modal）。
-- **ラウンジの間隔。** フワッチの状況シェアは 2026-11-01 から2時間ごとに変更。見張りは30分ごと（06:00–22:00 JST）のまま。
+- 現在のアーキテクチャと論理ネットワーク図を11月6日の証拠範囲へ更新。
+- 定期確認、手動受領、人によるブラウザー画面操作、未検証の自動往復を分離。
+- 過去の断面を保存。この文書変更では配備・権限・認証情報・予定を変更していません。
 
 ## 更新 — 2026-10-30
 
