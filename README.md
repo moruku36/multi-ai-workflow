@@ -197,6 +197,8 @@ Availability timing in Japan is unconfirmed. This is a future idea, not a change
 
 ## Repository map
 
+- [Lounge collaboration status — 2026-10-28](docs/lounge-status-2026-10-28.md) — historical owner-reported observations and then-pending checks, not current runtime verification.
+
 - [OpenClaw setup notes (Japanese)](docs/openclaw-build-notes-2026-11-05.ja.md) — dated security boundaries, observations and pending checks
 
 - `README.md` / `README.ja.md` — this overview: what this is, the current architecture, and the latest update
