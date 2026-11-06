@@ -1,0 +1,122 @@
+{
+  "schema_version": "1.0.0",
+  "verification_date": "2026-11-06",
+  "base_head": "8a0877ab5225cbb806389e1a19842bbce71a47e3",
+  "evidence_type": "builder-run deterministic verification; not independent-provider review",
+  "overall_status": "PASSED",
+  "commands": [
+    "python -m unittest discover -s tests -p test_quality_*.py -v",
+    "TMPDIR=/dev/shm PATH=/absolute/path/to/approved/venv/bin:$PATH python tools/check_quality.py --json --static-target tools/check_quality.py --static-target tools/run_static_checks.py --static-tool ruff --static-tool semgrep"
+  ],
+  "affected_quality_tests": {
+    "run": 31,
+    "passed": 31,
+    "skipped": 0
+  },
+  "unchanged_adapter_tests_previously_passed": 12,
+  "required_suites": [
+    {
+      "directory": "configs/openwebui-local-memory-0.11.4",
+      "passed": true,
+      "tests_run": 54,
+      "tests_skipped": 0,
+      "returncode": 0
+    },
+    {
+      "directory": "configs/openwebui-local-memory-0.11.4/confirmed-memory-tool",
+      "passed": true,
+      "tests_run": 27,
+      "tests_skipped": 0,
+      "returncode": 0
+    },
+    {
+      "directory": "configs/openwebui-local-memory-0.11.4/public-template/context-guard",
+      "passed": true,
+      "tests_run": 7,
+      "tests_skipped": 0,
+      "returncode": 0
+    }
+  ],
+  "python_syntax": {
+    "check": "python_syntax",
+    "command": "py_compile.compile",
+    "passed": true,
+    "files_checked": 26,
+    "errors": [],
+    "duration_sec": 0.042
+  },
+  "fixtures": {
+    "check": "fixtures_integrity",
+    "passed": true,
+    "samples_checked": 2,
+    "errors": [],
+    "duration_sec": 0.0
+  },
+  "versions": {
+    "ruff": "0.17.3",
+    "semgrep": "1.183.0"
+  },
+  "official_wheel_hashes_verified": 67,
+  "static_checks": {
+    "schema_version": "1.0.0",
+    "mode": "LOCAL_CHECK_ONLY",
+    "status": "PASSED",
+    "network_policy": "Local rules; metrics and version checks disabled. Not an OS egress sandbox.",
+    "limits": {
+      "timeout_seconds_per_tool": 30,
+      "max_files": 50,
+      "max_file_bytes": 1048576,
+      "max_total_bytes": 5242880
+    },
+    "sources": [
+      {
+        "path": "tools/check_quality.py",
+        "sha256": "18394b76e6c49c1975443c972e8ceab4d6b21d7b0d5c7f643651fbd40476eabe",
+        "bytes": 17011
+      },
+      {
+        "path": "tools/run_static_checks.py",
+        "sha256": "e0576d45a56fceca216528a82567155975c584c5e2ea1e8c81f28df07bd66ba2",
+        "bytes": 16597
+      }
+    ],
+    "results": [
+      {
+        "tool": "ruff",
+        "status": "PASSED",
+        "passed": true,
+        "findings": [],
+        "version": "unknown",
+        "returncode": 0,
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "duration_sec": 0.021
+      },
+      {
+        "tool": "semgrep",
+        "status": "PASSED",
+        "passed": true,
+        "findings": [],
+        "version": "1.183.0",
+        "rules_sha256": "701a50fda74ed554cf182742b636486af231b1b70087ed082dc55aacb1b4ffc4",
+        "returncode": 0,
+        "stderr_sha256": "842e2129f650fc6dd96307e468fd3ab334a76d0da42e03dc63a4340c833bb9be",
+        "duration_sec": 1.572
+      }
+    ]
+  },
+  "selected_sources_unchanged_after_scanning": true,
+  "test_source_sha256": {
+    "tests/test_quality_baseline.py": "5e9d044d0c60402e652548626d17354f95025e78d44dcea763b0594b4c32252b",
+    "tests/test_quality_integration.py": "bab813b0a1af0a9230c6fed011cd6ec10b550cae77c6783adbb420953f58cade",
+    "tests/test_static_checks.py": "fe8d73d36c0f9426ed3748e577549308e6d57a0b670c4fc45ed560edf21ed3d0"
+  },
+  "history": [
+    "Initial baseline test run failed three synthetic database tests because the temporary root had a Git marker; using a non-Git temporary directory passed without changing safety checks.",
+    "Initial Semgrep scan found two swallowed exception handlers. Both were changed to report redacted exception types; the final scan passed."
+  ],
+  "limitations": [
+    "Only the two explicit Python files were statically scanned.",
+    "No whole-repository security audit, Ruff format check, live LLM acceptance, or deployment is claimed.",
+    "Current-head independent-provider review remains a separate gate."
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "rules": [
+    {
+      "id": "local-python-dynamic-eval",
+      "languages": ["python"],
+      "severity": "ERROR",
+      "message": "Review dynamic evaluation: do not evaluate untrusted input.",
+      "pattern-either": [{"pattern": "eval(...)"}, {"pattern": "exec(...)"}]
+    },
+    {
+      "id": "local-python-shell-true",
+      "languages": ["python"],
+      "severity": "ERROR",
+      "message": "Review shell execution: prefer an argument list with shell=False.",
+      "pattern-either": [
+        {"pattern": "subprocess.run(..., shell=True, ...)"},
+        {"pattern": "subprocess.Popen(..., shell=True, ...)"},
+        {"pattern": "subprocess.call(..., shell=True, ...)"},
+        {"pattern": "subprocess.check_call(..., shell=True, ...)"},
+        {"pattern": "subprocess.check_output(..., shell=True, ...)"}
+      ]
+    },
+    {
+      "id": "local-python-bare-except-pass",
+      "languages": ["python"],
+      "severity": "WARNING",
+      "message": "Review silently swallowed exceptions; preserve an observable failure path.",
+      "pattern-either": [
+        {"pattern": "try:\n    ...\nexcept:\n    pass"},
+        {"pattern": "try:\n    ...\nexcept Exception:\n    pass"}
+      ]
+    }
+  ]
+}
