@@ -2,6 +2,13 @@
 
 [English](CHANGELOG.md) | [日本語](CHANGELOG.ja.md)
 
+## 2026-11-08
+
+- Simplified the bilingual README to the high-level role map, logical architecture and navigation.
+- Updated the English/Japanese Mermaid topology sources and added a dated explanation based only on already-public project records. No new internal operating status, schedules, test results, account details or security settings are included.
+- Added an archive index linking the complete prior overviews and diagram sources at an immutable commit. Existing dated documents and rendered historical diagrams remain in place; detailed past content is not duplicated into new snapshots.
+- Documentation only: no runtime, permission, credential, schedule, sending-limit or deployment changes, and no new machine/model tests.
+
 ## 2026-11-02 (Asia/Tokyo)
 
 - Brought the bilingual README's current architecture up to the 2026-11-02 state and updated the Mermaid diagram to match: Muse (Fuwatchi) recorded with its direction / design / review / media role; the home lab's Mac mini (M4, arrived 2026-11-01) with OpenClaw as gateway and the read-only-start lab-operations agent Kurocchi (LINE for daily contact, Discord for lab notifications); the OCI cloud development environment midorun running Claude Code, with Claude Code (CLI) decided as the development axis for both the cloud environment and the home lab; Antigravity restricted to the official client on the owner's own devices (not deployed to OCI or OpenClaw); Dots as the home-lab build and operations lead; Fuwatchi's lounge status share at every 2 hours since 2026-11-01.

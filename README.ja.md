@@ -2,164 +2,57 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-認可済みのツール間で実装、検証、報告を調整するための公開資料です。日付付きの節にあるモデル名は本人の運用上の呼称であり、サービスの提供仕様や実行時のモデルIDを確認したものではありません。
+複数の AI ツールをチームとして使うための、大枠の構成をまとめたリポジトリです。Dots は実装の調整、Muse（フワッチ）は設計・レビュー、クロッチは OpenClaw を通じたラボ側の作業を担います。このページは現在の構成を中心にし、以前の記録は[アーカイブ索引](docs/archive/README.ja.md)から辿れます。
 
-このリポジトリは、複数のAIエージェントを1つのチームとして運用する公開記録です。誰が何を担当し、どうやって仕事を受け渡し、何が確認済みなのかを残します。冒頭は現在の構成と最新の更新で、それ以前の内容は下位の日付付きドキュメントに置き、リポジトリ構成から辿れるようにしています。
+## 最新の更新：2026-11-08
 
-## 現在のアーキテクチャ — 2026-11-06
+- 現在の役割分担と論理構成がわかる概要へ整理しました。
+- Mac / OpenClaw のラボ、開発ツール、ブラウザ、共有ラウンジを図にまとめました。
+- 過去の更新・旧概要全文への入口をアーカイブ索引に集約しました。既存の日付付き文書と過去の図も維持しています。
 
-現在の構成は **メールボックスを介した非同期のチーム** です。三者の自律会話が検証済みという意味ではありません。ドッチーは実装・進捗調整、フワッチ（Muse）はクラウド側の相談・設計・レビュー、クロッチ（旧文書のKurocchi）はMac上のOpenClawによるラボ運用を担当します。非公開GitHubラウンジが相手別メールボックスと依頼を保持します。モデルAPIは呼び出される側であり、独立した常駐エージェントではありません。
-
-**既存の運用と観測段階。** ドッチーの既存予定はMuse宛の状況共有が2時間ごと、受信確認が毎時です。Museには約30分確認という報告がありますが、実ジョブ定義や各便の配送を今回再試験していません。クロッチの受信確認は06:00〜21:30の各30分と22:00（JST）に登録されています。メールボックス読取、別途の手動受領1件、11月5日22:00の自然起動は本人提供の実行結果で確認された段階です。これらは別々の観測であり、自動返信や相手の受領を証明しません。
-
-**Macとブラウザーの境界。** OpenClaw Gateway/CLI 2026.10.10、Gateway稼働、loopback待受けが報告されています。ブラウザーはDocker環境にあり、その後の本人報告で人による画面接続とクリップボード試験が確認されました。11月5日のビルドのみの記録から前進していますが、自律ブラウザー操作、認証情報の隔離、Docker管理権限の限定は証明していません。OpenShellのプラグイン・workspace準備も、実タスクの制約が強制される証拠ではありません。
-
-**準備・構想段階。** 三者の自動往復、共通の30分送信間隔、オフライン統合harnessの実adapter接続は未検証です。Metaのプラグイン・profile準備は報告されていますが、その構成でのAPI応答は未試験です。Render Workflowsは[PR #40](https://github.com/moruku36/multi-ai-workflow/pull/40)のオンデマンド実行案であり、配備済みの基盤ではありません。Windows/OCIの開発担当やAPI経路は過去の記録に保持し、この断面で稼働状態を再認定しません。
-
-図は論理的な関係であり、物理経路や安全性の認定ではありません。実線は既存の運用関係または限定的な報告観測で、ラベルがその範囲を示します。破線は未検証・今回再試験なし・構想の関係です。どちらも各便の成功を保証しません。
+## 構成の全体像
 
 ```mermaid
 flowchart TB
-    OWNER["オーナー / 最終判断"]
-    DOTS["ドッチー / OpenAI<br/>作業調整・実装"]
-    MUSE["フワッチ / Muse<br/>クラウド相談・レビュー"]
-    LOUNGE["非公開GitHubラウンジ<br/>相手別メールボックス・依頼"]
-    subgraph MAC["Macラボ：本人提供の観測"]
-        GATE["OpenClaw Gateway<br/>ローカルloopback待受け"]
-        ADAPTER["読取adapter / 定期確認<br/>06:00-22:00 JST、30分ごと"]
-        KURO["クロッチ<br/>隔離環境で手動受領1件"]
-        BROWSER["Dockerブラウザー<br/>人による画面操作を確認"]
+    OWNER["本人 / 判断と受入れ"]
+    DOTS["Dots<br/>調整と実装"]
+    MUSE["Muse / フワッチ<br/>相談・設計・レビュー"]
+    LOUNGE["非公開 GitHub ラウンジ<br/>非同期の情報共有"]
+    subgraph LAB["Mac ラボ"]
+        KURO["クロッチ / OpenClaw<br/>ラボ側の作業"]
+        CLI["Codex / Claude Code"]
+        BROWSER["専用ブラウザ"]
     end
-    WORKERS["開発環境<br/>Claude Code / Codex / 公式Antigravity"]
-    API["オンデマンドのモデルAPI<br/>呼ばれる側、常駐エージェントではない"]
-    FUTURE["構想・未検証<br/>三者の自動往復<br/>Render Workflows"]
+    WORKERS["案件ごとの開発ツール<br/>Codex / Claude Code / 公式 Antigravity"]
+    API["オンデマンドのモデル API"]
     OWNER --> DOTS
     OWNER --> MUSE
-    DOTS -->|"既存の状況共有予定：2時間"| LOUNGE
-    LOUNGE -->|"既存の受信確認：毎時"| DOTS
-    MUSE -.->|"既存の状況共有、今回再試験なし"| LOUNGE
-    LOUNGE -.->|"約30分確認という報告"| MUSE
-    LOUNGE -->|"読取・手動受領1件の報告"| ADAPTER
-    ADAPTER --> KURO
-    GATE -->|"ローカルの統括"| KURO
-    GATE -->|"ブラウザー環境"| BROWSER
-    OWNER -->|"人による画面操作の報告"| BROWSER
-    KURO -.->|"自動投稿と相手受領は未検証"| LOUNGE
-    DOTS -.->|"作業受渡し、今回再試験なし"| WORKERS
-    MUSE -.->|"必要時呼出し、経路ごとに検証"| API
-    DOTS -.->|"必要時呼出し、経路ごとに検証"| API
-    LOUNGE -.->|"統合済みの実運用ではない"| FUTURE
+    OWNER --> KURO
+    DOTS <--> LOUNGE
+    MUSE <--> LOUNGE
+    KURO <--> LOUNGE
+    KURO --> CLI
+    KURO --> BROWSER
+    DOTS -.->|"案件ごとに選択"| WORKERS
+    DOTS -.-> API
+    MUSE -.-> API
+    KURO -.-> API
 ```
 
-[構成と根拠の詳細](docs/network-topology-2026-11-06.ja.md)・[通信の段階](docs/communication-status-2026-11-06.ja.md)・[11月2日の過去構成](docs/architecture-snapshot-2026-11-02.ja.md)。
+矢印は役割と情報共有の論理的な関係です。物理的な通信経路や、常時の自動運用を保証するものではありません。点線は案件に応じた選択肢です。開発ツールやモデル API は必要な作業で呼び出すもので、追加の常駐メンバーではありません。Antigravity は公式クライアントを指します。
 
-## 最新の更新 — 2026-11-06
+## 作業の流れ
 
-- 現在のアーキテクチャと論理ネットワーク図を11月6日の証拠範囲へ更新。
-- 定期確認、手動受領、人によるブラウザー画面操作、未検証の自動往復を分離。
-- 過去の断面を保存。この文書変更では配備・権限・認証情報・予定を変更していません。
+1. 本人が目的を決め、重要な判断を行います。
+2. Dots が作業を調整し、適切な実装・調査ツールを選びます。Muse は相談・設計・レビューを支え、クロッチはラボ側の CLI・ブラウザ作業の入口になります。
+3. 非公開ラウンジで非同期に情報を共有します。受信したメッセージを、そのまま操作の許可とは扱いません。
+4. 成果とレビューの根拠を本人へ戻し、受入れを確認します。論理的な接続があることと、あらゆる作業・ツールの組合せが端から端まで受入れ済みであることは別です。
 
-## 更新 — 2026-10-30
+この公開概要には、内部の稼働状況、定期設定、試験の本文、アカウント情報、セキュリティ設定を載せません。文書の更新で実行構成・権限・デプロイを変更することもありません。
 
-- [ネットワーク構成図](docs/network-topology-2026-10-30.ja.md)を追加した：現在のメッシュを、接続ごとにイベント駆動／ポーリング／オンデマンドと分かる形で記録。
-- ラウンジの通信間隔を短縮：フワッチの見張りと状況シェアを1時間ごとから30分ごと（06:00–22:00 JST）に変更し、ラグを減らした。ドッチーはイベント駆動＋毎時の補助のまま。
-- ラウンジに依頼を2件起票：Meta / OpenAI のイベントルートをワンショット候補から接頭辞方式の一般ルートへ（REQ-20251030-001）、Baseten のラウンジルート新設（REQ-20251030-002）。
-- `LOUNGE-CLAUDE:` Issue 受付が、フワッチから Windows ローカルの Claude Code への経路。接続テストはラウンジ Issue #39 で実施中。未使用の `claude-lounge-one-shot` ワークフローは設計候補であり、APIルートではない（この環境に Claude API のキーやクレジットは無い）。
-- 本 README を整理した：日付付きの節は全文を[アーカイブ](docs/readme-history-2026-10.ja.md)へ移し、図は SVG 画像から Mermaid テキストに戻した。
+## 詳細と過去の記録
 
-## 日付付き更新のアーカイブ
-
-本 README にあった日付付きの節（2026-10-13 → 2026-10-26）は、全文を [docs/readme-history-2026-10.ja.md](docs/readme-history-2026-10.ja.md)（[English](docs/readme-history-2026-10.md)）に保存しています：
-
-- 2026-10-26 — 通信・品質基盤の設計案
-- 2026-10-22 — 現在の運用スナップショット
-- 2026-10-19 — モデル・効率化運用方針；MiMo APIの活用拡大とLiteLLM検討案
-- 2026-10-16 — Daybreak対象モデルと認可されたOSSセキュリティレビュー
-- 2026-10-15 — レビュー運用方針 v2026.10.15-r2；Claude Opus 5.5 Mediumへの限定的な最終エスカレーション
-- 2026-10-14 — Gemini 4 Argon の段階的導入方針
-- 2026-10-13 — 運用スナップショット；Codex Review / PR Review Pipeline
-
-## 役割とワークフローの境界
-
-| 層 | 責任 | 状態 |
-|---|---|---|
-| Dottie | PM: タスク範囲、provider／環境選択、進捗、受入 | 人が判断するPM役割。完全自律dispatchとは表現しない |
-| AI Governance Control | 再利用できる簡潔なhandoff、成果物、evidenceの層 | AI Governance Control PR #29でminimal-handoffを検証済み。第二の自律orchestratorではない |
-| AIteamBridge | 容量観測、routing、transportの実装プロジェクト | ローカル／offline段階。ライブquota取得と自律dispatchは未検証 |
-
-各層は補完的であり、重複する完全自動の司令塔3つとして扱いません。AI Governance Controlの検証済みminimal handoffは[PR #29](https://github.com/moruku36/ai-governance-control/pull/29)（`4fb014a`でmerge）を参照してください。Bridgeの詳細はリポジトリで変わるため、公開文書では日付付きの検証状況と一般的な境界に絞ります。
-
-```mermaid
-flowchart LR
-    U["Product Owner"] --> D["Dottie<br/>PM / 受入"]
-    D --> A["選択された制作・調査担当<br/>Claude / Antigravity / local Qwen"]
-    A --> F["AI Governance Control<br/>handoff + artifacts + evidence"]
-    F --> D
-    B["AIteamBridge<br/>ローカル容量/router/transport開発"] -. "ライブ自律dispatchではない" .-> D
-```
-
-## Quotaを考慮した選択
-
-- Sessionとweeklyのquota windowは別の計測値として扱います。使用量／残量にはwindowと観測時刻を付けます。
-- 5時間利用がなかったことだけではquotaが100%に戻ったとは言えません。古い・欠落した・鮮度のない観測値は`unknown`とし、手動判断に戻します。
-- Antigravity Gemini、Antigravity Claude/GPT、native Claude/Codex subscriptionは別々のpoolです。API料金はsubscription quotaとは別です。残高、quota画像、認証情報、個別アカウントの支出は公開しません。
-- 難度、品質、環境制約、観測の鮮度、消費ペース、リセット時刻、費用を総合します。固定閾値だけでは決めません。
-
-## 実装と検証の状態
-
-英語・日本語とも **verified/merged**、**local/offline**、**runtime pending**、**proposal** を区別します。ユーザー承認、実行環境での権限承認、ローカルテスト成功、稼働環境への反映は別の段階です。承認が拒否されたら再試行を連打したり別経路で迂回せず、作業を保存して正規の承認経路で止まります。
-
-- AI Governance Controlのminimal-handoffはPR #29で検証済みです。Ubuntu/Windows品質ゲートと、offlineのcontainer-boundary検証を含みます。ライブ自動化を意味しません。
-- AIteamBridgeのcapacity/router作業はlocal/offlineで246 testsと報告されています。未commit／未publishであり、ライブの自律quota取得／dispatchは未検証です。この日付付き根拠を更新する際は対象repoを再確認してください。
-- 監督付きAntigravity Webセッション1件でタスク依頼と応答を確認し、取得した結果にはunit check 324件とmock browser check 25件が報告されていました。この単一結果はCLI稼働、一般的な自動routing、テストの独立再実行を証明しません。
-- CodexBar quota画像の確認は手動です。自動読み取りやquota対応routing全体の自動化を主張しません。
-
-## QwenとオンデマンドGPUの状態
-
-- **Local：** Windows Open WebUI/Ollamaの文章応答は本人操作で確認済み。Mac Open WebUI 0.11.4とQwen2.5 3Bにはローカル応答・Web検索結果の過去観測がある。全環境の検索可否・専門調査品質は別途確認が必要で、自動orchestrationの証明ではない。
-- **RunPod Phase 1：** [PR #39](https://github.com/moruku36/qwen-multimodal/pull/39)で小型Qwen2.5-1.5B-Instructの実回答1件とPod削除を記録。A100の独立レビュー品質や全ワークフロー受入ではない。
-- **RunPod Phase 2：** *（2026-10-13時点：mock / offlineのみ。2026-10-15以降、Claude Opus 5.5 Mediumで接続試験に合格したという本人報告がある。独立ログでは未確認で、レビュー品質・運用の受入ではない。）* A100によるlive独立レビュー、品質、継続運用は未受入。現時点はCodex ReviewまたはClaude / Antigravityの別providerレビューを使う。会話上の「3.7ぐらい」は未確定な呼称で、モデルIDとして扱わない。
-- **Colab：** 固定Q8チャットnotebookは別環境。[PR #35](https://github.com/moruku36/qwen-multimodal-colab/pull/35)のCPU CI 287件（2 skip）はColab/GPU inference・モデルdownload・A100品質の確認ではない。
-- OpenAI-compatibleはAPI形式で、有料OpenAI利用を意味しない。単回のHTTP応答を自動起動・接続・終了の完成としない。Pod停止と削除は別で、永続storageやデータ保持にも注意する。この文書改訂ではGPUを起動せず実運用設定を変更しない。
-
-## プライバシーとセキュリティ
-
-このリポジトリは公開です。私的な会話、個人・家族事情、認証情報、ログイン先、quota画像、正確な口座・アカウント残高、これらを含むログは記載しません。一般化した運用制約だけを説明します。文書更新のための新サービス導入、課金、APIキー生成、アプリ実行構成変更、セキュリティ制御の迂回は行いません。
-
-## 将来検証案：エージェントのKVキャッシュ制御
-
-[Cache Engineering for Agentsに基づく検証案](docs/cache-engineering-future-study.ja.md)を追加しました。プロバイダーのプロンプトキャッシュ、会話要約、直接KV制御を分けて扱います。AKVの導入、費用削減の実測、コード変更は未実施です。
-
-## 将来のアイデア — 2026-11-03：Claude Duetへの顧客対応業務の分担
-
-Claude Duetが日本で利用可能になったら、営業・コンサルティングなどのカスタマーフェーシング業務をまとめて任せたい。相手への配慮が必要な、丁寧で慎重に進めるべき対話やタスクの担当として、マルチAIワークフローに組み込む構想。
-
-日本での利用開始時期は未確認であり、現時点では将来のアイデアとして記録する。現在の担当や実行権限を変更するものではない。
-
-## 将来の選択肢：Render Workflows
-
-[Render Workflowsの活用案](docs/render-workflows-proposal.ja.md)に、オンデマンドのマルチAI処理、Vercelとの比較、予算制御、認証、証跡ゲートを記載しています。提案であり、デプロイ済み・受入済みの実行経路ではありません。
-
-## リポジトリ構成
-
-- [ラウンジ連携の状況 — 2026-10-28](docs/lounge-status-2026-10-28.ja.md) — 本人報告に基づく過去の観測と当時の残課題。現在の稼働検証ではありません。
-
-- [OpenClaw構築メモ](docs/openclaw-build-notes-2026-11-05.ja.md) — 権限境界、確認結果、未検証事項の記録
-
-- `README.md` / `README.ja.md` — 本書：概要、現在のアーキテクチャ、最新の更新
-- `docs/network-topology-2026-10-30.md` / `.ja.md` — ネットワーク構成図：誰が誰と、どうやって通信するか（図＋接続一覧）
-- `docs/readme-history-2026-10.md` / `.ja.md` — 本 README にあった日付付き更新（2026-10-13 → 2026-10-26）の全文アーカイブ
-- `docs/` — ガイドと記録：[AIチーム](docs/ai-team.ja.md)、[ルーティングガイド](docs/routing-guide.ja.md)、[引き継ぎテンプレート](docs/handoff-templates.ja.md)、[PRレビューパイプライン](docs/pr-review-pipeline.ja.md)、[Dots / CodexBar オーケストレーション](docs/dots-codexbar-orchestration.ja.md)、日付付き `operating-decisions-*`、`cookbook/`、`reports/`
-- `docs/daybreak-authorized-oss-security-review.md` / `.ja.md` — Daybreak対象モデルと認可されたOSSセキュリティレビュー手順案（記録のみ、未有効化）
-- `configs/` — ツール別のガイド。[Open WebUI ローカルメモリ運用手順](configs/openwebui-local-memory-0.11.4/README.ja.md)（[English](configs/openwebui-local-memory-0.11.4/README.md)）を含む
-- `tools/architecture/` — 図の Mermaid 原本（`.mmd`）。直すときは画像ではなくこちらを編集する
-- `assets/` — 描画済みの図ファイル（参照用に保管）
-- `templates/` / `tests/` — 環境テンプレートと品質ベースラインのチェック
-
-## クイックスタート
-
-```bash
-cp templates/.env.example .env
-```
-
-直接クライアントを使う通常の作業では環境テンプレートは任意です。公開文書へ認証情報を記載しないでください。
+- [役割分担の詳細と出典](docs/network-topology-2026-11-08.ja.md)
+- 手順：[AI チーム](docs/ai-team.ja.md)、[ルーティング](docs/routing-guide.ja.md)、[引継ぎ](docs/handoff-templates.ja.md)、[レビュー](docs/pr-review-pipeline.ja.md)
+- 履歴：[アーカイブ索引](docs/archive/README.ja.md)、[更新履歴](CHANGELOG.ja.md)
+- 参照：[ツール](tools/README.ja.md)、[構成ガイド](configs/)、[テンプレート](templates/)、[検査](tests/)、[図の原本](tools/architecture/README.md)

@@ -1,30 +1,24 @@
 flowchart TB
-    OWNER["Owner / final decisions"]
-    DOTS["Dots / OpenAI<br/>coordination and implementation"]
-    MUSE["Muse / Fuwatchi<br/>cloud consultation and review"]
-    LOUNGE["Private GitHub lounge<br/>recipient mailboxes and requests"]
-    subgraph MAC["Mac lab: owner-reported observations"]
-        GATE["OpenClaw Gateway<br/>local loopback listener"]
-        ADAPTER["Read adapter / scheduled polling<br/>06:00-22:00 JST, every 30 min"]
-        KURO["Kurotchi<br/>isolated receipt: one manual test"]
-        BROWSER["Docker browser<br/>human screen access demonstrated"]
+    OWNER["Owner / decisions and acceptance"]
+    DOTS["Dots<br/>coordination and implementation"]
+    MUSE["Muse / Fuwatchi<br/>consultation, design and review"]
+    LOUNGE["Private GitHub lounge<br/>asynchronous information sharing"]
+    subgraph LAB["Mac lab"]
+        KURO["Kurotchi / OpenClaw<br/>lab-side work"]
+        CLI["Codex / Claude Code"]
+        BROWSER["Dedicated browser"]
     end
-    WORKERS["Coding environments<br/>Claude Code / Codex / official Antigravity"]
-    API["On-demand model APIs<br/>caller-initiated, not resident agents"]
-    FUTURE["Proposed / unverified<br/>three-party automatic round trip<br/>Render Workflows"]
+    WORKERS["Task-specific coding tools<br/>Codex / Claude Code / official Antigravity"]
+    API["On-demand model APIs"]
     OWNER --> DOTS
     OWNER --> MUSE
-    DOTS -->|"existing status schedule: 2 hours"| LOUNGE
-    LOUNGE -->|"existing watch: hourly"| DOTS
-    MUSE -.->|"existing status sharing; not retested"| LOUNGE
-    LOUNGE -.->|"reported polling: about 30 min"| MUSE
-    LOUNGE -->|"read and one manual receipt reported"| ADAPTER
-    ADAPTER --> KURO
-    GATE -->|"local orchestration"| KURO
-    GATE -->|"browser environment"| BROWSER
-    OWNER -->|"human screen operation reported"| BROWSER
-    KURO -.->|"automatic posting and peer receipt unverified"| LOUNGE
-    DOTS -.->|"task handoff; not retested"| WORKERS
-    MUSE -.->|"on demand; route-specific verification"| API
-    DOTS -.->|"on demand; route-specific verification"| API
-    LOUNGE -.->|"not a live integrated workflow"| FUTURE
+    OWNER --> KURO
+    DOTS <--> LOUNGE
+    MUSE <--> LOUNGE
+    KURO <--> LOUNGE
+    KURO --> CLI
+    KURO --> BROWSER
+    DOTS -.->|"select per task"| WORKERS
+    DOTS -.-> API
+    MUSE -.-> API
+    KURO -.-> API

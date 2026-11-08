@@ -16,3 +16,9 @@ The script writes the English and Japanese workflow and dashboard SVGs to `../..
 The two diagram concepts are task/review flow and dashboard record boundary, each in English and Japanese. Edit `workflow.*.mmd` or `dashboard.*.mmd`, then run the commands above. The build generates four SVGs in `assets/`. The dated `assets/workflow-architecture-2026-10-19*.mmd` files preserve an earlier snapshot and are not inputs to this build.
 
 The SVGs include a white background and dark text and lines for consistent light/dark host display. Use the full-size links for narrow screens. Do not edit generated SVGs directly. After rebuilding, compare outputs with the committed SVGs and inspect a static render at desktop and narrow widths. A browser check must be recorded separately if performed.
+
+## High-level topology overview: 2026-11-08
+
+`network-topology.en.mmd` and `network-topology.ja.mmd` now describe the high-level role map, without internal operating status or security configuration. Each is embedded unchanged in the matching root README and `docs/network-topology-2026-11-08*.md`. GitHub renders those blocks directly. Keep the three copies per language identical.
+
+The existing build command renders only the four workflow/dashboard sources described above, not the network topology. Historical PNG/SVG assets retain their original dates. The archive index at `docs/archive/README.md` links the complete previous topology sources at their immutable public commit; no old source is lost.

@@ -1,30 +1,24 @@
 flowchart TB
-    OWNER["オーナー / 最終判断"]
-    DOTS["ドッチー / OpenAI<br/>作業調整・実装"]
-    MUSE["フワッチ / Muse<br/>クラウド相談・レビュー"]
-    LOUNGE["非公開GitHubラウンジ<br/>相手別メールボックス・依頼"]
-    subgraph MAC["Macラボ：本人提供の観測"]
-        GATE["OpenClaw Gateway<br/>ローカルloopback待受け"]
-        ADAPTER["読取adapter / 定期確認<br/>06:00-22:00 JST、30分ごと"]
-        KURO["クロッチ<br/>隔離環境で手動受領1件"]
-        BROWSER["Dockerブラウザー<br/>人による画面操作を確認"]
+    OWNER["本人 / 判断と受入れ"]
+    DOTS["Dots<br/>調整と実装"]
+    MUSE["Muse / フワッチ<br/>相談・設計・レビュー"]
+    LOUNGE["非公開 GitHub ラウンジ<br/>非同期の情報共有"]
+    subgraph LAB["Mac ラボ"]
+        KURO["クロッチ / OpenClaw<br/>ラボ側の作業"]
+        CLI["Codex / Claude Code"]
+        BROWSER["専用ブラウザ"]
     end
-    WORKERS["開発環境<br/>Claude Code / Codex / 公式Antigravity"]
-    API["オンデマンドのモデルAPI<br/>呼ばれる側、常駐エージェントではない"]
-    FUTURE["構想・未検証<br/>三者の自動往復<br/>Render Workflows"]
+    WORKERS["案件ごとの開発ツール<br/>Codex / Claude Code / 公式 Antigravity"]
+    API["オンデマンドのモデル API"]
     OWNER --> DOTS
     OWNER --> MUSE
-    DOTS -->|"既存の状況共有予定：2時間"| LOUNGE
-    LOUNGE -->|"既存の受信確認：毎時"| DOTS
-    MUSE -.->|"既存の状況共有、今回再試験なし"| LOUNGE
-    LOUNGE -.->|"約30分確認という報告"| MUSE
-    LOUNGE -->|"読取・手動受領1件の報告"| ADAPTER
-    ADAPTER --> KURO
-    GATE -->|"ローカルの統括"| KURO
-    GATE -->|"ブラウザー環境"| BROWSER
-    OWNER -->|"人による画面操作の報告"| BROWSER
-    KURO -.->|"自動投稿と相手受領は未検証"| LOUNGE
-    DOTS -.->|"作業受渡し、今回再試験なし"| WORKERS
-    MUSE -.->|"必要時呼出し、経路ごとに検証"| API
-    DOTS -.->|"必要時呼出し、経路ごとに検証"| API
-    LOUNGE -.->|"統合済みの実運用ではない"| FUTURE
+    OWNER --> KURO
+    DOTS <--> LOUNGE
+    MUSE <--> LOUNGE
+    KURO <--> LOUNGE
+    KURO --> CLI
+    KURO --> BROWSER
+    DOTS -.->|"案件ごとに選択"| WORKERS
+    DOTS -.-> API
+    MUSE -.-> API
+    KURO -.-> API
