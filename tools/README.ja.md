@@ -6,6 +6,10 @@
 
 `pipeline.py`はOllamaで草案を作り、Claude APIにレビューを依頼できます。保持されているコードの説明であり、稼働中のorchestrationサービスを意味しません。
 
+## 新しい単独接続の入口
+
+`ocr_mimo_connection.py` は、固定版OpenCodeReviewとMiMoの接続確認用です。実CLIとのローカルmock往復を確認済みで、live接続・実コードレビュー・品質受入はまだです。[手順と制約](../docs/ocr-mimo-standalone.ja.md)を参照してください。旧式pipelineは変更しません。
+
 ## 現在のルーティング
 
 - コード変更は[routing guide](../docs/routing-guide.ja.md)に従ってCodex、Claude Code、Antigravityなどから選びます。
