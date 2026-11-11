@@ -2,7 +2,30 @@
 
 [English](README.md) | [日本語](README.ja.md)
 
-## 2026-11-09: One-week GPT-6.1 Sol / xhigh experiment
+## Current status — 2026-11-12
+
+This repository now includes executable, source-only PR review tooling as well as
+architecture and configuration templates. **Merged implementation is not the
+same as accepted live automation.**
+
+| Area | Verified stage | Remaining work |
+|---|---|---|
+| Repository PR review | Alibaba OpenCodeReview + MiMo and a separate Cloudflare-guided MiMo lane are merged and activated. A bounded smoke run succeeded, but later PR reviews were incomplete. | Diagnose failed lanes and validate the exact current revision; do not blindly replay reserved reviews. |
+| Central review hub | Controller, inactive config, workflow and bilingual guides merged in [#49](https://github.com/moruku36/multi-ai-workflow/pull/49) and [#50](https://github.com/moruku36/multi-ai-workflow/pull/50). Five mocked offline cases passed. | Both config gates remain false; cross-repository execution and recurring activation are not accepted. |
+| Team communication | The private lounge is an asynchronous information-sharing boundary. | An architecture arrow, local status save or posted message does not prove delivery, acknowledgment or task execution. |
+
+For this project's current development work, the selected coding worker is
+Codex CLI with `gpt-6.1-sol` / `xhigh`. PR review uses Xiaomi
+`mimo-v2.6-pro`: Alibaba supplies a review tool and Cloudflare supplies audit
+guidance, not separate model providers. Two lanes on the same provider are not
+independent-provider approval.
+
+See [automatic PR review](docs/automatic-dual-review.md) and
+[central review setup and limits](docs/central-review-hub.md) for the dated evidence,
+scope, resource limits and remaining acceptance steps. This documentation update
+does not enable a workflow, change permissions or grant merge authority.
+
+## Dated trial: 2026-11-09 — One-week GPT-6.1 Sol / xhigh experiment
 
 - **Period:** Monday, 2026-11-09 through Monday, 2026-11-16 (JST), followed by a review.
 - **New work:** Use **GPT-6.1 Sol** (`gpt-6.1-sol`) with **Extra high** reasoning (`xhigh`) for new Codex and Dots-coordinated ChatGPT Work tasks during this period. Work already in flight may keep its current setup.
@@ -13,7 +36,7 @@
 
 [Official usage guidance](https://learn.chatgpt.com/docs/pricing) explains that Codex and ChatGPT Work share usage and directs users to their dashboard for current limits and reset times. A general November doubling of Pro's allowance has not been verified from the official sources checked on 2026-11-09. This section records the trial policy, not proof that every environment's model setting has already changed.
 
-A high-level map of how several AI tools work as a team: Dots coordinates implementation, Muse (Fuwatchi) supports design and review, and Kurotchi handles lab-side work through OpenClaw. This page focuses on the current structure; older material is reachable from the [archive index](docs/archive/README.md).
+A high-level map of how several AI tools work as a team: Dots supports coordination and research, Muse (Fuwatchi) supports design and review, and Kurotchi handles lab-side and repository development work through OpenClaw. This page focuses on the current structure; older material is reachable from the [archive index](docs/archive/README.md).
 
 ## Previous update: 2026-11-08
 
@@ -26,11 +49,11 @@ A high-level map of how several AI tools work as a team: Dots coordinates implem
 ```mermaid
 flowchart TB
     OWNER["Owner / decisions and acceptance"]
-    DOTS["Dots<br/>coordination and implementation"]
+    DOTS["Dots<br/>coordination and research"]
     MUSE["Muse / Fuwatchi<br/>consultation, design and review"]
     LOUNGE["Private GitHub lounge<br/>asynchronous information sharing"]
     subgraph LAB["Mac lab"]
-        KURO["Kurotchi / OpenClaw<br/>lab-side work"]
+        KURO["Kurotchi / OpenClaw<br/>lab and repository development"]
         CLI["Codex / Claude Code"]
         BROWSER["Dedicated browser"]
     end
@@ -55,7 +78,7 @@ The arrows show logical responsibilities and information-sharing relationships, 
 ## How work moves
 
 1. The owner sets the goal and makes consequential decisions.
-2. Dots coordinates the work and selects an appropriate implementation or research tool. Muse supports consultation, design and review; Kurotchi provides a lab-side entry point to CLI and browser work.
+2. Dots coordinates the work and selects an appropriate implementation or research tool. Muse supports consultation, design and review; Kurotchi provides a lab-side entry point to CLI, browser and repository development work.
 3. The private lounge provides asynchronous information sharing. A received message is information, not permission to execute it.
 4. Results and review evidence return to the owner for acceptance. A logical connection does not mean every task or tool combination has been accepted end to end.
 
