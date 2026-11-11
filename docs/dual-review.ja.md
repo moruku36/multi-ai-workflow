@@ -2,7 +2,10 @@
 
 [English](dual-review.md) | [日本語](dual-review.ja.md)
 
-## 導入済み／自動実行は未稼働
+## 自動controllerと手動依頼
+
+[自動PR controller](automatic-dual-review.ja.md)に両系統の実行とPRイベント起動を
+実装しました。有効化・実PR受入は未実施です。以下の手動依頼も別経路として残します。
 
 Cloudflare公式の [security-audit-skill](https://github.com/cloudflare/security-audit-skill)
 を [.agents/skills/security-audit](../.agents/skills/security-audit/SKILL.md) に改変せず導入しました。
