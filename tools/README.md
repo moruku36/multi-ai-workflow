@@ -6,6 +6,10 @@
 
 `pipeline.py` can draft with local Ollama and send a review request through the Claude API. It is retained for legacy/reference use.
 
+## New standalone connection entry point
+
+`ocr_mimo_connection.py` probes a pinned OpenCodeReview CLI/MiMo connection. A real-CLI local mock round trip is verified; live connectivity, actual code review and quality acceptance are not. See [instructions and limits](../docs/ocr-mimo-standalone.md). The legacy pipeline is unchanged.
+
 ## Current routing context
 
 - For code changes, select an appropriate Codex, Claude Code, or Antigravity route per the [routing guide](../docs/routing-guide.md).
