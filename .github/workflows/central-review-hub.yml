@@ -1,0 +1,53 @@
+name: Central review hub
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: central-review-hub
+  cancel-in-progress: false
+
+jobs:
+  review:
+    if: ${{ github.repository == 'moruku36/multi-ai-workflow' && github.ref == 'refs/heads/main' && vars.CENTRAL_REVIEW_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out trusted hub controller
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Create installation token for all installed repositories
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-contents: read
+          permission-pull-requests: read
+          permission-checks: write
+          # Deliberately omit repositories: discover all installation repos.
+      - name: Download and verify pinned Alibaba CLI
+        env:
+          OCR_BINARY: ${{ runner.temp }}/opencodereview
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 --max-time 60 --output "$OCR_BINARY" https://github.com/alibaba/open-code-review/releases/download/v1.13.7/opencodereview-linux-amd64
+          echo "8c1ff786161b6dc0e8dcb06107f18bda8b6181b39ce573400add4a39f90cf19d  $OCR_BINARY" | sha256sum --check --status
+          chmod 500 "$OCR_BINARY"
+      - name: Run central source review coordinator
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          MIMO_API_KEY: ${{ secrets.MIMO_API_KEY }}
+          OCR_BINARY: ${{ runner.temp }}/opencodereview
+          CENTRAL_REVIEW_ENABLED: ${{ vars.CENTRAL_REVIEW_ENABLED }}
+          CENTRAL_REVIEW_SINCE: ${{ vars.CENTRAL_REVIEW_SINCE }}
+        run: python3 tools/central_review_hub.py
