@@ -10,6 +10,10 @@
 
 `ocr_mimo_connection.py` は、固定版OpenCodeReviewとMiMoの接続確認用です。実CLIとのローカルmock往復を確認済みで、live接続・実コードレビュー・品質受入はまだです。[手順と制約](../docs/ocr-mimo-standalone.ja.md)を参照してください。旧式pipelineは変更しません。
 
+## 2系統レビューの依頼作成（自動実行ではありません）
+
+`dual_review.py` はAlibaba＋Cloudflareの同一base/headの依頼を作成し、結果の記録状態を確認します。Cloudflare公式スキル一式をリポジトリ内に固定導入しています。このツールはレビュアーを起動しません。[手順・制約・未実装アダプター](../docs/dual-review.ja.md)を参照してください。
+
 ## 現在のルーティング
 
 - コード変更は[routing guide](../docs/routing-guide.ja.md)に従ってCodex、Claude Code、Antigravityなどから選びます。
