@@ -2,7 +2,11 @@
 
 [English](ocr-mimo-standalone.md) | [日本語](ocr-mimo-standalone.ja.md)
 
-## Status, 2026-11-11
+## Update, 2026-11-11
+
+A subsequent operator-reported live connection receipt confirmed two MiMo responses and a tool round trip. This is not review quality acceptance. The next [synthetic diff review step](ocr-mimo-synthetic-review.md) adds the actual CLI review entry point, locally mock-verified; live diff review remains pending. The sections below preserve the original implementation-time snapshot.
+
+## Historical status, 2026-11-11
 
 **Implemented: a pinned real-CLI connection probe and a local mock tool-call round trip. Live MiMo connectivity is NOT verified.** This is not completed code review, quality evaluation, Mailbox integration, or Cloudflare audit integration.
 
