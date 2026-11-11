@@ -40,7 +40,7 @@ python3 tools/ocr_mimo_review.py --binary /absolute/path/to/pinned-ocr --live --
 
 OCRの `security`・`bug` 等はそのまま保存し、`security/path_traversal` 等の細分類へ推測変換しません。既存mock専用scorerは変更せず、実結果をmockと偽って投入しません。誤検出・見逃し・細分類一致は自動受入せず、別の正解データとローカルで照合してください。常に `review_quality_accepted=false` です。
 
-次は操作者による上限付き実レビュー、その後に正常サンプルの誤検出と欠陥4件の人手判定です。細分類の機械採点・品質／費用の明示受入・Mailbox連携・Cloudflare監査・無人運用は未完了です。
+次は操作者による上限付き実レビュー、その後に[オフライン人手判定ツール](ocr-mimo-adjudication.ja.md)で正常サンプルの誤検出と欠陥4件を確認します。細分類の機械採点・品質／費用の明示受入・Mailbox連携・Cloudflare監査・無人運用は未完了です。
 
 選択検証：
 
@@ -48,4 +48,4 @@ OCRの `security`・`bug` 等はそのまま保存し、`security/path_traversal
 python3 tests/check_ocr_mimo_review.py --binary /absolute/path/to/pinned-ocr
 ```
 
-同じ試行では残り1/10件なので、予算増加なしに4件を再実行しないでください。
+上記9/10件はrunner導入時点の記録です。その後の人手判定ツール検証1件で累計10/10件・3実行になりました。予算増加なしに同じ試行のテストを再実行しないでください。

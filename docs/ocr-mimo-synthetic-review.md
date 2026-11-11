@@ -40,7 +40,7 @@ The child CLI receives only an ephemeral loopback token, not the MiMo key. No HO
 
 Raw OCR categories such as `security` and `bug` are preserved. They are not converted to exact subcategories such as `security/path_traversal`. The existing mock-only scorer is unchanged; real outputs are never mislabeled mock to enter it. False positives, missed defects and fine-category matches are not automatically accepted; inspect findings against the separate ground truth locally. All outputs retain `review_quality_accepted=false`.
 
-Next: operator-run bounded live synthetic review, then human adjudication of clean false positives and four seeded defects. Machine subtype scoring, explicit quality/cost acceptance, Mailbox integration, Cloudflare auditing and unattended rollout remain unfinished.
+Next: operator-run bounded live synthetic review, then use the [offline human adjudication tool](ocr-mimo-adjudication.md) for clean false positives and four seeded defects. Machine subtype scoring, explicit quality/cost acceptance, Mailbox integration, Cloudflare auditing and unattended rollout remain unfinished.
 
 Selected checks:
 
@@ -48,4 +48,4 @@ Selected checks:
 python3 tests/check_ocr_mimo_review.py --binary /absolute/path/to/pinned-ocr
 ```
 
-Do not repeat these four cases in the same trial without a budget increase: only one of ten case executions remains.
+The 9/10 count above records the runner increment. The subsequent adjudication-tool check used the final case: now 10/10 cases in 3 invocations. Do not rerun tests in the same trial without a budget increase.
