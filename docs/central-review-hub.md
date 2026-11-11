@@ -2,9 +2,9 @@
 
 [日本語](central-review-hub.ja.md)
 
-**Inactive draft; offline checks passed.** The five mocked offline test cases
-passed in one invocation. The workflow and live integration have not been accepted
-on a real PR. Both `enabled` and
+**Inactive static draft; this repair is unexecuted.** The earlier five mocked
+offline test cases were reported passed in one invocation and have not been rerun.
+The workflow and live integration have not been accepted on a real PR. Both `enabled` and
 `paid_execution_authorized` in [the central config](../config/central-review-hub.json)
 are currently `false`. These files do not establish live automation or review
 quality acceptance.
@@ -41,7 +41,7 @@ quality acceptance.
 
 ## Discovery and execution
 
-The workflow schedules every 30 minutes and permits manual dispatch without
+The draft workflow defines a 30-minute schedule and permits manual dispatch without
 inputs. The job requires the configured hub, `refs/heads/main`, and the runtime
 enable variable. It checks out immutable `github.sha`; there is no arbitrary
 manual source ref. One `central-review-hub` concurrency group serializes runs
@@ -89,7 +89,7 @@ run. Daily accounting includes all statuses and conservatively counts both
 Check start and reservation dates across midnight. A lane cannot start on a new
 UTC day using the preceding day's reservation. Deduplication uses target
 repository/base-tip/head and target receipts, independently of hub checkout SHA.
-There are no refunds, automatic retries, reconciliation, or Markdown repair.
+There are no refunds, automatic retries, reconciliation, or replay after repair.
 A lost write acknowledgment stops the run; do not delete checks to recover slots.
 
 Each reserved PR permits up to **8 Alibaba HTTP attempts plus 1 Cloudflare-guided
@@ -121,10 +121,61 @@ interruption remains unknown and its reservation stays consumed. Preserve all
 receipts and ledger state when stopping or restarting; restart requires an
 accepted policy and a deliberate cutoff, without historical replay.
 
-Unsupported Markdown handling in the existing Alibaba adapter is **still not
-fixed**; such a lane may fail with its reservation consumed. The five offline
-cases passed with every API/source/lane/preflight dependency mocked;
-this does not establish real provider execution or live integration acceptance. Real-PR acceptance, durable GitHub
-behavior, App installation scope, and the full-fetch resource controls remain
-unvalidated. The normal [dual-review contract](dual-review.md) and human,
-independence and merge gates still apply.
+Before this 2026-11-12 draft, unsupported Markdown handling in the Alibaba adapter
+was recorded as unresolved; failed lanes consumed their reservations. That
+historical observation is not a diagnosis of any particular failed run. Real-PR
+acceptance, durable GitHub behavior, App installation scope, and the full-fetch
+resource controls remain unvalidated.
+
+## Static repair — 2026-11-12
+
+Read-only inspection used the local pinned OCR source at
+`b1dcffb0729f3f2e3e47170968a5014a2e035580` (v1.13.7).
+Its [flags](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/cmd/opencodereview/shared_flags.go)
+support `--rule`; `--no-filter` affects comment post-filtering, not file selection.
+The [rule loader](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/internal/config/rules/system_rules.go)
+supports an `include` glob. The adapter now writes only
+`{"include":["**/*.md"]}` to a trusted scratch rule file **outside** the source
+snapshot and passes it via `--rule`. No target-derived policy or review-rule text
+is added. In [selection](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/internal/agent/selection.go),
+binary and secret-path rejection precede includes; deletion and size gates still
+apply. Other extensions retain their default selection rules. Full snapshot
+file-count coverage, expected model, completed response/output, no warnings and
+valid findings remain required; selection wiring alone proves no completion.
+
+Both adapters now raise typed failures with a fixed stopping-stage vocabulary.
+Failed central receipts retain only that stage, CLI exit code (integer from
+−255 to 255, otherwise `null`), HTTP attempts/completed-response counts (0–8 for
+Alibaba, 0–1 for the guidance lane, otherwise `unknown`), boolean halted state or
+`unknown`, and safe usage. Usage keeps only `prompt_tokens`, `completion_tokens`
+and `total_tokens`, each an integer from 0 to 1,000,000,000 or `unknown`, in at most
+8/1 rows respectively. Missing usage is `unknown`; absent rows do not imply zero
+cost. Alibaba counters are sampled after relay cleanup; an unsettled or lost
+worker has unknown counters. Generic exceptions have unknown metadata, never
+invented zeroes. The worker and receipt writer reproject failures through this
+allowlist; exception text, paths, stderr, provider text, credentials and headers
+are excluded from diagnostics. Stages identify stopping points, not root causes.
+Completed central receipts also retain bounded completion/halted/exit metadata.
+
+Exactly three mocked cases are authored in
+[`tests/check_central_review_live_acceptance.py`](../tests/check_central_review_live_acceptance.py):
+`test_trusted_markdown_rule_wiring`, `test_safe_alibaba_failure_diagnostics` and
+`test_central_failed_receipt_persists_safe_metadata`. **None was run.** The earlier
+five central cases used mocked API/source/lane/preflight dependencies and remain
+historical evidence only. Authoring these cases adds no execution budget.
+Current verification is source/diff and syntax/whitespace inspection only; the new
+cases and live-provider acceptance remain unexecuted. No workflow/config/auth/
+settings/hooks or activation changed.
+
+Remaining acceptance requires separately authorized evaluation and current-head
+external review of this repair, finding resolution, and installation on the
+trusted base. A bounded real PR must demonstrate **actual-source completion in
+both lanes** on the same immutable base/head/diff binding with the recorded actual
+provider/model. Read back the final target Check and hub reservation from Checks,
+verify the exact current binding and retained diagnostics, and establish durable
+deduplication against both the hub ledger and target receipts, including failed
+or unknown pairs across hub revisions. Reconcile existing consumed reservations
+before any new paid work; never replay a reserved pair or delete its markers.
+Mocks, static inspection and a successful Check alone do not satisfy these gates.
+The normal [dual-review contract](dual-review.md), required provider independence,
+human acceptance and merge gates still apply. Central recurring work stays disabled.

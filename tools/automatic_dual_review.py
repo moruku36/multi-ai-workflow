@@ -14,7 +14,7 @@ import threading
 
 import dual_review
 import ocr_mimo_connection as connection
-from ocr_mimo_review import ReviewRelay
+from ocr_mimo_review import MAX_CALLS, ReviewRelay
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_SOURCE = 65536
@@ -90,133 +90,296 @@ def validate_findings(findings, snapshots):
     return findings
 
 
+# Stages identify the stopping point, not a proven provider/root cause.
+FAILURE_STAGES = {
+    'alibaba': frozenset((
+        'preflight', 'relay_setup', 'workspace_setup', 'cli_execution', 'cli_launch',
+        'cli_timeout', 'cli_exit_nonzero', 'relay_halted', 'no_completed_response',
+        'output_missing', 'output_oversized', 'output_read', 'output_parse',
+        'output_status', 'output_warnings', 'output_model', 'output_coverage',
+        'findings_validation', 'cleanup', 'lane_result', 'lane_worker', 'internal')),
+    'cloudflare': frozenset((
+        'preflight', 'request_setup', 'request_http', 'response_parse',
+        'response_validation', 'report_parse', 'findings_validation',
+        'report_validation', 'lane_result', 'lane_worker', 'internal')),
+}
+USAGE_KEYS = ('prompt_tokens', 'completion_tokens', 'total_tokens')
+MAX_USAGE_TOKENS = 10**9  # Serialization bound, not a billing limit.
+
+
+def bounded_count(value, maximum):
+    return value if type(value) is int and 0 <= value <= maximum else 'unknown'
+
+
+def safe_usage(value, maximum):
+    if type(value) is dict:
+        value = [value]
+    if type(value) is not list:
+        return 'unknown'
+    return [{key: bounded_count(row.get(key), MAX_USAGE_TOKENS)
+             if type(row) is dict else 'unknown' for key in USAGE_KEYS}
+            for row in value[:maximum]]
+
+
+def safe_diagnostics(lane, values=None):
+    """Project only fixed vocabulary, bounded numbers/bools and safe usage.
+
+    Reapply at receipt boundaries; never serialize arbitrary exception attributes,
+    strings, stderr, paths, provider bodies, credentials or headers.
+    """
+    values = values if type(values) is dict else {}
+    maximum = MAX_CALLS if lane == 'alibaba' else 1
+    stage = values.get('failure_stage')
+    halted, code = values.get('relay_halted'), values.get('cli_exit_code')
+    return {
+        'failure_stage': stage if type(stage) is str and stage in FAILURE_STAGES[lane]
+                         else 'internal',
+        'http_attempts': bounded_count(values.get('http_attempts'), maximum),
+        'completed_responses': bounded_count(values.get('completed_responses'), maximum),
+        'relay_halted': halted if type(halted) is bool else 'unknown',
+        'cli_exit_code': code if lane == 'alibaba' and type(code) is int
+                         and -255 <= code <= 255 else None,
+        'usage': safe_usage(values.get('usage'), maximum),
+    }
+
+
+def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None):
+    return safe_diagnostics(lane, {
+        'failure_stage': stage, 'cli_exit_code': cli_exit_code,
+        'http_attempts': getattr(relay, 'attempts', None),
+        'completed_responses': getattr(relay, 'completed', None),
+        'relay_halted': getattr(relay, 'halted', None),
+        'usage': getattr(relay, 'usage', None)})
+
+
+class LaneError(ValueError):
+    """Only this bounded diagnostic projection crosses a failed-lane boundary."""
+
+    def __init__(self, lane, stage, relay=None, cli_exit_code=None):
+        super().__init__('Review lane incomplete or unknown')
+        self.lane = lane
+        self.diagnostics = relay_diagnostics(lane, stage, relay, cli_exit_code)
+
+
 def alibaba(binary, snapshots):
-    binary, digest = connection.checked_binary(binary)
-    for name in ('config.json', 'rule.json'):
-        if (Path.home() / '.opencodereview' / name).exists():
-            raise ValueError('reconcile global OCR configuration')
-    relay = ReviewRelay(live=True, api_key=os.environ['MIMO_API_KEY'])
-
-    class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *_args):
-            pass
-
-        def do_POST(self):
-            self.connection.settimeout(30)
-            try:
-                size = int(self.headers.get('Content-Length', '-1'))
-                if not 0 < size <= MAX_SOURCE or self.headers.get('Transfer-Encoding'):
-                    raise ValueError()
-                raw = self.rfile.read(size)
-                if len(raw) != size:
-                    raise ValueError()
-                body = relay.exchange(raw, self.headers.get('Authorization', ''), self.path)
-                status = 200
-            except Exception:
-                relay.halted = True
-                body, status = b'{"error":{"message":"stopped; do not retry"}}', 400
-            self.send_response(status)
-            self.send_header('Content-Length', str(len(body)))
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-            self.wfile.write(body)
-
-    server = HTTPServer(('127.0.0.1', 0), Handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+    stage, failure, cli_exit_code = 'preflight', None, None
+    relay = server = thread = workspace = None
     try:
-        with tempfile.TemporaryDirectory(prefix='ocr-pr-') as tmp:
-            scratch = Path(tmp)
-            repo = scratch / 'source'
-            repo.mkdir()
-            git(repo, 'init', '-q')
-            for path, pair in snapshots.items():
-                if pair[0] is not None:
-                    dest = repo / path
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    dest.write_text(pair[0], encoding='utf-8')
-            git(repo, 'add', '--all', '--force')
-            git(repo, '-c', 'user.name=Review', '-c', 'user.email=review@example.invalid',
-                '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-qm', 'Source baseline')
-            for path, pair in snapshots.items():
+        binary, digest = connection.checked_binary(binary)
+        for name in ('config.json', 'rule.json'):
+            if (Path.home() / '.opencodereview' / name).exists():
+                raise ValueError()
+        stage = 'relay_setup'
+        relay = ReviewRelay(live=True, api_key=os.environ['MIMO_API_KEY'])
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *_args):
+                pass
+
+            def do_POST(self):
+                self.connection.settimeout(30)
+                try:
+                    size = int(self.headers.get('Content-Length', '-1'))
+                    if not 0 < size <= MAX_SOURCE or self.headers.get('Transfer-Encoding'):
+                        raise ValueError()
+                    raw = self.rfile.read(size)
+                    if len(raw) != size:
+                        raise ValueError()
+                    body = relay.exchange(raw, self.headers.get('Authorization', ''), self.path)
+                    status = 200
+                except Exception:
+                    relay.halted = True
+                    body, status = b'{"error":{"message":"stopped; do not retry"}}', 400
+                self.send_response(status)
+                self.send_header('Content-Length', str(len(body)))
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(body)
+
+        class Server(HTTPServer):
+            def handle_error(self, *_args):
+                # No background traceback containing request/exception text.
+                relay.halted = True
+
+        server = Server(('127.0.0.1', 0), Handler)
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        thread = worker
+        stage = 'workspace_setup'
+        workspace = tempfile.TemporaryDirectory(prefix='ocr-pr-')
+        scratch = Path(workspace.name)
+        repo = scratch / 'source'
+        repo.mkdir()
+        git(repo, 'init', '-q')
+        for path, pair in snapshots.items():
+            if pair[0] is not None:
                 dest = repo / path
-                if pair[1] is None:
-                    dest.unlink(missing_ok=True)
-                else:
-                    dest.parent.mkdir(parents=True, exist_ok=True)
-                    dest.write_text(pair[1], encoding='utf-8')
-            git(repo, 'add', '--all', '--force')
-            output = scratch / 'review.json'
-            # Only output tools: no model-directed filesystem/shell/search access.
-            tools = scratch / 'tools.json'
-            tools.write_text(json.dumps([
-                {'name': 'task_done', 'plan_task': False, 'main_task': True,
-                 'definition': {'name': 'task_done', 'description': 'Finish review.',
-                    'parameters': {'type': 'object', 'properties': {
-                        'state': {'type': 'string', 'enum': ['DONE', 'FAILED']}},
-                        'required': ['state']}}},
-                {'name': 'code_comment', 'plan_task': False, 'main_task': True,
-                 'definition': {'name': 'code_comment', 'description':
-                    'Report issues using exact newly added existing_code from the diff.',
-                    'parameters': {'type': 'object', 'properties': {'comments': {
-                        'type': 'array', 'items': {'type': 'object', 'properties': {
-                            k: {'type': 'string'} for k in
-                            ('path', 'content', 'existing_code', 'category', 'severity')},
-                            'required': ['path', 'content', 'existing_code', 'category', 'severity']}}},
-                        'required': ['comments']}}}]))
-            env = connection.child_environment(relay.token, server.server_port)
-            env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
-                       GIT_TERMINAL_PROMPT='0', GIT_ATTR_NOSYSTEM='1')
-            result = subprocess.run([str(binary), 'review', '--repo', str(repo),
-                '--format', 'json', '--audience', 'agent', '--output', str(output),
-                '--tools', str(tools), '--no-filter', '--effort', 'low',
-                '--concurrency', '1', '--timeout', '1'],
-                cwd=repo, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL, timeout=150, check=False)
-            if (result.returncode or relay.halted or not relay.completed
-                    or not output.is_file() or output.stat().st_size > 262144):
-                raise ValueError('Alibaba incomplete or unknown')
-            data = json.loads(output.read_text())
-            if (data.get('status') not in ('success', 'complete') or data.get('warnings')
-                    or data.get('llm', {}).get('model') != connection.MODEL
-                    or data.get('summary', {}).get('files_reviewed') != len(snapshots)):
-                raise ValueError('Alibaba coverage incomplete')
-            return {'findings': validate_findings(data.get('comments'), snapshots),
-                    'unresolved': [], 'http_attempts': relay.attempts,
-                    'usage': relay.usage, 'binary_sha256': digest}
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(pair[0], encoding='utf-8')
+        git(repo, 'add', '--all', '--force')
+        git(repo, '-c', 'user.name=Review', '-c', 'user.email=review@example.invalid',
+            '-c', 'commit.gpgsign=false', 'commit', '--allow-empty', '-qm', 'Source baseline')
+        for path, pair in snapshots.items():
+            dest = repo / path
+            if pair[1] is None:
+                dest.unlink(missing_ok=True)
+            else:
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_text(pair[1], encoding='utf-8')
+        git(repo, 'add', '--all', '--force')
+        output = scratch / 'review.json'
+        # Pinned v1.13.7 selection.go and rules/system_rules.go support this
+        # include. --no-filter only disables comment post-filtering. Keep policy
+        # outside target sources, without rule text or target-derived globs.
+        rules = scratch / 'rules.json'
+        rules.write_text(json.dumps({'include': ['**/*.md']}))
+        # Only output tools: no model-directed filesystem/shell/search access.
+        tools = scratch / 'tools.json'
+        tools.write_text(json.dumps([
+            {'name': 'task_done', 'plan_task': False, 'main_task': True,
+             'definition': {'name': 'task_done', 'description': 'Finish review.',
+                'parameters': {'type': 'object', 'properties': {
+                    'state': {'type': 'string', 'enum': ['DONE', 'FAILED']}},
+                    'required': ['state']}}},
+            {'name': 'code_comment', 'plan_task': False, 'main_task': True,
+             'definition': {'name': 'code_comment', 'description':
+                'Report issues using exact newly added existing_code from the diff.',
+                'parameters': {'type': 'object', 'properties': {'comments': {
+                    'type': 'array', 'items': {'type': 'object', 'properties': {
+                        k: {'type': 'string'} for k in
+                        ('path', 'content', 'existing_code', 'category', 'severity')},
+                        'required': ['path', 'content', 'existing_code', 'category', 'severity']}}},
+                    'required': ['comments']}}}]))
+        env = connection.child_environment(relay.token, server.server_port)
+        env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
+                   GIT_TERMINAL_PROMPT='0', GIT_ATTR_NOSYSTEM='1')
+        stage = 'cli_execution'
+        result = subprocess.run([str(binary), 'review', '--repo', str(repo),
+            '--format', 'json', '--audience', 'agent', '--output', str(output),
+            '--rule', str(rules), '--tools', str(tools), '--no-filter', '--effort', 'low',
+            '--concurrency', '1', '--timeout', '1'],
+            cwd=repo, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, timeout=150, check=False)
+        cli_exit_code = result.returncode
+        stage = 'cli_exit_nonzero'
+        if cli_exit_code:
+            raise ValueError()
+        stage = 'relay_halted'
+        if relay.halted:
+            raise ValueError()
+        stage = 'no_completed_response'
+        if not relay.completed:
+            raise ValueError()
+        stage = 'output_missing'
+        if not output.is_file():
+            raise ValueError()
+        stage = 'output_oversized'
+        if output.stat().st_size > 262144:
+            raise ValueError()
+        stage = 'output_read'
+        raw = output.read_text()
+        stage = 'output_parse'
+        data = json.loads(raw)
+        stage = 'output_status'
+        if data.get('status') not in ('success', 'complete'):
+            raise ValueError()
+        stage = 'output_warnings'
+        if data.get('warnings'):
+            raise ValueError()
+        stage = 'output_model'
+        if data.get('llm', {}).get('model') != connection.MODEL:
+            raise ValueError()
+        stage = 'output_coverage'
+        if data.get('summary', {}).get('files_reviewed') != len(snapshots):
+            raise ValueError()
+        stage = 'findings_validation'
+        findings = validate_findings(data.get('comments'), snapshots)
+    except subprocess.TimeoutExpired:
+        failure = 'cli_timeout' if stage == 'cli_execution' else stage
+    except OSError:
+        failure = 'cli_launch' if stage == 'cli_execution' else stage
+    except Exception:
+        failure = stage
     finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=31)
+        # Preserve the primary failure and try every cleanup. Sample counters
+        # only after the relay settles; an unsettled worker has unknown counts.
+        cleanups = []
+        if thread is not None:
+            cleanups.append(server.shutdown)
+        if server is not None:
+            cleanups.append(server.server_close)
+        if thread is not None:
+            cleanups.append(lambda: thread.join(timeout=31))
+        if workspace is not None:
+            cleanups.append(workspace.cleanup)
+        for close in cleanups:
+            try:
+                close()
+            except Exception:
+                failure = failure or 'cleanup'
+        try:
+            settled = thread is None or not thread.is_alive()
+        except Exception:
+            settled = False
+        if not settled:
+            failure = failure or 'cleanup'
+        elif relay is not None and relay.halted:
+            failure = failure or 'relay_halted'
+    if failure:
+        raise LaneError('alibaba', failure, relay if settled else None, cli_exit_code) from None
+    stats = relay_diagnostics('alibaba', 'internal', relay, cli_exit_code)
+    return {'findings': findings, 'unresolved': [], 'binary_sha256': digest,
+            **{key: value for key, value in stats.items() if key != 'failure_stage'}}
 
 
 def cloudflare(diff, snapshots):
-    revision = dual_review.verify_skill()
-    skill = ROOT / '.agents/skills/security-audit'
-    names = ['SKILL.md', 'ATTACK-CLASSES.md', 'VALIDATION-AND-REPORTING.md']
-    guidance = '\n'.join((skill / name).read_text() for name in names)
-    payload = {'model': connection.MODEL, 'stream': False, 'max_tokens': 2048,
-               'messages': [{'role': 'system', 'content': SYSTEM + '\n' + guidance},
-                            {'role': 'user', 'content': json.dumps({
-                                'untrusted_diff': diff, 'untrusted_sources': snapshots})}]}
-    body = json.dumps(payload).encode()
-    if len(body) > 196608:
-        raise ValueError('Cloudflare input exceeds byte budget')
-    # Separate source-only agent request; no tool or shell capabilities.
-    relay = connection.Relay(live=True, api_key=os.environ['MIMO_API_KEY'])
-    data = json.loads(relay._forward(body))
-    if data.get('model') != connection.MODEL or len(data.get('choices', [])) != 1:
-        raise ValueError('Cloudflare model mismatch')
-    choice = data['choices'][0]
-    if choice.get('finish_reason') != 'stop' or choice['message'].get('tool_calls'):
-        raise ValueError('Cloudflare response incomplete')
-    report = json.loads(choice['message']['content'])
-    validate_findings(report.get('findings'), snapshots)
-    if (not isinstance(report.get('unresolved'), list)
-            or not all(isinstance(s, str) for s in report['unresolved'])):
-        raise ValueError('Cloudflare gaps missing')
-    return {**report, 'skill_revision': revision, 'companions': names,
-            'http_attempts': 1, 'usage': data.get('usage', {})}
+    stage, relay = 'preflight', None
+    try:
+        revision = dual_review.verify_skill()
+        skill = ROOT / '.agents/skills/security-audit'
+        names = ['SKILL.md', 'ATTACK-CLASSES.md', 'VALIDATION-AND-REPORTING.md']
+        guidance = '\n'.join((skill / name).read_text() for name in names)
+        stage = 'request_setup'
+        payload = {'model': connection.MODEL, 'stream': False, 'max_tokens': 2048,
+                   'messages': [{'role': 'system', 'content': SYSTEM + '\n' + guidance},
+                                {'role': 'user', 'content': json.dumps({
+                                    'untrusted_diff': diff, 'untrusted_sources': snapshots})}]}
+        body = json.dumps(payload).encode()
+        if len(body) > 196608:
+            raise ValueError()
+        # Separate source-only request; reserve before HTTP, including failure.
+        relay = connection.Relay(live=True, api_key=os.environ['MIMO_API_KEY'])
+        stage = 'request_http'
+        relay.attempts = 1
+        raw = relay._forward(body)
+        stage = 'response_parse'
+        if len(raw) > connection.MAX_RESPONSE_BYTES:
+            raise ValueError()
+        data = json.loads(raw)
+        stage = 'response_validation'
+        relay.usage = safe_usage(data.get('usage'), 1)
+        if data.get('model') != connection.MODEL or len(data.get('choices', [])) != 1:
+            raise ValueError()
+        choice = data['choices'][0]
+        if choice.get('finish_reason') != 'stop' or choice['message'].get('tool_calls'):
+            raise ValueError()
+        relay.completed = 1
+        stage = 'report_parse'
+        report = json.loads(choice['message']['content'])
+        stage = 'findings_validation'
+        validate_findings(report.get('findings'), snapshots)
+        stage = 'report_validation'
+        if (not isinstance(report.get('unresolved'), list)
+                or not all(isinstance(s, str) for s in report['unresolved'])):
+            raise ValueError()
+        stats = relay_diagnostics('cloudflare', 'internal', relay)
+        return {'findings': report['findings'], 'unresolved': report['unresolved'],
+                'skill_revision': revision, 'companions': names,
+                **{key: value for key, value in stats.items() if key != 'failure_stage'}}
+    except Exception:
+        if relay is not None:
+            relay.halted = True
+    raise LaneError('cloudflare', stage, relay) from None
 
 
 def api(method, path, payload=None):
@@ -285,8 +448,13 @@ def main():
                 report['lanes'][lane] = {**binding, **result, 'status': 'completed',
                     'reviewer_provider': 'xiaomi', 'reviewer_model': connection.MODEL,
                     'scope': 'diff-only', 'reviewer_id': lane + '-source-review'}
+            except LaneError as exc:
+                report['lanes'][lane]['status'] = 'FAILED_OR_UNKNOWN'
+                report['lanes'][lane]['diagnostics'] = safe_diagnostics(
+                    lane, exc.diagnostics if exc.lane == lane else None)
             except Exception:
                 report['lanes'][lane]['status'] = 'FAILED_OR_UNKNOWN'
+                report['lanes'][lane]['diagnostics'] = safe_diagnostics(lane)
         completed = all(r['status'] == 'completed' for r in report['lanes'].values())
         count = sum(len(r.get('findings', [])) for r in report['lanes'].values())
         gaps = sum(len(r.get('unresolved', [])) for r in report['lanes'].values())

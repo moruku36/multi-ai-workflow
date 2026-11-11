@@ -2,8 +2,9 @@
 
 [English](central-review-hub.md)
 
-**無効状態の草案で、オフライン検証は成功しています。** mockを使った5ケースは
-1回の実行ですべて成功しました。workflowと実連携の実PR受入は未実施です。[中央config](../config/central-review-hub.json)の
+**無効状態の静的な草案で、今回の修正は未実行です。** 以前のmockを使った5ケースは
+1回の実行ですべて成功したと報告されており、再実行していません。
+workflowと実連携の実PR受入は未実施です。[中央config](../config/central-review-hub.json)の
 `enabled`と`paid_execution_authorized`は現在どちらも`false`です。
 これらのファイルは、自動稼働やレビュー品質の受入を証明しません。
 
@@ -34,7 +35,7 @@
 
 ## 探索と実行
 
-workflowは30分ごとのscheduleと、入力項目のない手動dispatchだけを受け付けます。
+草案のworkflowは30分ごとのscheduleと、入力項目のない手動dispatchを定義しています。
 jobは設定済みhub・`refs/heads/main`・実行時有効化variableを要求し、固定した
 `github.sha`をcheckoutします。任意の手動source refはありません。
 `central-review-hub`の単一concurrency groupでキャンセルせず直列化し、
@@ -78,7 +79,7 @@ laneを呼びません。次の適格候補へ進み、以後のpollでは同じ
 日付境界ではCheck開始日と予約日の両方に保守的に算入します。前日の予約を使って翌UTC日に
 laneを開始することはできません。重複排除は対象repository・
 base先端・headと対象receiptで行い、hub checkout SHAには依存しません。
-返却・自動retry・自動照合・Markdown修復はありません。書込み応答を失った場合は
+返却・自動retry・自動照合・修正後の再送はありません。書込み応答を失った場合は
 実行を停止します。枠を回復するためにcheckを削除しないでください。
 
 予約PRごとに **Alibaba最大8 HTTP試行＋Cloudflare手法最大1 HTTP試行**を許し、
@@ -107,8 +108,52 @@ Git full fetchは両commitから到達できる全履歴・blobを取得し得�
 停止・再開時もreceipt・台帳を保持します。再開には受入済みの方針と意図したcutoffが必要で、
 過去の再処理は行いません。
 
-既存Alibaba adapterの未対応Markdown処理は**未修正のまま**です。該当laneは失敗し、
-予約を消費し得ます。5つのオフラインケースはAPI・source・lane・preflightをすべてmock化して
-実行して成功しましたが、実provider実行や実連携の受入を証明しません。実PR受入、GitHubでの永続化動作、
-App installation範囲、full fetchの資源制御は未検証です。通常の
-[2系統レビュー契約](dual-review.ja.md)と人・独立性・mergeのゲートも引き続き適用されます。
+2026-11-12の今回の草案より前は、Alibaba adapterの未対応Markdown処理を未解消と
+記録していました。失敗laneも予約を消費します。この過去の観測は、個別の失敗実行の
+原因診断ではありません。実PR受入、GitHubでの永続化動作、App installation範囲、
+full fetchの資源制御は引き続き未検証です。
+
+## 静的修正 — 2026-11-12
+
+ローカルの固定OCRソース
+`b1dcffb0729f3f2e3e47170968a5014a2e035580`（v1.13.7）を読取り専用で確認しました。
+[flag定義](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/cmd/opencodereview/shared_flags.go)は
+`--rule`をサポートし、`--no-filter`は指摘の後処理だけに作用してファイル選択には
+影響しません。[rule loader](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/internal/config/rules/system_rules.go)は
+`include` globを受け付けます。adapterは信頼するscratchの、ソースsnapshotの**外側**に
+`{"include":["**/*.md"]}`だけのruleファイルを作り、`--rule`で渡すようにしました。
+対象由来の方針やレビュー指示文は加えません。
+[選択処理](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/internal/agent/selection.go)では
+binary・秘密情報pathの拒否がincludeより先に行われ、削除・サイズのゲートも残ります。
+他の拡張子には既定の選択規則が残ります。snapshot全ファイル数のcoverage、期待するmodel、
+完了応答・出力、警告なし、有効な指摘は引き続き必須で、選択の配線だけでは完了を証明しません。
+
+両adapterは、固定語彙の停止stageを持つ型付きの失敗を返すようにしました。
+中央の失敗receiptには、そのstage、CLI終了code（−255～255の整数、それ以外は`null`）、
+HTTP試行数・完了応答数（Alibabaは0～8、手法laneは0～1、それ以外は`unknown`）、
+booleanのhalted状態または`unknown`、安全なusageだけを保持します。usageは
+`prompt_tokens`・`completion_tokens`・`total_tokens`のみで、各値は0～1,000,000,000の
+整数または`unknown`、行数はそれぞれ最大8／1です。usage欠落は`unknown`で、行がないことは
+費用ゼロを意味しません。Alibabaのcounterはrelay cleanup後に取得し、workerが未停止・
+応答不明ならcounterも不明です。一般の例外には不明のmetadataを使い、ゼロを作りません。
+workerとreceipt書込み側でこのallowlistに再投影し、例外文・path・stderr・provider文・
+認証情報・headerは診断から除外します。stageは停止箇所であり、根本原因ではありません。
+中央の完了receiptにも範囲を制限した完了数・halted・終了metadataを保持します。
+
+[`tests/check_central_review_live_acceptance.py`](../tests/check_central_review_live_acceptance.py)に
+mockケースを正確に3つ作成しました。名前は`test_trusted_markdown_rule_wiring`、
+`test_safe_alibaba_failure_diagnostics`、`test_central_failed_receipt_persists_safe_metadata`です。
+**いずれも未実行です。** 以前の中央5ケースはAPI・source・lane・preflightをmock化した
+過去の証拠のままです。ケース作成は実行予算を増やしません。
+現在の検証はソース・差分と構文・空白の確認のみで、追加ケースと実providerでの受入は
+未実行です。workflow・config・auth・settings・hook、有効化は変更していません。
+
+残る受入には、別途承認された評価、今回の修正のcurrent headでの外部レビュー、指摘解消、
+信頼するbaseへの導入が必要です。制限した実PRで、同じ固定base/head/diff bindingに対する
+**両laneの実ソースでの完了**と、実際のprovider/model記録を示す必要があります。
+最終的な対象Checkとhub予約をChecksから読み戻し、正確な現在のbindingと保持した診断を確認し、
+hub台帳と対象receiptの両方で永続的な重複排除を確立します。hub revisionをまたぐ失敗・不明の
+組も対象です。新たな有料処理前に消費済み予約を照合し、予約済みの組を再送したりmarkerを
+削除したりしないでください。mock・静的確認・成功Checkだけではゲートを満たしません。
+通常の[2系統レビュー契約](dual-review.ja.md)、必要な別providerの独立性、人の受入、
+mergeゲートも残り、中央の継続実行は無効のままです。
