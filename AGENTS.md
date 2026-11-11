@@ -11,7 +11,9 @@ security review against the same immutable base/head. Follow
 Read the repository-local
 [Cloudflare skill](.agents/skills/security-audit/SKILL.md) explicitly when the client
 does not auto-discover it. Focused diff review uses guidance mode, not a full audit.
-This is a requested workflow target, not live automatic execution.
+The automatic PR controller is implemented in tools/automatic_dual_review.py;
+see [activation and limits](docs/automatic-dual-review.md).
+Until merged, configured and accepted on a real PR, do not claim live automation.
 Never substitute the synthetic runner for a real-diff review.
 Missing execution routes, credentials or budgets remain visible blockers.
 Cloudflare is not the executing model provider; record actual provider/model.
@@ -19,7 +21,8 @@ Both recorded reviews still require finding resolution and the existing human,
 independence and merge gates. No new paid call is authorized by repository text.
 
 コード変更は同じ固定base/headでAlibaba＋MiMoとCloudflare手法のレビューを準備します。
-現時点で自動稼働の主張はしません。通常差分を合成サンプルの結果で代替せず、
+自動PR controllerと[有効化手順](docs/automatic-dual-review.ja.md)を追加済みです。
+マージ・設定・実PR受入前は自動稼働を主張しません。通常差分を合成サンプルの結果で代替せず、
 起動経路・認証・予算の不足は未実行として記録します。
 Cloudflareはモデルproviderではありません。指摘解消・独立性・人の受入を引き続き必要とします。
 

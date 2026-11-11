@@ -2,7 +2,11 @@
 
 [English](dual-review.md) | [日本語](dual-review.ja.md)
 
-## Implemented, not running automatically
+## Automatic controller and manual handoff
+
+The [automatic PR controller](automatic-dual-review.md) now implements both
+execution lanes and PR event wiring. Activation and real-PR acceptance are still
+pending. The manual handoff below remains available separately.
 
 Cloudflare's [security-audit-skill](https://github.com/cloudflare/security-audit-skill)
 is vendored unchanged in [.agents/skills/security-audit](../.agents/skills/security-audit/SKILL.md)
