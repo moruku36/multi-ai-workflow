@@ -10,6 +10,10 @@
 
 `ocr_mimo_connection.py` probes a pinned OpenCodeReview CLI/MiMo connection. A real-CLI local mock round trip is verified; live connectivity, actual code review and quality acceptance are not. See [instructions and limits](../docs/ocr-mimo-standalone.md). The legacy pipeline is unchanged.
 
+## Two-review handoff (not automatic execution)
+
+`dual_review.py` prepares a same-base/head Alibaba + Cloudflare handoff and checks recorded lane status. The complete pinned Cloudflare skill is repository-local. This tool invokes neither reviewer. See [setup, limitations and remaining adapters](../docs/dual-review.md).
+
 ## Current routing context
 
 - For code changes, select an appropriate Codex, Claude Code, or Antigravity route per the [routing guide](../docs/routing-guide.md).
