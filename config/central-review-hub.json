@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "enabled": false,
+  "paid_execution_authorized": false,
+  "hub_repository": "moruku36/multi-ai-workflow",
+  "owner": "moruku36",
+  "anchor_sha": "f715e63bc2a76a02984c171d87d0b3bc94931676",
+  "activation_cutoff_env": "CENTRAL_REVIEW_SINCE",
+  "exclusions": {
+    "hub": true,
+    "private": true,
+    "forks": true,
+    "archived": true,
+    "draft": true,
+    "non_default_base": true
+  },
+  "limits": {
+    "installation_repositories": 250,
+    "pull_requests_per_repository": 100,
+    "ledger_entries": 1000,
+    "target_receipts": 1000,
+    "reservations_per_run": 2,
+    "reservations_per_utc_day": 6,
+    "github_response_bytes": 2000000,
+    "github_timeout_seconds": 20,
+    "git_output_bytes": 131072,
+    "git_timeout_seconds": 30,
+    "fetch_timeout_seconds": 120,
+    "fetch_observed_disk_bytes": 268435456,
+    "lane_timeout_seconds": 240,
+    "run_timeout_seconds": 900,
+    "target_output_bytes": 48000
+  },
+  "notes": {
+    "en": "UNTESTED inactive draft. Central code-policy review and explicit paid execution authorization must precede enabling both config flags and the runtime gate. Single non-cancelling workflow concurrency is required across the hub. The immutable check ledger must remain readable and retained; missing or truncated state blocks work. Full fetch downloads all history and blobs reachable from both SHAs: no shallow/partial clone, no hard aggregate disk or wire-byte ceiling. The observed disk limit can overshoot between polls; use a runner disk quota for a hard ceiling. Target check output contains bounded untrusted finding previews; human resolution, independence and merge gates still apply.",
+    "ja": "未テスト・無効状態の草案。中央のコード・方針レビューと明示的な有料実行承認を経てから、configの両フラグと実行時ゲートを有効化する。hub全体で単一・非キャンセルの同時実行制御が必要。固定check台帳を保持し、欠落・打切り時は停止。full fetchは両SHAから到達可能な全履歴・blobを取得し、総ディスク・通信量の厳密上限はない。監視間隔中の超過はあり得るため厳密制限にはrunner側quotaが必要。対象check内の指摘抜粋は未信頼。指摘解消・独立性・人のmerge gateは継続。"
+  }
+}
