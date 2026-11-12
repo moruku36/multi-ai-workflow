@@ -66,7 +66,10 @@ class BoundedReviewRelay(ReviewRelay):
             self.halted = True
             raise connection.ProbeError('authorization expired')
         self.payload_budget.reserve(body)
-        return super()._forward(body)
+        response = super()._forward(body)
+        # Observe before inherited ReviewRelay validation replaces the failure.
+        observe_response_reason('alibaba', self, response)
+        return response
 
 
 def effective_attempt_cap(cap, existing):
@@ -187,6 +190,47 @@ FAILURE_STAGES = {
 }
 USAGE_KEYS = ('prompt_tokens', 'completion_tokens', 'total_tokens')
 MAX_USAGE_TOKENS = 10**9  # Serialization bound, not a billing limit.
+RESPONSE_REASONS = frozenset((
+    'length_stop', 'model_mismatch', 'malformed_response', 'unexpected_tools'))
+
+
+def observe_response_reason(lane, relay, raw):
+    """Best-effort bounded observation only; never validate or retain raw text."""
+    try:
+        if type(raw) is not bytes or len(raw) > connection.MAX_RESPONSE_BYTES:
+            return
+        try:
+            data = json.loads(raw)
+        except (ValueError, UnicodeError):
+            relay.response_reason = 'malformed_response'
+            return
+        reason = None
+        if type(data) is not dict or type(data.get('model')) is not str:
+            reason = 'malformed_response'
+        elif data['model'] != connection.MODEL:
+            reason = 'model_mismatch'
+        else:
+            choices = data.get('choices')
+            if type(choices) is not list or len(choices) != 1 or type(choices[0]) is not dict:
+                reason = 'malformed_response'
+            else:
+                choice = choices[0]
+                message, finish = choice.get('message'), choice.get('finish_reason')
+                if type(finish) is not str:
+                    reason = 'malformed_response'
+                elif finish == 'length':
+                    reason = 'length_stop'
+                elif type(message) is not dict:
+                    reason = 'malformed_response'
+                elif lane == 'cloudflare' and message.get('tool_calls'):
+                    reason = 'unexpected_tools'
+                elif not message.get('tool_calls') and (
+                        type(message.get('content')) is not str or not message['content'].strip()):
+                    reason = 'malformed_response'
+        if reason is not None:
+            relay.response_reason = reason
+    except Exception:
+        pass  # Diagnostics must never replace the original result/failure.
 
 
 def bounded_count(value, maximum):
@@ -213,7 +257,7 @@ def safe_diagnostics(lane, values=None):
     maximum = MAX_CALLS if lane == 'alibaba' else 1
     stage = values.get('failure_stage')
     halted, code = values.get('relay_halted'), values.get('cli_exit_code')
-    return {
+    result = {
         'failure_stage': stage if type(stage) is str and stage in FAILURE_STAGES[lane]
                          else 'internal',
         'http_attempts': bounded_count(values.get('http_attempts'), maximum),
@@ -223,15 +267,24 @@ def safe_diagnostics(lane, values=None):
                          and -255 <= code <= 255 else None,
         'usage': safe_usage(values.get('usage'), maximum),
     }
+    reason = values.get('response_reason')
+    if type(reason) is str and reason in RESPONSE_REASONS:
+        result['response_reason'] = reason
+    return result
 
 
 def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None):
+    reason = None
+    try:
+        reason = getattr(relay, 'response_reason', None)
+    except Exception:
+        pass
     return safe_diagnostics(lane, {
         'failure_stage': stage, 'cli_exit_code': cli_exit_code,
         'http_attempts': getattr(relay, 'attempts', None),
         'completed_responses': getattr(relay, 'completed', None),
         'relay_halted': getattr(relay, 'halted', None),
-        'usage': getattr(relay, 'usage', None)})
+        'usage': getattr(relay, 'usage', None), 'response_reason': reason})
 
 
 class LaneError(ValueError):
@@ -434,6 +487,7 @@ def cloudflare(diff, snapshots, *, attempt_cap=None, attempt_deadline=None):
         stage = 'request_http'
         raw = relay._forward(body)
         stage = 'response_parse'
+        observe_response_reason('cloudflare', relay, raw)
         if len(raw) > connection.MAX_RESPONSE_BYTES:
             raise ValueError()
         data = json.loads(raw)
