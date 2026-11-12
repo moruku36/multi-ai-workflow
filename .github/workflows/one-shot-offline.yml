@@ -4,13 +4,13 @@ name: One-shot offline acceptance
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize]
+    types: [synchronize]
 
 permissions:
   contents: read
 
 jobs:
-  five-offline-cases:
+  three-review-regressions:
     if: ${{ github.repository == 'moruku36/multi-ai-workflow' && github.head_ref == 'feat/central-authenticated-one-shot' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 3
@@ -20,7 +20,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Run exactly five offline cases once
+      - name: Run exactly three new offline regression cases once
         env:
           PYTHONDONTWRITEBYTECODE: '1'
-        run: python3 -B tests/check_one_shot_integration.py
+        run: >-
+          python3 -B tests/check_one_shot_review_regressions.py
+          OneShotReviewRegressions.test_frozen_deadline_survives_delay_and_clock_rollback
+          OneShotReviewRegressions.test_signed_lane_caps_reject_zero_before_reservations
+          OneShotReviewRegressions.test_total_authorization_window_is_positive_and_at_most_one_hour

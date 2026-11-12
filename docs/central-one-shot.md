@@ -6,11 +6,18 @@
 
 | Layer | State |
 | --- | --- |
-| Operator signature, launcher provenance, common target lifecycle, sender caps | Source draft implemented; statically reviewed, not behavior-verified |
-| Focused offline verification | Five cases authored in tests/check_one_shot_integration.py; UNEXECUTED |
+| Operator signature, launcher provenance, common target lifecycle, sender caps | Source draft plus three bounded review fixes; new behavior UNEXECUTED |
+| Historical offline verification | Five cases in tests/check_one_shot_integration.py succeeded in CI run [43169607402](https://github.com/moruku36/multi-ai-workflow/actions/runs/43169607402) before these fixes |
+| New review regressions | Exactly three focused scenarios authored (no parameterized subcases) in tests/check_one_shot_review_regressions.py; UNEXECUTED |
 | Trust-root provisioning | Empty checked-in key list; no operational keys generated or installed |
+| Live OIDC / external signing and custody / concurrency acceptance | UNACCEPTED; historical offline CI does not establish these |
 | Workflow deployment / real target acceptance / recurring activation | Not performed |
-| Independent two-lane code review / human merge | Not completed for this draft |
+| Review / human merge | Fresh source review of PR53 HEAD 0203ada2feb26fffa85dbfde0d726757775e609a completed; acceptance of these new fixes and human merge remain pending |
+
+The earlier 2026-11-12 draft recorded the five authored integration cases as
+UNEXECUTED. That historical observation is superseded for those five by the CI
+success above, not for the new three or for live acceptance. This bounded fix
+task ran no tests, imports, builds, syntax executables, provider calls or probes.
 
 This is product code, not a change to OpenClaw execution permissions. It does not
 repair the host approval-binding blocker or reopen historical test/call budgets.
@@ -39,8 +46,12 @@ Payload fields are exactly:
 - repository, pr, base, head and controller_revision: one eligible owner target,
   excluding the hub, with fixed 40-character lowercase commit SHAs.
 - eligible_since and expires_at: UTC second-resolution strings. The window is
-  positive and at most one hour; now must be within it.
-- lane_attempt_limits: Alibaba 1–8; Cloudflare 1.
+  the TOTAL expires_at minus eligible_since interval, strictly positive and at
+  most 3600 seconds; a short remaining lifetime cannot excuse a longer window.
+  now must satisfy eligible_since <= now < expires_at.
+- lane_attempt_limits: strict integers, Alibaba 1–8 and Cloudflare exactly 1,
+  checked before any reservation. Zero is invalid signed authority; lower-level
+  sender zero-cap support remains available for its own fail-closed behavior.
 
 The envelope is capped at 8192 bytes. Duplicate/extra fields and non-finite
 numbers are rejected. Payload changes invalidate the signature. A digest,
@@ -85,9 +96,14 @@ than fall back. The added job-level id-token:write is SOURCE ONLY until this
 workflow is reviewed and deployed. Actual GitHub claim/host compatibility has
 not been accepted on a real run. No JWT/capability/raw signature is published.
 
-Hub.prepare_one_shot authenticates evidence and launcher before preflight.
-Hub.run_one_shot passes only the signed target into _run_targets; it never
-discovers other repositories. Recurring run uses the SAME _run_targets:
+Hub.prepare_one_shot samples monotonic time before UTC and envelope validation.
+Initial payload validation freezes one deadline from those samples, capped by
+the run deadline, before signature verification can consume time. Only successful
+authentication returns the payload and this separate local deadline; no unsigned
+field is added to the signed payload. Launcher verification uses that deadline.
+Hub.run_one_shot passes the signed target and explicit frozen deadline into
+_run_targets; it never discovers other repositories. Recurring behavior is
+unchanged and uses the SAME _run_targets:
 
 1. Verify current target binding, complete ledger, dedup and existing day/run caps.
 2. Consume and read back the global reservation; unknown ACK stops without retry.
@@ -112,22 +128,43 @@ sends, and never refund. Cloudflare retains its 196608-byte request ceiling;
 source/diff/snapshot ceilings remain 65536 and Alibaba's existing cumulative
 envelope remains unchanged. These are not monetary ceilings.
 
-The signed UTC expiry is rechecked before reservations and lanes, converted
-to a bounded monotonic deadline, enforced before each actual HTTP send, and
-also bounds the lane worker lifetime. In-flight responses can become unknown;
+UTC active checks remain before both reservations and every lane. The SAME
+initially frozen monotonic bound is also enforced there and after the durable
+lane marker, then passed through real_lane and its worker to both actual senders.
+Neither verification/preflight delay nor UTC rollback recalculates a later bound.
+The sender checks it before HTTP, and it also bounds the lane worker lifetime.
+In-flight responses can become unknown;
 an expiry does not refund them or authorize a resend. No output-byte guard
 is described as a provider-side token/dollar limit.
 
 ## Verification still required
 
-The five authored cases cover real local Ed25519 verification/tampering/empty
+The historical five cases cover real local Ed25519 verification/tampering/empty
 roots, launcher claim rejection and environment-only denial, common-ledger
 ordering/replay/cap propagation, lost reservation acknowledgment, and actual
-sender caps/failure charging/expiry. All are UNEXECUTED. Local API/transport
-fixtures are not GitHub OIDC or provider acceptance. Real JWKS/JWT compatibility,
-actual concurrency and authenticated workflow execution require separate
-bounded acceptance after infrastructure recovery and appropriate remaining
-authorization. Never silently consume or reset the earlier seven-case batch.
+sender caps/failure charging/expiry. Their CI success at run 43169607402 is
+historical evidence for the earlier implementation, not execution of these fixes.
+
+The new, UNEXECUTED methods are:
+
+- test_frozen_deadline_survives_delay_and_clock_rollback
+- test_signed_lane_caps_reject_zero_before_reservations
+- test_total_authorization_window_is_positive_and_at_most_one_hour
+
+These three scenarios cover clock rollback between lanes, a zero Alibaba cap,
+and an overlong total interval with only one second remaining. They exercise
+the real payload/lifecycle/sender guards with offline fixtures and
+time/transport mocks, without invoking OpenSSL, a target process or a network.
+.github/workflows/one-shot-offline.yml selects ONLY these three methods on PR
+synchronize, retaining the checkout pin, read-only permissions and credential
+isolation. It does not rerun the historical five, the old seven, or a push/main
+duplicate. This edit does not execute or dispatch that workflow.
+
+Local fixtures are not GitHub OIDC or provider acceptance. Live JWKS/JWT
+compatibility, external signing/custody, actual concurrency and authenticated
+workflow execution remain UNACCEPTED and require separate bounded acceptance
+with appropriate authorization. Never consume or reset the earlier seven-case
+batch. No new independent two-lane acceptance of these fixes is claimed.
 
 The large-source first independent review route and its existing size policy
 remain unresolved. Do not trigger a known oversized paid automatic review

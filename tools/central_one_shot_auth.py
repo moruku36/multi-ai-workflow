@@ -128,10 +128,16 @@ def utc(value):
 def active(payload, now):
     require(now.tzinfo is not None and now.utcoffset().total_seconds() == 0)
     since, expiry = utc(payload["eligible_since"]), utc(payload["expires_at"])
-    require(since <= now < expiry and (expiry - now).total_seconds() <= 3600)
+    require(0 < (expiry - since).total_seconds() <= 3600 and since <= now < expiry)
 
 
-def validate_payload(p, revision, now):
+def validate_lane_attempt_limits(caps):
+    require(type(caps) is dict and set(caps) == {"alibaba", "cloudflare"})
+    for lane, maximum in (("alibaba", 8), ("cloudflare", 1)):
+        require(type(caps[lane]) is int and 1 <= caps[lane] <= maximum)
+
+
+def validate_payload(p, revision, now, *, validation_started, deadline):
     require(type(p) is dict and set(p) == {
         "schema_version", "domain", "issuer", "key_id", "authorization",
         "repository", "pr", "base", "head", "controller_revision",
@@ -152,20 +158,22 @@ def validate_payload(p, revision, now):
     for name in ("base", "head", "controller_revision"):
         require(type(p[name]) is str and SHA.fullmatch(p[name]))
     require(p["controller_revision"] == revision)
-    caps = p["lane_attempt_limits"]
-    require(type(caps) is dict and set(caps) == {"alibaba", "cloudflare"})
-    for lane, maximum in (("alibaba", 8), ("cloudflare", 1)):
-        require(type(caps[lane]) is int and 0 <= caps[lane] <= maximum)
+    validate_lane_attempt_limits(p["lane_attempt_limits"])
     active(p, now)
+    # The caller samples monotonic BEFORE sampling UTC and starting validation.
+    # Freeze once, before signature verification; its delay consumes this budget.
+    # This value is local state, never a new unsigned field in the signed payload.
+    return min(deadline, validation_started + (utc(p["expires_at"]) - now).total_seconds())
 
 
-def verify_envelope(raw, *, revision, now, deadline):
-    """Authenticate against ONLY the strict root policy in this checkout."""
+def verify_envelope(raw, *, revision, now, validation_started, deadline):
+    """Return authenticated payload + frozen deadline from pre-validation clocks."""
     envelope = strict_json(raw)
     require(type(envelope) is dict and set(envelope) == {"payload", "signature"})
     require(canonical(envelope) == raw)  # Exact ASCII encoding; no trailing newline.
     payload = envelope["payload"]
-    validate_payload(payload, revision, now)
+    authorization_deadline = validate_payload(
+        payload, revision, now, validation_started=validation_started, deadline=deadline)
     signature = decode64(envelope["signature"], 64)
     policy = strict_json(read_policy_file(ROOT / "config/central-one-shot-trust.json", 16384), 16384)
     require(type(policy) is dict and set(policy) == {"schema_version", "keys"}
@@ -193,4 +201,5 @@ def verify_envelope(raw, *, revision, now, deadline):
         bounded_command([OPENSSL, "pkeyutl", "-verify", "-pubin", "-keyform", "DER",
                          "-inkey", "public.der", "-rawin", "-in", "payload",
                          "-sigfile", "signature"], cwd=scratch, deadline=deadline, maximum=512)
-    return payload
+    require(time.monotonic() < authorization_deadline)
+    return payload, authorization_deadline

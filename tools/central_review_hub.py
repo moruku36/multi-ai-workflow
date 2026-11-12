@@ -636,21 +636,25 @@ class Hub:
         import central_one_shot_auth as auth
         from central_one_shot_provenance import verify_launcher
         revision = auth.controller_revision(self.deadline)
-        request = auth.verify_envelope(envelope, revision=revision,
-                                       now=self.now(), deadline=self.deadline)
-        verify_launcher(revision=revision, envelope=envelope, deadline=self.deadline)
+        validation_started = time.monotonic()
+        request, authorization_deadline = auth.verify_envelope(
+            envelope, revision=revision, now=self.now(),
+            validation_started=validation_started, deadline=self.deadline)
+        verify_launcher(revision=revision, envelope=envelope, deadline=authorization_deadline)
         auth.active(request, self.now())
-        return request
+        require(time.monotonic() < authorization_deadline)
+        return request, authorization_deadline
 
     def run_one_shot(self, envelope):
         try:
-            request = self.prepare_one_shot(envelope)
+            request, authorization_deadline = self.prepare_one_shot(envelope)
             binary = self.preflight()
             since = utc(request["eligible_since"])
             # Exactly one target. Never call installation/PR discovery here.
             candidates = [(since, request["repository"], request["pr"],
                            request["base"], request["head"])]
-            return self._run_targets(candidates, since, binary, authorization=request)
+            return self._run_targets(candidates, since, binary, authorization=request,
+                                     authorization_deadline=authorization_deadline)
         except Exception:
             self.aggregate["status"] = "BLOCKED_OR_UNKNOWN"
             self.aggregate["failed_or_unknown"] = max(1, self.aggregate["failed_or_unknown"])
@@ -721,15 +725,27 @@ class Hub:
             self.aggregate["failed_or_unknown"] = max(1, self.aggregate["failed_or_unknown"])
         return dict(self.aggregate)
 
-    def _run_targets(self, candidates, since, binary, authorization=None):
+    def _run_targets(self, candidates, since, binary, authorization=None,
+                     authorization_deadline=None):
         """ONE reservation/receipt lifecycle, shared by both production modes."""
         try:
+            attempt_deadline = None
+            if authorization is not None:
+                from central_one_shot_auth import active, validate_lane_attempt_limits
+                require(authorization_deadline is not None)
+                validate_lane_attempt_limits(authorization["lane_attempt_limits"])
+                attempt_deadline = min(self.deadline, authorization_deadline)
+
+            def check_authorization():
+                if authorization is not None:
+                    active(authorization, self.now())
+                    require(time.monotonic() < attempt_deadline)
+
             any_failure = False
             for _updated, repository, number, base, head in candidates:
                 require(time.monotonic() < self.deadline)
                 if authorization is not None:
-                    from central_one_shot_auth import active
-                    active(authorization, self.now())
+                    check_authorization()
                     require(len(candidates) == 1 and (repository, number, base, head) == tuple(
                         authorization[k] for k in ("repository", "pr", "base", "head")))
                 if self.aggregate["reservations"] >= self.limits["reservations_per_run"]:
@@ -747,8 +763,7 @@ class Hub:
                     require(authorization is None)
                     break
                 require(run_count < self.limits["reservations_per_run"])
-                if authorization is not None:
-                    active(authorization, self.now())
+                check_authorization()
                 # Global reservation BEFORE target reservation BEFORE sources.
                 # Increment locally before a possibly ambiguous POST; never retry.
                 self.aggregate["reservations"] += 1
@@ -782,6 +797,7 @@ class Hub:
                         "expires_at": authorization["expires_at"],
                         "lane_attempt_limits": dict(authorization["lane_attempt_limits"]),
                         "payload_sha256": hashlib.sha256(DOMAIN + canonical(authorization)).hexdigest()}
+                check_authorization()
                 check_id = create_check(self.api, repository, RECEIPT, head, target_identity,
                                         check_summary(report, self.limits["target_output_bytes"]))
                 with ExitStack() as source_stack:
@@ -802,6 +818,7 @@ class Hub:
                     report = {**binding, **report}
                     for lane in LANES:
                         require(time.monotonic() < self.deadline)
+                        check_authorization()
                         require(current(self.api, repository, number, since) == (base, head))
                         # Never carry paid calls into a new UTC day using an
                         # earlier day's reservation. Keep the consumed marker.
@@ -813,12 +830,7 @@ class Hub:
                         require(time.monotonic() < self.deadline)
                         require(current(self.api, repository, number, since) == (base, head))
                         require(utc(meta["reserved_at"]).date() == self.now().date())
-                        attempt_deadline = None
-                        if authorization is not None:
-                            active(authorization, self.now())
-                            remaining = (utc(authorization["expires_at"]) - self.now()).total_seconds()
-                            attempt_deadline = min(self.deadline, time.monotonic() + remaining)
-                            require(attempt_deadline > time.monotonic())
+                        check_authorization()
                         try:
                             outcome = (self.lanes(lane, binary, diff, snapshots) if authorization is None
                                        else self.lanes(lane, binary, diff, snapshots,

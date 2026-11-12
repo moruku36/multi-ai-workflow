@@ -48,7 +48,8 @@ def target_ready(case):
 
 class OneShotIntegration(unittest.TestCase):
     def test_real_signature_accepts_exact_payload_and_rejects_tampering(self):
-        deadline = time.monotonic() + 25
+        validation_started = time.monotonic()
+        deadline = validation_started + 25
         auth.openssl3(deadline)  # Missing OpenSSL 3 is a failure, never a silent skip.
         with tempfile.TemporaryDirectory(prefix="central-test-signature-") as directory:
             scratch = Path(directory).resolve()
@@ -75,17 +76,20 @@ class OneShotIntegration(unittest.TestCase):
                 (scratch / "signature").read_bytes()).decode("ascii")}
             with patch.object(auth, "ROOT", scratch):
                 self.assertEqual(auth.verify_envelope(auth.canonical(signed), revision=REVISION,
-                                                     now=NOW, deadline=deadline), p)
+                                                     now=NOW, validation_started=validation_started,
+                                                     deadline=deadline)[0], p)
                 changed = deepcopy(signed)
                 changed["payload"]["head"] = "e" * 40
                 with self.assertRaises(auth.Blocked):
                     auth.verify_envelope(auth.canonical(changed), revision=REVISION,
-                                         now=NOW, deadline=deadline)
+                                         now=NOW, validation_started=validation_started,
+                                         deadline=deadline)
                 (scratch / "config/central-one-shot-trust.json").write_bytes(
                     auth.canonical({"schema_version": 1, "keys": []}))
                 with self.assertRaises(auth.Blocked):
                     auth.verify_envelope(auth.canonical(signed), revision=REVISION,
-                                         now=NOW, deadline=deadline)
+                                         now=NOW, validation_started=validation_started,
+                                         deadline=deadline)
 
     def test_launcher_claims_and_environment_self_assertions_are_not_authority(self):
         audience = provenance.audience(b"test-envelope")
@@ -123,18 +127,21 @@ class OneShotIntegration(unittest.TestCase):
             return h.lane(name, binary, diff, snapshots)
         h.lanes.side_effect = lane
         request = payload()
+        authorization_deadline = time.monotonic() + 1800
         since = hub.utc(request["eligible_since"])
         candidates = [(since, TARGET, 1, BASE, HEAD)]
         with patch.object(hub, "discover", side_effect=AssertionError("must not discover")):
             result = h.controller()._run_targets(candidates, since, Path("/offline/opencodereview"),
-                                                  authorization=request)
+                                                  authorization=request,
+                                                  authorization_deadline=authorization_deadline)
         self.assertEqual(result["completed"], 1)
         self.assertEqual(seen, list(hub.LANES))
         self.assertEqual(len(h.ledger()), 1)
         self.assertEqual(len(h.receipts()), 1)
         self.assertFalse(h.memory.unread_writes)
         repeated = h.controller()._run_targets(candidates, since, Path("/offline/opencodereview"),
-                                                authorization=request)
+                                                authorization=request,
+                                                authorization_deadline=authorization_deadline)
         self.assertEqual(repeated["status"], "BLOCKED_OR_UNKNOWN")
         self.assertEqual(h.lanes.call_count, 2)
         self.assertEqual(h.controller().run(ENV)["reservations"], 0)
@@ -150,17 +157,20 @@ class OneShotIntegration(unittest.TestCase):
             return result
         h.api.side_effect = lost_ack
         request = payload()
+        authorization_deadline = time.monotonic() + 1800
         since = hub.utc(request["eligible_since"])
         candidates = [(since, TARGET, 1, BASE, HEAD)]
         result = h.controller()._run_targets(candidates, since, Path("/offline/opencodereview"),
-                                              authorization=request)
+                                              authorization=request,
+                                              authorization_deadline=authorization_deadline)
         self.assertEqual(result["status"], "BLOCKED_OR_UNKNOWN")
         self.assertEqual(len(h.ledger()), 1)
         h.sources.assert_not_called()
         h.lanes.assert_not_called()
         h.api.side_effect = original
         again = h.controller()._run_targets(candidates, since, Path("/offline/opencodereview"),
-                                             authorization=request)
+                                             authorization=request,
+                                             authorization_deadline=authorization_deadline)
         self.assertEqual(again["status"], "BLOCKED_OR_UNKNOWN")
         self.assertEqual(len(h.ledger()), 1)
         h.lanes.assert_not_called()
