@@ -2,8 +2,11 @@
 
 [English](central-review-hub.md)
 
-**無効状態の草案で、オフライン検証は成功しています。** mockを使った5ケースは
-1回の実行ですべて成功しました。workflowと実連携の実PR受入は未実施です。[中央config](../config/central-review-hub.json)の
+**無効状態の草案で、証拠はローカルのものだけです。** 以前のmockを使った5ケースは
+1回の実行ですべて成功したと報告されており、再実行していません。その後の修正用mock
+3ケースは **3 PASS／1 invocation／0.005秒** と報告されています。今回のreadiness変更では
+再実行しておらず、live受入ではありません。
+workflowと実連携の実PR受入は未実施です。[中央config](../config/central-review-hub.json)の
 `enabled`と`paid_execution_authorized`は現在どちらも`false`です。
 これらのファイルは、自動稼働やレビュー品質の受入を証明しません。
 
@@ -27,14 +30,29 @@
    有料実行を明示承認し、**`enabled: true`と`paid_execution_authorized: true`の両方**を
    設定し、既存の人によるゲートを経て信頼する`main`へマージします。
    これは将来の有効化手順であり、草案そのものによる承認ではありません。
-4. hub variable `CENTRAL_REVIEW_SINCE`に、有効化の起点を厳密なUTC形式
-   `YYYY-MM-DDTHH:MM:SSZ`で設定します。現在以前の時刻が必要です。その後hub variable
-   `CENTRAL_REVIEW_ENABLED`を正確に`true`にします。configの両ゲート・有効なcutoff・
-   実行時ゲートがすべて必要です。有効化が受け入れられるまでは未設定か`false`にします。
+4. 人によるマージ後、レビュー済みの信頼するrevisionで、制限した新しい実対象PRを
+   1件受け入れるための**新たな有料実行許可を明示的に取得**します。先に消費済み予約を
+   照合し、未予約の新しい固定base/head/diff bindingを使います。20 path、差分65,536 byte、
+   before＋after blob合計65,536 byteの既存上限を守ります。超過はblockedのままとし、
+   上限の引上げやpath省略をしません。実ソースで両laneを完了し、実際のprovider/modelを
+   記録し、指摘解消・独立性・人の受入ゲートを満たします。継続実行は無効のままです。
+   そのゲートを無効にしたまま使える、別途レビュー済みの制限付き受入経路は、ここでは
+   確立していません。経路が用意されるまではblockedです。呼出し側flagやローカル証拠で
+   経路不足を回避したり課金を承認したりできません。
+5. 最終的な対象Check／receiptとhub予約／台帳を読み戻します。正確な現在の
+   base/head/diff、完了と安全な診断、消費済みの失敗・不明記録の保持、hub revisionを
+   またぐ永続的な重複排除を確認し、その読戻しを明示的に受け入れます。mockや成功Check
+   だけでは受入になりません。予約済みの組を再送したりmarkerを削除したりしません。
+6. 受入後に初めて、**その時点の現在のUTC時刻**を意図して選び、`CENTRAL_REVIEW_SINCE`へ
+   厳密な`YYYY-MM-DDTHH:MM:SSZ`形式で設定します。過去のcutoffを再利用したり、受入用PRや
+   backlogを含めるために遡らせたり、過去の処理を再実行したりしません。正確なcutoffを
+   読み戻した後、`CENTRAL_REVIEW_ENABLED`を正確に`true`へ設定して読み戻します。
+   configの両ゲート、新しい実PR／台帳証拠の受入、最後の実行時ゲートは別々の要件です。
+   それまでは実行時variableを未設定か`false`にします。
 
 ## 探索と実行
 
-workflowは30分ごとのscheduleと、入力項目のない手動dispatchだけを受け付けます。
+草案のworkflowは30分ごとのscheduleと、入力項目のない手動dispatchを定義しています。
 jobは設定済みhub・`refs/heads/main`・実行時有効化variableを要求し、固定した
 `github.sha`をcheckoutします。任意の手動source refはありません。
 `central-review-hub`の単一concurrency groupでキャンセルせず直列化し、
@@ -78,7 +96,7 @@ laneを呼びません。次の適格候補へ進み、以後のpollでは同じ
 日付境界ではCheck開始日と予約日の両方に保守的に算入します。前日の予約を使って翌UTC日に
 laneを開始することはできません。重複排除は対象repository・
 base先端・headと対象receiptで行い、hub checkout SHAには依存しません。
-返却・自動retry・自動照合・Markdown修復はありません。書込み応答を失った場合は
+返却・自動retry・自動照合・修正後の再送はありません。書込み応答を失った場合は
 実行を停止します。枠を回復するためにcheckを削除しないでください。
 
 予約PRごとに **Alibaba最大8 HTTP試行＋Cloudflare手法最大1 HTTP試行**を許し、
@@ -107,8 +125,80 @@ Git full fetchは両commitから到達できる全履歴・blobを取得し得�
 停止・再開時もreceipt・台帳を保持します。再開には受入済みの方針と意図したcutoffが必要で、
 過去の再処理は行いません。
 
-既存Alibaba adapterの未対応Markdown処理は**未修正のまま**です。該当laneは失敗し、
-予約を消費し得ます。5つのオフラインケースはAPI・source・lane・preflightをすべてmock化して
-実行して成功しましたが、実provider実行や実連携の受入を証明しません。実PR受入、GitHubでの永続化動作、
-App installation範囲、full fetchの資源制御は未検証です。通常の
-[2系統レビュー契約](dual-review.ja.md)と人・独立性・mergeのゲートも引き続き適用されます。
+2026-11-12の今回の草案より前は、Alibaba adapterの未対応Markdown処理を未解消と
+記録していました。失敗laneも予約を消費します。この過去の観測は、個別の失敗実行の
+原因診断ではありません。実PR受入、GitHubでの永続化動作、App installation範囲、
+full fetchの資源制御は引き続き未検証です。
+
+## 静的修正 — 2026-11-12
+
+ローカルの固定OCRソース
+`b1dcffb0729f3f2e3e47170968a5014a2e035580`（v1.13.7）を読取り専用で確認しました。
+[flag定義](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/cmd/opencodereview/shared_flags.go)は
+`--rule`をサポートし、`--no-filter`は指摘の後処理だけに作用してファイル選択には
+影響しません。[rule loader](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/internal/config/rules/system_rules.go)は
+`include` globを受け付けます。adapterは信頼するscratchの、ソースsnapshotの**外側**に
+`{"include":["**/*.md"]}`だけのruleファイルを作り、`--rule`で渡すようにしました。
+対象由来の方針やレビュー指示文は加えません。
+[選択処理](https://github.com/alibaba/open-code-review/blob/b1dcffb0729f3f2e3e47170968a5014a2e035580/internal/agent/selection.go)では
+binary・秘密情報pathの拒否がincludeより先に行われ、削除・サイズのゲートも残ります。
+他の拡張子には既定の選択規則が残ります。snapshot全ファイル数のcoverage、期待するmodel、
+完了応答・出力、警告なし、有効な指摘は引き続き必須で、選択の配線だけでは完了を証明しません。
+
+両adapterは、固定語彙の停止stageを持つ型付きの失敗を返すようにしました。
+中央の失敗receiptには、そのstage、CLI終了code（−255～255の整数、それ以外は`null`）、
+HTTP試行数・完了応答数（Alibabaは0～8、手法laneは0～1、それ以外は`unknown`）、
+booleanのhalted状態または`unknown`、安全なusageだけを保持します。usageは
+`prompt_tokens`・`completion_tokens`・`total_tokens`のみで、各値は0～1,000,000,000の
+整数または`unknown`、行数はそれぞれ最大8／1です。usage欠落は`unknown`で、行がないことは
+費用ゼロを意味しません。Alibabaのcounterはrelay cleanup後に取得し、workerが未停止・
+応答不明ならcounterも不明です。一般の例外には不明のmetadataを使い、ゼロを作りません。
+workerとreceipt書込み側でこのallowlistに再投影し、例外文・path・stderr・provider文・
+認証情報・headerは診断から除外します。stageは停止箇所であり、根本原因ではありません。
+中央の完了receiptにも範囲を制限した完了数・halted・終了metadataを保持します。
+
+[`tests/check_central_review_live_acceptance.py`](../tests/check_central_review_live_acceptance.py)に
+mockケースを正確に3つ作成しました。名前は`test_trusted_markdown_rule_wiring`、
+`test_safe_alibaba_failure_diagnostics`、`test_central_failed_receipt_persists_safe_metadata`です。
+初回の静的修正時点では**いずれも未実行でした**。その後に記録されたmock結果は
+**3 PASS／1 invocation／0.005秒**であり、実providerや実PRの受入ではありません。
+以前の中央5ケースはAPI・source・lane・preflightをmock化した過去の証拠のままです。
+今回のreadiness変更では再実行していません。ケース作成は実行予算を増やしません。
+workflow・config・auth・settings・hook、有効化は変更していません。
+
+残る受入には、別途承認された評価、今回の修正のcurrent headでの外部レビュー、指摘解消、
+信頼するbaseへの導入が必要です。制限した実PRで、同じ固定base/head/diff bindingに対する
+**両laneの実ソースでの完了**と、実際のprovider/model記録を示す必要があります。
+最終的な対象Checkとhub予約をChecksから読み戻し、正確な現在のbindingと保持した診断を確認し、
+hub台帳と対象receiptの両方で永続的な重複排除を確立します。hub revisionをまたぐ失敗・不明の
+組も対象です。新たな有料処理前に消費済み予約を照合し、予約済みの組を再送したりmarkerを
+削除したりしないでください。mock・静的確認・成功Checkだけではゲートを満たしません。
+通常の[2系統レビュー契約](dual-review.ja.md)、必要な別providerの独立性、人の受入、
+mergeゲートも残り、中央の継続実行は無効のままです。
+
+## 継続開始前のオフラインreadiness — 2026-11-12
+
+[`tools/central_review_readiness.py`](../tools/central_review_readiness.py)は、呼出し側flagを
+受け付けない読取り専用のオフラインreporterです。固定したローカルの中央config／workflowと、
+`origin/main`・`HEAD`から固定したmerge-base/headの、制限付きローカルGit metadata／差分だけを
+読みます。fetch・認証情報の読取り・reviewer呼出し・ファイル書込み・ゲート変更は行いません。
+remote-tracking refは古い可能性があり、未commitの編集や最新の対象PR状態は計測対象外です。
+
+変更path数、差分byte数、before＋after blobの合計サイズを、固定上限の
+**20 path／差分65,536 byte／snapshot合計65,536 byte**に対して報告します。
+超過・ref欠落・未対応blob・制限付き読取りの失敗はblockedのままです。計測不能な値は
+`null`とし、差分の打切り時には下限を示します。20 path超過時はblob合計の走査をしません。
+除外や上限overrideはありません。サイズ上限内というローカル観測は、完全なsource preflight・
+merge承認・課金許可・対象受入・有効化権限を意味しません。
+
+reportは、観測したconfig値に関わらず、**人のmerge**、**新たな有料実行許可**、
+**新しい実PRのCheck／台帳受入**、**runtime enable**を別々の外部証拠待ちstageとして保持します。
+[`tests/check_central_review_readiness.py`](../tests/check_central_review_readiness.py)には
+オフラインケースを2つ作成し、**実行していません**。読取り専用reporterを1回呼び出し、
+ローカルの`origin/main`／merge-base `7eabdf4973fdf06f768319020a60311275d6b7b2`から
+`HEAD` `8e53c1e79de5f6ce690cc8a72072f974b3857acd`について、**5 path、差分54,178 byte、
+before＋after blob合計170,398 byte**を観測しました。snapshot上限により、この入力は
+**BLOCKED**のままです。上限や除外は変更していません。この観測は現在の未commit修正を
+含まず、テストや新しい実対象の受入でもありません。必要なcurrent headの2系統レビューも
+未実行で、外部経路や新たな有料実行許可を使っていません。
+上記の順序による有効化は引き続き未実施です。

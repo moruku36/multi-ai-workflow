@@ -7,8 +7,8 @@ This file is NOT activation, paid authorization or real-PR acceptance evidence.
 
 Global reservations are append-only check runs on a fixed hub commit. EVERY
 reservation, including failure/interruption/unknown, consumes its slot forever;
-daily accounting includes every status. No refund, retry, Markdown repair or
-automatic reconciliation exists. A lost write response stops the entire run.
+daily accounting includes every status. No refund, retry or automatic
+reconciliation exists. A lost write response stops the entire run.
 
 Git fetch is full (no lazy/promisor auth): all objects/history reachable from the
 two validated commits can be downloaded. Time, captured output and OBSERVED disk
@@ -446,16 +446,14 @@ def lane_metadata(auto, lane, result):
                          "start_line": positive(finding["start_line"]),
                          "end_line": positive(finding["end_line"]),
                          "content_untrusted": plain(finding["content"])})
-    usage = result.get("usage", {})
-    require(isinstance(usage, (dict, list)))
-    usage = [usage] if isinstance(usage, dict) else usage
-    require(len(usage) <= 8)
-    clean_usage = []
-    for item in usage:
-        require(isinstance(item, dict))
-        clean_usage.append({key: item[key] if type(item.get(key)) is int
-                            and 0 <= item[key] <= 10**9 else "unknown" for key in
-                            ("prompt_tokens", "completion_tokens", "total_tokens")})
+    usage = result.get("usage", "unknown")
+    if usage == "unknown":
+        clean_usage = "unknown"
+    else:
+        require(isinstance(usage, (dict, list)))
+        usage = [usage] if isinstance(usage, dict) else usage
+        require(len(usage) <= 8 and all(isinstance(item, dict) for item in usage))
+        clean_usage = auto.safe_usage(usage, 8 if lane == "alibaba" else 1)
     record = {"status": "completed", "reviewer_provider": "xiaomi",
               "reviewer_model": auto.connection.MODEL, "reviewer_id": lane + "-source-review",
               "scope": "diff-only", "http_attempts": attempts, "usage": clean_usage,
@@ -463,6 +461,9 @@ def lane_metadata(auto, lane, result):
               "findings_preview": previews, "findings_omitted": max(0, len(findings) - 10),
               "gaps_preview": [plain(gap) for gap in gaps[:10]],
               "gaps_omitted": max(0, len(gaps) - 10)}
+    stats = auto.safe_diagnostics(lane, result)
+    for key in ("completed_responses", "relay_halted", "cli_exit_code"):
+        record[key] = stats[key]
     if lane == "alibaba":
         digest = result.get("binary_sha256")
         require(digest in auto.connection.BINARY_HASHES)
@@ -470,6 +471,16 @@ def lane_metadata(auto, lane, result):
     else:
         record["skill_revision"] = sha(result.get("skill_revision"))
     return record
+
+
+def failed_lane_metadata(lane, diagnostics=None):
+    # Lazy import preserves the disabled path's no-import/no-credential gate.
+    # Reproject at IPC/persistence boundaries; never copy exception attributes or
+    # arbitrary lane dictionaries into public Checks. Missing counts stay unknown.
+    import automatic_dual_review as auto
+    require(lane in LANES)
+    return {"status": "FAILED_OR_UNKNOWN",
+            "diagnostics": auto.safe_diagnostics(lane, diagnostics)}
 
 
 def _lane_worker(pipe, auto, lane, binary, diff, snapshots):
@@ -480,12 +491,17 @@ def _lane_worker(pipe, auto, lane, binary, diff, snapshots):
         with open(os.devnull, "w") as sink, redirect_stdout(sink), redirect_stderr(sink):
             os.dup2(sink.fileno(), 1)
             os.dup2(sink.fileno(), 2)
+            result = None
             try:
                 result = (auto.alibaba(binary, snapshots) if lane == "alibaba"
                           else auto.cloudflare(diff, snapshots))
                 record = lane_metadata(auto, lane, result)
+            except auto.LaneError as exc:
+                record = failed_lane_metadata(
+                    lane, exc.diagnostics if exc.lane == lane else None)
             except Exception:
-                record = {"status": "FAILED_OR_UNKNOWN"}
+                stats = dict(result, failure_stage="lane_result") if type(result) is dict else None
+                record = failed_lane_metadata(lane, stats)
             raw = json_bytes(record)
             require(len(raw) <= 32768)
             pipe.send_bytes(raw)
@@ -510,7 +526,7 @@ def real_lane(auto, limits, deadline, lane, binary, diff, snapshots):
         require(process.exitcode == 0 and isinstance(record, dict))
         return record
     except Exception:
-        return {"status": "FAILED_OR_UNKNOWN"}
+        return failed_lane_metadata(lane, {"failure_stage": "lane_worker"})
     finally:
         # setsid is first in the child; also terminate the worker if it failed
         # before establishing its group. Descendants must not outlive the lane.
@@ -708,7 +724,9 @@ class Hub:
                             require(isinstance(outcome, dict) and outcome.get("status") in
                                     ("completed", "FAILED_OR_UNKNOWN"))
                         except Exception:
-                            outcome = {"status": "FAILED_OR_UNKNOWN"}
+                            outcome = failed_lane_metadata(lane)
+                        if outcome["status"] == "FAILED_OR_UNKNOWN":
+                            outcome = failed_lane_metadata(lane, outcome.get("diagnostics"))
                         report["lanes"][lane] = {**outcome, **binding}
                         self.update_target(repository, check_id, target_identity, head, report)
                     complete = all(report["lanes"][lane]["status"] == "completed" for lane in LANES)
