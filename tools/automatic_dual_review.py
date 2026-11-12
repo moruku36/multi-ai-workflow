@@ -508,18 +508,22 @@ def main():
         raise ValueError('invalid SHA')
     output = Path(os.environ['RUNNER_TEMP']) / 'dual-review-results'
     output.mkdir(mode=0o700, exist_ok=False)
-    dual_review.verify_skill()
-    key = os.environ.get('MIMO_API_KEY', '')
-    if not key or '\n' in key or '\r' in key:
-        raise ValueError('configure Actions MIMO_API_KEY secret')
-    check_id = reserve(repository, base, head)
     report = {'schema_version': '1.0', 'base_tip_sha': base, 'head_sha': head,
               'merge_authorized': False, 'review_quality_accepted': False,
-              'independence': 'NOT_VERIFIED_SAME_PROVIDER', 'status': 'INCOMPLETE', 'lanes': {}}
+              'independence': 'NOT_VERIFIED_SAME_PROVIDER', 'status': 'PREFLIGHT_REJECTED', 'lanes': {}}
     try:
+        dual_review.verify_skill()
+        key = os.environ.get('MIMO_API_KEY', '')
+        if not key or '\n' in key or '\r' in key:
+            raise ValueError('configure Actions MIMO_API_KEY secret')
         git(ROOT, 'fetch', '--no-tags', 'origin', base, head)
         binding, diff, snapshots = collect(ROOT, base, head)
         report.update(binding)
+        # Eligibility comes first; an attempted reservation may have persisted
+        # even if its response is lost. Never continue or replay on failure.
+        report['status'] = 'RESERVATION_FAILED_OR_UNKNOWN'
+        check_id = reserve(repository, base, head)
+        report['status'] = 'INCOMPLETE'
         for lane in ('alibaba', 'cloudflare'):
             report['lanes'][lane] = {'status': 'OUTCOME_UNKNOWN', **binding}
             (output / 'receipt.json').write_text(json.dumps(report))
