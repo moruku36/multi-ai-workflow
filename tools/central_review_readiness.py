@@ -115,7 +115,8 @@ def measure():
             report["diff_bytes"] = len(diff)
             if len(diff) > MAX_SOURCE:
                 report["blockers"].append("diff_cap")
-            if b"GIT binary patch" in diff or b"Binary files " in diff:
+            if any(line == b"GIT binary patch" or line.startswith(b"Binary files ")
+                   for line in diff.splitlines()):
                 report["blockers"].append("binary_diff")
         except Blocked as error:
             report["blockers"].append(str(error))
