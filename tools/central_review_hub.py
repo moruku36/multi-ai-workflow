@@ -582,6 +582,33 @@ def create_check(api, repository, name, head, identity, output, **extra):
     return check_id
 
 
+def validate_one_shot(request, *, controller_revision, now):
+    """Validate an operator proposal, NEVER authenticate or grant paid authority.
+
+    The controller revision must come from a future trusted launcher, not from
+    request content. No such authenticated launcher/verifier is installed here.
+    """
+    require(isinstance(request, dict) and set(request) == {
+        'repository', 'pr', 'base', 'head', 'controller_revision', 'expires_at',
+        'eligible_since', 'lane_attempt_limits', 'authorization_evidence_sha256'})
+    repository = request['repository']
+    require(isinstance(repository, str) and REPO.fullmatch(repository)
+            and repository.split('/')[0] == OWNER and repository.lower() != HUB.lower())
+    positive(request['pr'])
+    for key in ('base', 'head', 'controller_revision'):
+        sha(request[key])
+    require(request['controller_revision'] == sha(controller_revision))
+    require(utc(request['eligible_since']) <= now < utc(request['expires_at']))
+    require((utc(request['expires_at']) - now).total_seconds() <= 3600)
+    limits = request['lane_attempt_limits']
+    require(isinstance(limits, dict) and set(limits) == set(LANES))
+    for lane, cap in (('alibaba', 8), ('cloudflare', 1)):
+        require(type(limits[lane]) is int and 1 <= limits[lane] <= cap)
+    require(isinstance(request['authorization_evidence_sha256'], str)
+            and re.fullmatch(r'[0-9a-f]{64}', request['authorization_evidence_sha256']))
+    return dict(request)
+
+
 class Hub:
     """The injected seams never replace production lanes with synthetic success."""
 
@@ -594,6 +621,39 @@ class Hub:
         self.aggregate = {"status": "BLOCKED_OR_UNKNOWN", "reservations": 0,
                           "completed": 0, "failed_or_unknown": 0}
         self.run_id = uuid.uuid4().hex
+
+    def prepare_one_shot(self, request, *, controller_revision):
+        """Read-only preflight through the SAME ledger/binding/receipt checks.
+
+        No recurring gate change, reservation, credential preflight or paid call.
+        A digest binds supplied evidence bytes, but does not establish provenance.
+        """
+        r = validate_one_shot(request, controller_revision=controller_revision, now=self.now())
+        repository, number, base, head = (r[k] for k in ('repository', 'pr', 'base', 'head'))
+        require(time.monotonic() < self.deadline)
+        require(current(self.api, repository, number, utc(r['eligible_since'])) == (base, head))
+        digest = hashlib.sha256((repository.lower() + '\0' + base + '\0' + head).encode()).hexdigest()
+        identities, today, run_count = self.ledger()
+        require('central-v1:' + digest not in identities
+                and not self.target_seen(repository, base, head)
+                and today < self.limits['reservations_per_utc_day']
+                and run_count < self.limits['reservations_per_run'])
+        return {'status': 'PREPARED_LIVE_AUTHORITY_UNAVAILABLE', 'request': r,
+                'reservation_path': f'/repos/{HUB}/check-runs',
+                'ledger_lookup_path': f'/repos/{HUB}/commits/{ANCHOR}/check-runs',
+                'reservation_name': LEDGER, 'reservation_identity': 'central-v1:' + digest,
+                'target_path': f'/repos/{repository}/check-runs', 'target_name': RECEIPT,
+                'target_identity': base + ':' + head, 'limits': dict(self.limits),
+                'paid_authorized': False, 'reservations_written': 0,
+                'blocker': 'Independent operator evidence verifier and trusted serialized launcher unavailable'}
+
+    def run_one_shot(self, request, *, controller_revision):
+        self.prepare_one_shot(request, controller_revision=controller_revision)
+        # Never translate manifest booleans, evidence hashes or an injected
+        # callback into live authority. Future integration must use run's exact
+        # reservation/receipt sequence under the same hub-wide concurrency gate,
+        # and enforce the authorized attempt limits inside BOTH lane relays.
+        raise Blocked('LIVE_ONE_SHOT_AUTHORITY_UNAVAILABLE')
 
     def ledger(self):
         # A missing anchor, unavailable collection, corrupt row or any
@@ -712,6 +772,7 @@ class Hub:
                     report = {**binding, **report}
                     for lane in LANES:
                         require(time.monotonic() < self.deadline)
+                        require(current(self.api, repository, number, since) == (base, head))
                         # Never carry paid calls into a new UTC day using an
                         # earlier day's reservation. Keep the consumed marker.
                         require(utc(meta["reserved_at"]).date() == self.now().date())

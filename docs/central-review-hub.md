@@ -2,6 +2,9 @@
 
 [日本語](central-review-hub.ja.md)
 
+The [2026-11-12 bounded source-only draft](bounded-hub-draft.md) adds fail-closed
+one-shot preparation; it does not enable recurring execution or live paid authority.
+
 **Inactive draft; local evidence only.** The earlier five mocked offline test
 cases were reported passed in one invocation and have not been rerun. The later
 three mocked repair cases are reported as **3 PASS / 1 invocation / 0.005s**;
