@@ -483,7 +483,7 @@ def failed_lane_metadata(lane, diagnostics=None):
             "diagnostics": auto.safe_diagnostics(lane, diagnostics)}
 
 
-def _lane_worker(pipe, auto, lane, binary, diff, snapshots):
+def _lane_worker(pipe, auto, lane, binary, diff, snapshots, attempt_cap=None, attempt_deadline=None):
     # A whole-lane wall deadline also bounds slow/dribbling HTTP responses and
     # kills the CLI/relay process group on timeout. Never send raw bodies home.
     os.setsid()
@@ -493,8 +493,10 @@ def _lane_worker(pipe, auto, lane, binary, diff, snapshots):
             os.dup2(sink.fileno(), 2)
             result = None
             try:
-                result = (auto.alibaba(binary, snapshots) if lane == "alibaba"
-                          else auto.cloudflare(diff, snapshots))
+                result = (auto.alibaba(binary, snapshots, attempt_cap=attempt_cap,
+                                       attempt_deadline=attempt_deadline) if lane == "alibaba"
+                          else auto.cloudflare(diff, snapshots, attempt_cap=attempt_cap,
+                                               attempt_deadline=attempt_deadline))
                 record = lane_metadata(auto, lane, result)
             except auto.LaneError as exc:
                 record = failed_lane_metadata(
@@ -509,14 +511,17 @@ def _lane_worker(pipe, auto, lane, binary, diff, snapshots):
         pipe.close()
 
 
-def real_lane(auto, limits, deadline, lane, binary, diff, snapshots):
+def real_lane(auto, limits, deadline, lane, binary, diff, snapshots, attempt_cap=None,
+              attempt_deadline=None):
     require(lane in LANES and os.name == "posix")
     end = min(deadline, time.monotonic() + limits["lane_timeout_seconds"])
+    if attempt_deadline is not None:
+        end = min(end, attempt_deadline)
     require(end > time.monotonic())
     context = multiprocessing.get_context("fork")
     receiver, sender = context.Pipe(duplex=False)
     process = context.Process(target=_lane_worker,
-                              args=(sender, auto, lane, binary, diff, snapshots))
+                              args=(sender, auto, lane, binary, diff, snapshots, attempt_cap, attempt_deadline))
     process.start()
     sender.close()
     try:
@@ -582,6 +587,33 @@ def create_check(api, repository, name, head, identity, output, **extra):
     return check_id
 
 
+def validate_one_shot(request, *, controller_revision, now):
+    """Legacy read-only proposal validation; never grants execution authority.
+
+    Retained for existing offline checks. Production uses signed envelopes,
+    not this proposal's evidence digest or caller-supplied revision.
+    """
+    require(isinstance(request, dict) and set(request) == {
+        'repository', 'pr', 'base', 'head', 'controller_revision', 'expires_at',
+        'eligible_since', 'lane_attempt_limits', 'authorization_evidence_sha256'})
+    repository = request['repository']
+    require(isinstance(repository, str) and REPO.fullmatch(repository)
+            and repository.split('/')[0] == OWNER and repository.lower() != HUB.lower())
+    positive(request['pr'])
+    for key in ('base', 'head', 'controller_revision'):
+        sha(request[key])
+    require(request['controller_revision'] == sha(controller_revision))
+    require(utc(request['eligible_since']) <= now < utc(request['expires_at']))
+    require((utc(request['expires_at']) - now).total_seconds() <= 3600)
+    limits = request['lane_attempt_limits']
+    require(isinstance(limits, dict) and set(limits) == set(LANES))
+    for lane, cap in (('alibaba', 8), ('cloudflare', 1)):
+        require(type(limits[lane]) is int and 1 <= limits[lane] <= cap)
+    require(isinstance(request['authorization_evidence_sha256'], str)
+            and re.fullmatch(r'[0-9a-f]{64}', request['authorization_evidence_sha256']))
+    return dict(request)
+
+
 class Hub:
     """The injected seams never replace production lanes with synthetic success."""
 
@@ -594,6 +626,39 @@ class Hub:
         self.aggregate = {"status": "BLOCKED_OR_UNKNOWN", "reservations": 0,
                           "completed": 0, "failed_or_unknown": 0}
         self.run_id = uuid.uuid4().hex
+
+    def prepare_one_shot(self, envelope):
+        """Verify operator AND launcher; no injectable authorization callback.
+
+        Runtime provenance verification uses GitHub OIDC, not a local paid route.
+        The old digest-only proposal contract is deliberately unsupported.
+        """
+        import central_one_shot_auth as auth
+        from central_one_shot_provenance import verify_launcher
+        revision = auth.controller_revision(self.deadline)
+        validation_started = time.monotonic()
+        request, authorization_deadline = auth.verify_envelope(
+            envelope, revision=revision, now=self.now(),
+            validation_started=validation_started, deadline=self.deadline)
+        verify_launcher(revision=revision, envelope=envelope, deadline=authorization_deadline)
+        auth.active(request, self.now())
+        require(time.monotonic() < authorization_deadline)
+        return request, authorization_deadline
+
+    def run_one_shot(self, envelope):
+        try:
+            request, authorization_deadline = self.prepare_one_shot(envelope)
+            binary = self.preflight()
+            since = utc(request["eligible_since"])
+            # Exactly one target. Never call installation/PR discovery here.
+            candidates = [(since, request["repository"], request["pr"],
+                           request["base"], request["head"])]
+            return self._run_targets(candidates, since, binary, authorization=request,
+                                     authorization_deadline=authorization_deadline)
+        except Exception:
+            self.aggregate["status"] = "BLOCKED_OR_UNKNOWN"
+            self.aggregate["failed_or_unknown"] = max(1, self.aggregate["failed_or_unknown"])
+            return dict(self.aggregate)
 
     def ledger(self):
         # A missing anchor, unavailable collection, corrupt row or any
@@ -654,21 +719,51 @@ class Hub:
             binary = self.preflight()
             self.ledger()
             candidates = discover(self.api, self.limits, since)
+            return self._run_targets(candidates, since, binary)
+        except Exception:
+            self.aggregate["status"] = "BLOCKED_OR_UNKNOWN"
+            self.aggregate["failed_or_unknown"] = max(1, self.aggregate["failed_or_unknown"])
+        return dict(self.aggregate)
+
+    def _run_targets(self, candidates, since, binary, authorization=None,
+                     authorization_deadline=None):
+        """ONE reservation/receipt lifecycle, shared by both production modes."""
+        try:
+            attempt_deadline = None
+            if authorization is not None:
+                from central_one_shot_auth import active, validate_lane_attempt_limits
+                require(authorization_deadline is not None)
+                validate_lane_attempt_limits(authorization["lane_attempt_limits"])
+                attempt_deadline = min(self.deadline, authorization_deadline)
+
+            def check_authorization():
+                if authorization is not None:
+                    active(authorization, self.now())
+                    require(time.monotonic() < attempt_deadline)
+
             any_failure = False
             for _updated, repository, number, base, head in candidates:
                 require(time.monotonic() < self.deadline)
+                if authorization is not None:
+                    check_authorization()
+                    require(len(candidates) == 1 and (repository, number, base, head) == tuple(
+                        authorization[k] for k in ("repository", "pr", "base", "head")))
                 if self.aggregate["reservations"] >= self.limits["reservations_per_run"]:
                     break
                 if current(self.api, repository, number, since) != (base, head):
+                    require(authorization is None)
                     continue
                 digest = hashlib.sha256((repository.lower() + "\0" + base + "\0" + head).encode()).hexdigest()
                 external, target_identity = "central-v1:" + digest, base + ":" + head
                 identities, today, run_count = self.ledger()
                 if external in identities or self.target_seen(repository, base, head):
+                    require(authorization is None)
                     continue
                 if today >= self.limits["reservations_per_utc_day"]:
+                    require(authorization is None)
                     break
                 require(run_count < self.limits["reservations_per_run"])
+                check_authorization()
                 # Global reservation BEFORE target reservation BEFORE sources.
                 # Increment locally before a possibly ambiguous POST; never retry.
                 self.aggregate["reservations"] += 1
@@ -692,6 +787,17 @@ class Hub:
                           "status": "RESERVED_OUTCOME_UNKNOWN", "lanes": {},
                           "merge_authorized": False, "review_quality_accepted": False,
                           "independence": "NOT_VERIFIED_SAME_PROVIDER"}
+                if authorization is not None:
+                    # Fixed, public-safe attribution; no token/signature/private evidence.
+                    from central_one_shot_auth import canonical, DOMAIN
+                    report["one_shot"] = {
+                        "issuer": authorization["issuer"], "key_id": authorization["key_id"],
+                        "controller_revision": authorization["controller_revision"],
+                        "eligible_since": authorization["eligible_since"],
+                        "expires_at": authorization["expires_at"],
+                        "lane_attempt_limits": dict(authorization["lane_attempt_limits"]),
+                        "payload_sha256": hashlib.sha256(DOMAIN + canonical(authorization)).hexdigest()}
+                check_authorization()
                 check_id = create_check(self.api, repository, RECEIPT, head, target_identity,
                                         check_summary(report, self.limits["target_output_bytes"]))
                 with ExitStack() as source_stack:
@@ -712,6 +818,8 @@ class Hub:
                     report = {**binding, **report}
                     for lane in LANES:
                         require(time.monotonic() < self.deadline)
+                        check_authorization()
+                        require(current(self.api, repository, number, since) == (base, head))
                         # Never carry paid calls into a new UTC day using an
                         # earlier day's reservation. Keep the consumed marker.
                         require(utc(meta["reserved_at"]).date() == self.now().date())
@@ -719,8 +827,15 @@ class Hub:
                         self.update_target(repository, check_id, target_identity, head, report)
                         # A durable unknown marker must be readable before any
                         # provider request, including after an earlier failure.
+                        require(time.monotonic() < self.deadline)
+                        require(current(self.api, repository, number, since) == (base, head))
+                        require(utc(meta["reserved_at"]).date() == self.now().date())
+                        check_authorization()
                         try:
-                            outcome = self.lanes(lane, binary, diff, snapshots)
+                            outcome = (self.lanes(lane, binary, diff, snapshots) if authorization is None
+                                       else self.lanes(lane, binary, diff, snapshots,
+                                                       attempt_cap=authorization["lane_attempt_limits"][lane],
+                                                       attempt_deadline=attempt_deadline))
                             require(isinstance(outcome, dict) and outcome.get("status") in
                                     ("completed", "FAILED_OR_UNKNOWN"))
                         except Exception:
@@ -759,27 +874,38 @@ def main():
     # reach the hub console, including a background HTTPServer traceback.
     try:
         with open(os.devnull, "w") as sink, redirect_stdout(sink), redirect_stderr(sink):
-            if os.environ.get("CENTRAL_REVIEW_ENABLED") != "true":
+            envelope_text = os.environ.get("CENTRAL_ONE_SHOT_ENVELOPE", "")
+            one_shot = bool(envelope_text)
+            if not one_shot and os.environ.get("CENTRAL_REVIEW_ENABLED") != "true":
                 summary["status"] = "DISABLED"  # No config/key/import/API work.
             else:
                 config = load_config()
-                if not config["enabled"]:
+                if not one_shot and not config["enabled"]:
                     summary["status"] = "DISABLED"
                 else:
-                    utc(os.environ.get("CENTRAL_REVIEW_SINCE"))
-                    require(config["paid_execution_authorized"])
                     sys.dont_write_bytecode = True
-                    import automatic_dual_review as auto
                     limits = config["limits"]
                     deadline = time.monotonic() + limits["run_timeout_seconds"]
+                    if one_shot:
+                        require(len(envelope_text) <= 8192)
+                        envelope = envelope_text.encode("ascii")
+                    else:
+                        utc(os.environ.get("CENTRAL_REVIEW_SINCE"))
+                        require(config["paid_execution_authorized"])
+                        from central_one_shot_auth import controller_revision
+                        from central_one_shot_provenance import verify_launcher
+                        revision = controller_revision(deadline)
+                        verify_launcher(revision=revision, envelope=None, deadline=deadline)
+                    import automatic_dual_review as auto
                     api = GitHub(limits, deadline)
                     hub = Hub(config, api=api,
                               sources=lambda repo, base, head: immutable_sources(
                                   auto, limits, deadline, repo, base, head),
-                              lanes=lambda lane, binary, diff, snapshots: real_lane(
-                                  auto, limits, deadline, lane, binary, diff, snapshots),
+                              lanes=lambda lane, binary, diff, snapshots, attempt_cap=None, attempt_deadline=None: real_lane(
+                                  auto, limits, deadline, lane, binary, diff, snapshots,
+                                  attempt_cap, attempt_deadline),
                               preflight=lambda: preflight(auto), deadline=deadline)
-                    summary = hub.run()
+                    summary = hub.run_one_shot(envelope) if one_shot else hub.run()
     except Exception:
         summary["failed_or_unknown"] = 1
     print(json.dumps(summary, sort_keys=True))

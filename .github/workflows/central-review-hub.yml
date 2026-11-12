@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '*/30 * * * *'
   workflow_dispatch:
+    inputs:
+      one_shot_envelope:
+        description: 'Optional canonical signed one-target envelope; no recurring activation'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -14,13 +20,17 @@ concurrency:
 
 jobs:
   review:
-    if: ${{ github.repository == 'moruku36/multi-ai-workflow' && github.ref == 'refs/heads/main' && vars.CENTRAL_REVIEW_ENABLED == 'true' }}
+    if: ${{ github.repository == 'moruku36/multi-ai-workflow' && github.ref == 'refs/heads/main' && (vars.CENTRAL_REVIEW_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '')) }}
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - name: Check out trusted hub controller
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          repository: moruku36/multi-ai-workflow
           ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
@@ -50,4 +60,5 @@ jobs:
           OCR_BINARY: ${{ runner.temp }}/opencodereview
           CENTRAL_REVIEW_ENABLED: ${{ vars.CENTRAL_REVIEW_ENABLED }}
           CENTRAL_REVIEW_SINCE: ${{ vars.CENTRAL_REVIEW_SINCE }}
+          CENTRAL_ONE_SHOT_ENVELOPE: ${{ inputs.one_shot_envelope }}
         run: python3 tools/central_review_hub.py
