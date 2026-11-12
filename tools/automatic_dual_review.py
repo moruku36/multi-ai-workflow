@@ -65,6 +65,10 @@ class BoundedReviewRelay(ReviewRelay):
         if self.attempt_deadline is not None and time.monotonic() >= self.attempt_deadline:
             self.halted = True
             raise connection.ProbeError('authorization expired')
+        # Override CLI thinking settings at the final automatic sender.
+        payload = json.loads(body)
+        payload['thinking'] = {'type': 'disabled'}
+        body = json.dumps(payload, ensure_ascii=False).encode()
         self.payload_budget.reserve(body)
         response = super()._forward(body)
         # Observe before inherited ReviewRelay validation replaces the failure.
@@ -477,6 +481,7 @@ def cloudflare(diff, snapshots, *, attempt_cap=None, attempt_deadline=None):
         guidance = '\n'.join((skill / name).read_text() for name in names)
         stage = 'request_setup'
         payload = {'model': connection.MODEL, 'stream': False, 'max_tokens': MAX_OUTPUT_TOKENS,
+                   'thinking': {'type': 'disabled'},
                    'messages': [{'role': 'system', 'content': SYSTEM + '\n' + guidance},
                                 {'role': 'user', 'content': json.dumps({
                                     'untrusted_diff': diff, 'untrusted_sources': snapshots})}]}
