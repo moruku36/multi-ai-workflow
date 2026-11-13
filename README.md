@@ -4,45 +4,15 @@
 
 ## Current status — 2026-11-12
 
-This repository now includes executable, source-only PR review tooling as well as
-architecture and configuration templates. **Merged implementation is not the
-same as accepted live automation.**
+This repository holds executable, source-only PR review tooling plus architecture and configuration templates. **Merged implementation is not the same as accepted live automation.**
 
 | Area | Verified stage | Remaining work |
 |---|---|---|
-| Repository PR review | Alibaba OpenCodeReview + MiMo and a separate Cloudflare-guided MiMo lane are merged and activated. A bounded smoke run succeeded, but later PR reviews were incomplete. | Diagnose failed lanes and validate the exact current revision; do not blindly replay reserved reviews. |
+| Repository PR review | Alibaba OpenCodeReview + MiMo, and a separate Cloudflare-guided MiMo lane: merged and activated. A bounded smoke run succeeded; later PR reviews were incomplete. | Diagnose failed lanes and validate the exact current revision; do not blindly replay reserved reviews. |
 | Central review hub | Controller, inactive config, workflow and bilingual guides merged in [#49](https://github.com/moruku36/multi-ai-workflow/pull/49) and [#50](https://github.com/moruku36/multi-ai-workflow/pull/50). Five mocked offline cases passed. | Both config gates remain false; cross-repository execution and recurring activation are not accepted. |
-| Team communication | The private lounge is an asynchronous information-sharing boundary. | An architecture arrow, local status save or posted message does not prove delivery, acknowledgment or task execution. |
+| Team communication | The private lounge is an asynchronous information-sharing boundary. | A diagram arrow, local status save or posted message does not prove delivery, acknowledgment or task execution. |
 
-For this project's current development work, the selected coding worker is
-Codex CLI with `gpt-6.1-sol` / `xhigh`. PR review uses Xiaomi
-`mimo-v2.6-pro`: Alibaba supplies a review tool and Cloudflare supplies audit
-guidance, not separate model providers. Two lanes on the same provider are not
-independent-provider approval.
-
-See [automatic PR review](docs/automatic-dual-review.md) and
-[central review setup and limits](docs/central-review-hub.md) for the dated evidence,
-scope, resource limits and remaining acceptance steps. This documentation update
-does not enable a workflow, change permissions or grant merge authority.
-
-## Dated trial: 2026-11-09 — One-week GPT-6.1 Sol / xhigh experiment
-
-- **Period:** Monday, 2026-11-09 through Monday, 2026-11-16 (JST), followed by a review.
-- **New work:** Use **GPT-6.1 Sol** (`gpt-6.1-sol`) with **Extra high** reasoning (`xhigh`) for new Codex and Dots-coordinated ChatGPT Work tasks during this period. Work already in flight may keep its current setup.
-- **Usage goal:** Aim to use **at least 90%, as close to 100% as practical**, of the included weekly usage allowance by progressing useful, already-needed work. Track the percentage in the official usage dashboard rather than treating the allowance as a fixed raw-token count.
-- **Workload boundary:** Do not invent extra tasks, repeat tests without a reason, or expand scope just to consume the allowance. Existing budgets, permissions and stop conditions still apply.
-- **Review on 2026-11-16:** Compare completed work, quality, elapsed time and actual usage, then decide whether to continue or adjust the model choice.
-- **Reset planning:** Plan use of two banked reset opportunities before they expire. Their expiry dates need confirmation in the official account UI; specific work allocation is still undecided.
-
-[Official usage guidance](https://learn.chatgpt.com/docs/pricing) explains that Codex and ChatGPT Work share usage and directs users to their dashboard for current limits and reset times. A general November doubling of Pro's allowance has not been verified from the official sources checked on 2026-11-09. This section records the trial policy, not proof that every environment's model setting has already changed.
-
-A high-level map of how several AI tools work as a team: Dots supports coordination and research, Muse (Fuwatchi) supports design and review, and Kurotchi handles lab-side and repository development work through OpenClaw. This page focuses on the current structure; older material is reachable from the [archive index](docs/archive/README.md).
-
-## Previous update: 2026-11-08
-
-- Simplified the overview around the current roles and logical architecture.
-- Updated the diagram to include the Mac/OpenClaw lab, coding tools, browser and shared lounge.
-- Moved the entry point for older updates and complete previous overviews to the archive index. Existing dated documents and historical diagrams remain available.
+Coding worker: Codex CLI with `gpt-6.1-sol` / `xhigh`. PR review: Xiaomi `mimo-v2.6-pro` — Alibaba supplies the review tool and Cloudflare supplies audit guidance, not separate model providers, so two lanes on the same provider are not independent-provider approval. Dated evidence and remaining acceptance steps: [automatic PR review](docs/automatic-dual-review.md), [central review hub](docs/central-review-hub.md). This documentation does not enable a workflow, change permissions or grant merge authority.
 
 ## Architecture at a glance
 
@@ -73,7 +43,17 @@ flowchart TB
     KURO -.-> API
 ```
 
-The arrows show logical responsibilities and information-sharing relationships, not physical routing or proof of continuous automatic operation. Dashed links are task-dependent choices. Coding tools and model APIs are invoked for a task; they are not additional resident team members. Antigravity refers to its official client.
+Roles: Dots coordinates and researches; Muse (Fuwatchi) supports consultation, design and review; Kurotchi handles lab-side and repository development through OpenClaw. The arrows show logical responsibilities and information-sharing relationships, not physical routing or proof of continuous automatic operation. Dashed links are task-dependent choices; coding tools and model APIs are invoked per task and are not additional resident team members. Antigravity refers to its official client. Older material: [archive index](docs/archive/README.md).
+
+## Branches
+
+`main` is the trunk. Work lands through pull requests from short-lived, prefixed topic branches:
+
+- `docs/*` — documentation and status updates (the largest group)
+- `feat/*`, `feature/*` — new tooling, mainly the PR review lanes and central review hub
+- `fix/*` — review-pipeline fixes and diagnostics
+- `codex/*` — Codex task and handoff work
+- `test/*` — activation trials
 
 ## How work moves
 
