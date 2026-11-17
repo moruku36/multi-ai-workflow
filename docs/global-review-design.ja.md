@@ -90,14 +90,13 @@ flowchart TD
 
 ### Identity
 
-job keyはcanonical JSONのSHA256。可変名ではなくIDを主とする。`base_sha`（target tip）と`merge_base_sha`（source diff起点）は別に保持する。base移動も旧判定を失効させる。
+job keyは以下の固定projectionだけを含むcanonical JSONのSHA256。可変名ではなくIDを主とする。`base_sha`（target tip）と`merge_base_sha`（source diff起点）は別に保持する。base移動も旧判定を失効させる。
 
 ```json
 {
   "schema_version": 2,
   "installation_id": 100,
   "repository_id": 200,
-  "repository": "example/project",
   "pr_number": 7,
   "head_sha": "1111111111111111111111111111111111111111",
   "base_sha": "2222222222222222222222222222222222222222",
@@ -105,11 +104,11 @@ job keyはcanonical JSONのSHA256。可変名ではなくIDを主とする。`ba
   "policy_digest": "sha256:<canonical-policy-digest>",
   "controller_sha": "4444444444444444444444444444444444444444",
   "engines": {"bug": "pinned-version", "security": "pinned-version"},
-  "source_manifest_digest": "sha256:<all-paths-and-blobs>",
-  "event_delivery_id": "example-delivery",
-  "trigger": "webhook"
+  "source_manifest_digest": "sha256:<all-paths-and-blobs>"
 }
 ```
+
+上記field集合がjob-key projectionの全体。event delivery ID、trigger、受信時刻、receipt時刻、repository表示名などのtransport/display metadataは含めず、別event recordからjobへmany-to-oneで関連付ける。同一の固定PR revision・policy・controller・engine・source identityをpollとwebhookで発見しても同じkeyとなり、head/base/merge-base/policy/controller/engine/sourceが変われば別keyになる。
 
 例は非secretのshape。digest placeholderは実行時に受理しない。manifestにはpath/status/mode、before/after blob OID、byte数、取得結果、coverage理由を全件保持。
 
@@ -140,7 +139,7 @@ atomic leaseはrepo ID/PR単位。新head/base/policy/engine到着時は旧job�
 
 `neutral` / `skipped` はrequired gateに出さない。GitHubはこれらをrequired check成功として扱う場合があるため、緑skip運用は禁止。cancelledも内部では不合格。Appアクセス消失時はCheck更新不能なので外部inventoryにblockを残し、required check欠落でmergeを止める設計にする。ただし既存success失効をGitHub側で保証できない場合があるためdrift監査と人の最終照合が必要。
 
-aggregate successの必要条件：全path取得・coverage完了、両laneのschema/identity/完了有効、必要なprovider独立性、blocking findingゼロ、policy指定required CI全て最新identityに適合、最新API照合成功。CIがheadだけを提供する場合はbase互換性/strict up-to-dateまたはmerge queueの統合commit CIも要求する。CIの名前だけでなくexpected App/workflow sourceを確認し、別integrationの同名CheckやPR改変workflowで偽装させない。
+aggregate successの必要条件：全path取得・coverage完了、両laneのschema/identity/完了有効、必要なprovider独立性、blocking findingゼロ、policy指定required CI全て最新identityに適合しconclusionが明示的に`success`（`neutral` / `skipped` / missingを含む他状態は不合格）、最新API照合成功。通常PRのtest-merge SHAを使うCIは、そのcommitが現在のhead SHAとbase SHAの組から生成されたことをAPIとcommit parentsで確認し、runと正確な組をreceiptへ保存する。組が一致しない古いtest-merge結果は失効させる。これは以下の`merge_group` identityとは別に扱う。CIがheadだけを提供する場合はbase互換性/strict up-to-dateまたはmerge queueの統合commit CIも要求する。CIの名前だけでなくexpected App/workflow sourceを確認し、別integrationの同名CheckやPR改変workflowで偽装させない。
 
 merge queue採用時は`merge_group` SHA＋構成PR/head/base集合で別identityを作り、queue用CIとaggregateを再発行する。未対応の間はqueueを対象外/manualにし、PR headのsuccessをqueue SHAへコピーしない。
 
