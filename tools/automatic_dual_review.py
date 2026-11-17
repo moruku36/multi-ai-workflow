@@ -28,6 +28,14 @@ MAX_LANE_CALLS = MAX_CALLS
 MAX_OUTPUT_TOKENS = 2048
 
 
+class BudgetExceeded(ValueError):
+    """Fixed-vocabulary budget stop; carries no request text."""
+
+    def __init__(self, reason):
+        super().__init__('serialized payload budget exhausted')
+        self.reason = reason
+
+
 class PayloadBudget:
     """Charge actual serialized provider bodies before forwarding; never refund."""
 
@@ -37,10 +45,12 @@ class PayloadBudget:
         self.request_bytes, self.cumulative_bytes = request_bytes, cumulative_bytes
 
     def reserve(self, body):
-        if (not isinstance(body, bytes) or not 0 < len(body) <= self.request_bytes
-                or self.attempts >= self.calls
-                or self.bytes + len(body) > self.cumulative_bytes):
-            raise ValueError('serialized payload budget exhausted')
+        if not isinstance(body, bytes) or not 0 < len(body) <= self.request_bytes:
+            raise BudgetExceeded('payload_size')
+        if self.attempts >= self.calls:
+            raise BudgetExceeded('attempt_cap')
+        if self.bytes + len(body) > self.cumulative_bytes:
+            raise BudgetExceeded('cumulative_payload')
         self.attempts += 1
         self.bytes += len(body)
 
@@ -49,14 +59,19 @@ class BoundedReviewRelay(ReviewRelay):
     def __init__(self, *, attempt_cap=None, attempt_deadline=None, **kwargs):
         super().__init__(**kwargs)
         self.attempt_deadline = attempt_deadline
+        self.stop_reason = None
         self.attempt_cap = effective_attempt_cap(attempt_cap, MAX_LANE_CALLS)
         self.payload_budget = PayloadBudget(self.attempt_cap)
 
     def exchange(self, raw, authorization, path):
         # Stop before the inherited exchange increments its HTTP-attempt count.
         # The inherited eight-call ceiling and request/model gates still apply.
-        if (self.halted or self.attempts >= self.attempt_cap
-                or self.attempt_deadline is not None and time.monotonic() >= self.attempt_deadline):
+        expired = (self.attempt_deadline is not None
+                   and time.monotonic() >= self.attempt_deadline)
+        if self.halted or self.attempts >= self.attempt_cap or expired:
+            if not self.halted:
+                self.stop_reason = ('attempt_cap' if self.attempts >= self.attempt_cap
+                                    else 'deadline')
             self.halted = True
             raise connection.ProbeError('review stopped; outcome may be unknown')
         return super().exchange(raw, authorization, path)
@@ -64,12 +79,18 @@ class BoundedReviewRelay(ReviewRelay):
     def _forward(self, body):
         if self.attempt_deadline is not None and time.monotonic() >= self.attempt_deadline:
             self.halted = True
+            self.stop_reason = 'deadline'
             raise connection.ProbeError('authorization expired')
         # Override CLI thinking settings at the final automatic sender.
         payload = json.loads(body)
         payload['thinking'] = {'type': 'disabled'}
         body = json.dumps(payload, ensure_ascii=False).encode()
-        self.payload_budget.reserve(body)
+        try:
+            self.payload_budget.reserve(body)
+        except BudgetExceeded as exc:
+            self.halted = True
+            self.stop_reason = exc.reason
+            raise
         response = super()._forward(body)
         # Observe before inherited ReviewRelay validation replaces the failure.
         observe_response_reason('alibaba', self, response)
@@ -90,16 +111,23 @@ class BoundedGuidanceSender(connection.Relay):
     def __init__(self, *, attempt_cap=None, attempt_deadline=None, **kwargs):
         super().__init__(**kwargs)
         self.attempt_deadline = attempt_deadline
+        self.stop_reason = None
         self.payload_budget = PayloadBudget(
             effective_attempt_cap(attempt_cap, 1), request_bytes=MAX_GUIDANCE_REQUEST_BYTES,
             cumulative_bytes=MAX_GUIDANCE_REQUEST_BYTES)
 
     def _forward(self, body):
         try:
-            if (self.halted or self.attempt_deadline is not None
-                    and time.monotonic() >= self.attempt_deadline):
+            if self.attempt_deadline is not None and time.monotonic() >= self.attempt_deadline:
+                self.stop_reason = 'deadline'
                 raise ValueError('sender stopped')
-            self.payload_budget.reserve(body)
+            if self.halted:
+                raise ValueError('sender stopped')
+            try:
+                self.payload_budget.reserve(body)
+            except BudgetExceeded as exc:
+                self.stop_reason = exc.reason
+                raise
             self.attempts = self.payload_budget.attempts
             return super()._forward(body)
         except Exception:
@@ -196,6 +224,9 @@ USAGE_KEYS = ('prompt_tokens', 'completion_tokens', 'total_tokens')
 MAX_USAGE_TOKENS = 10**9  # Serialization bound, not a billing limit.
 RESPONSE_REASONS = frozenset((
     'length_stop', 'model_mismatch', 'malformed_response', 'unexpected_tools'))
+# Where our own sender/relay budget stopped; never a provider or transport diagnosis.
+STOP_REASONS = frozenset((
+    'attempt_cap', 'deadline', 'payload_size', 'cumulative_payload'))
 
 
 def observe_response_reason(lane, relay, raw):
@@ -274,16 +305,21 @@ def safe_diagnostics(lane, values=None):
     reason = values.get('response_reason')
     if type(reason) is str and reason in RESPONSE_REASONS:
         result['response_reason'] = reason
+    stop = values.get('stop_reason')
+    if type(stop) is str and stop in STOP_REASONS:
+        result['stop_reason'] = stop
     return result
 
 
 def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None):
-    reason = None
+    reason = stop = None
     try:
         reason = getattr(relay, 'response_reason', None)
+        stop = getattr(relay, 'stop_reason', None)
     except Exception:
         pass
     return safe_diagnostics(lane, {
+        'stop_reason': stop,
         'failure_stage': stage, 'cli_exit_code': cli_exit_code,
         'http_attempts': getattr(relay, 'attempts', None),
         'completed_responses': getattr(relay, 'completed', None),
@@ -472,6 +508,21 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
             **{key: value for key, value in stats.items() if key != 'failure_stage'}}
 
 
+def build_guidance_body(diff, snapshots, guidance):
+    """Serialize the source-only guidance request compactly, without truncation.
+
+    ensure_ascii=False at both JSON layers avoids double-escaping non-ASCII source;
+    the byte cap itself is unchanged and still enforced at the sender.
+    """
+    user = json.dumps({'untrusted_diff': diff, 'untrusted_sources': snapshots},
+                      ensure_ascii=False)
+    payload = {'model': connection.MODEL, 'stream': False, 'max_tokens': MAX_OUTPUT_TOKENS,
+               'thinking': {'type': 'disabled'},
+               'messages': [{'role': 'system', 'content': SYSTEM + '\n' + guidance},
+                            {'role': 'user', 'content': user}]}
+    return json.dumps(payload, ensure_ascii=False).encode()
+
+
 def cloudflare(diff, snapshots, *, attempt_cap=None, attempt_deadline=None):
     stage, relay = 'preflight', None
     try:
@@ -480,12 +531,7 @@ def cloudflare(diff, snapshots, *, attempt_cap=None, attempt_deadline=None):
         names = ['SKILL.md', 'ATTACK-CLASSES.md', 'VALIDATION-AND-REPORTING.md']
         guidance = '\n'.join((skill / name).read_text() for name in names)
         stage = 'request_setup'
-        payload = {'model': connection.MODEL, 'stream': False, 'max_tokens': MAX_OUTPUT_TOKENS,
-                   'thinking': {'type': 'disabled'},
-                   'messages': [{'role': 'system', 'content': SYSTEM + '\n' + guidance},
-                                {'role': 'user', 'content': json.dumps({
-                                    'untrusted_diff': diff, 'untrusted_sources': snapshots})}]}
-        body = json.dumps(payload).encode()
+        body = build_guidance_body(diff, snapshots, guidance)
         # Separate source-only request; reserve before HTTP, including failure.
         relay = BoundedGuidanceSender(live=True, api_key=os.environ['MIMO_API_KEY'],
                                       attempt_cap=attempt_cap, attempt_deadline=attempt_deadline)
