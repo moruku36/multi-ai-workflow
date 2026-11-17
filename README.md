@@ -1,72 +1,47 @@
-# Multi-AI Workflow Architecture
+# Multi-AI Workflow
 
-[English](README.md) | [日本語](README.ja.md)
+[English](README.md) · [日本語](README.ja.md)
 
-## Current status — 2026-11-12
+Practical architecture, source-only PR review tools and configuration templates for a human-led AI development team.
 
-This repository holds executable, source-only PR review tooling plus architecture and configuration templates. **Merged implementation is not the same as accepted live automation.**
+> **Next development entry point: [Global PR review — detailed design](docs/global-review-design.md)**
+> Japanese engineering specification: [全リポジトリPR品質ゲート](docs/global-review-design.ja.md).
+> Implementation is planned from **2026-11-18 JST**. This documentation does not activate anything.
 
-| Area | Verified stage | Remaining work |
+## What exists / what is next
+
+| Area | Current source and evidence | Next step |
 |---|---|---|
-| Repository PR review | Alibaba OpenCodeReview + MiMo, and a separate Cloudflare-guided MiMo lane: merged and activated. A bounded smoke run succeeded; later PR reviews were incomplete. | Diagnose failed lanes and validate the exact current revision; do not blindly replay reserved reviews. |
-| Central review hub | Controller, inactive config, workflow and bilingual guides merged in [#49](https://github.com/moruku36/multi-ai-workflow/pull/49) and [#50](https://github.com/moruku36/multi-ai-workflow/pull/50). Five mocked offline cases passed. | Both config gates remain false; cross-repository execution and recurring activation are not accepted. |
-| Team communication | The private lounge is an asynchronous information-sharing boundary. | A diagram arrow, local status save or posted message does not prove delivery, acknowledgment or task execution. |
+| PR review | Alibaba OpenCodeReview and Cloudflare-guided lanes use Xiaomi MiMo `mimo-v2.6-pro`. Historical smoke success is not current quality acceptance; later reviews were incomplete. | Accept both full lanes at a fresh immutable revision. Same-provider lanes are not provider-independent approval. |
+| Central hub | Polling controller, reservations and signed one-target source exist. Checked-in recurring config gates are false; current live settings are unknown. | Extend the hub with coverage inventory, proposed webhook ingress and latest-identity CI aggregation. |
+| Merge protection / repairs | Human merge policy exists; all-repository enforcement and bounded repair automation are not accepted as live. | One-repository no-write gate first; repository enrollment/protection next; human-approved fixes before automation. |
 
-Coding worker: Codex CLI with `gpt-6.1-sol` / `xhigh`. PR review: Xiaomi `mimo-v2.6-pro` — Alibaba supplies the review tool and Cloudflare supplies audit guidance, not separate model providers, so two lanes on the same provider are not independent-provider approval. Dated evidence and remaining acceptance steps: [automatic PR review](docs/automatic-dual-review.md), [central review hub](docs/central-review-hub.md). This documentation does not enable a workflow, change permissions or grant merge authority.
+Source baseline, historical discrepancies and outstanding acceptance are in the [reconciliation matrix](docs/global-review-design.ja.md#2-現状の照合sourceとliveを分ける). Neither an App installation nor a green lane alone proves every PR is protected.
 
-## Architecture at a glance
+## Architecture
 
 ```mermaid
-flowchart TB
-    OWNER["Owner / decisions and acceptance"]
-    DOTS["Dots<br/>coordination and research"]
-    MUSE["Muse / Fuwatchi<br/>consultation, design and review"]
-    LOUNGE["Private GitHub lounge<br/>asynchronous information sharing"]
-    subgraph LAB["Mac lab"]
-        KURO["Kurotchi / OpenClaw<br/>lab and repository development"]
-        CLI["Codex / Claude Code"]
-        BROWSER["Dedicated browser"]
-    end
-    WORKERS["Task-specific coding tools<br/>Codex / Claude Code / official Antigravity"]
-    API["On-demand model APIs"]
-    OWNER --> DOTS
-    OWNER --> MUSE
-    OWNER --> KURO
-    DOTS <--> LOUNGE
-    MUSE <--> LOUNGE
-    KURO <--> LOUNGE
-    KURO --> CLI
-    KURO --> BROWSER
-    DOTS -.->|"select per task"| WORKERS
-    DOTS -.-> API
-    MUSE -.-> API
-    KURO -.-> API
+flowchart LR
+    O[Human owner] --> A[AI coordination and coding]
+    A --> P[Pull request / immutable head]
+    P --> H[Existing central polling hub]
+    E[Proposed App webhook] -.-> H
+    H --> R[Bug + security review]
+    C[Isolated repository CI] --> G[Proposed latest-identity gate]
+    R --> G
+    G --> M[Required protection + human merge]
+    R --> F[Validated findings / bounded fix handoff]
+    F --> A
 ```
 
-Roles: Dots coordinates and researches; Muse (Fuwatchi) supports consultation, design and review; Kurotchi handles lab-side and repository development through OpenClaw. The arrows show logical responsibilities and information-sharing relationships, not physical routing or proof of continuous automatic operation. Dashed links are task-dependent choices; coding tools and model APIs are invoked per task and are not additional resident team members. Antigravity refers to its official client. Older material: [archive index](docs/archive/README.md).
+Text fallback: people scope work → coding produces a PR → the hub collects reviews → isolated CI and reviews feed a proposed latest-revision gate → protections and a human decide merge. Validated findings return through a bounded fix handoff. Proposed components are not active claims.
 
-## Branches
+## Choose a reading path
 
-`main` is the trunk. Work lands through pull requests from short-lived, prefixed topic branches:
+- **Build next:** [design guide](docs/global-review-design.md), with P0–P3 units and proposed acceptance cases.
+- **Use existing tooling:** [tools](tools/README.md), [dual review](docs/dual-review.md), [automatic review setup](docs/automatic-dual-review.md), [central hub setup and limits](docs/central-review-hub.md), [signed one-target draft](docs/central-one-shot.md).
+- **Understand the team:** [AI team](docs/ai-team.md), [routing](docs/routing-guide.md), [handoffs](docs/handoff-templates.md), [role/topology reference](docs/network-topology-2026-11-08.md).
+- **Configure / contribute:** [configs](configs/), [templates](templates/), [review policy](docs/pr-review-pipeline.md), [repository guidance](AGENTS.md). Use short-lived `docs/*`, `feat/*` or `fix/*` branches and PRs into `main`.
+- **Historical evidence:** [previous landing page](docs/archive/landing-before-global-review.md), [archive index](docs/archive/README.md), [changelog](CHANGELOG.md). Dated observations are history, not proof of present runtime state.
 
-- `docs/*` — documentation and status updates (the largest group)
-- `feat/*`, `feature/*` — new tooling, mainly the PR review lanes and central review hub
-- `fix/*` — review-pipeline fixes and diagnostics
-- `codex/*` — Codex task and handoff work
-- `test/*` — activation trials
-
-## How work moves
-
-1. The owner sets the goal and makes consequential decisions.
-2. Dots coordinates the work and selects an appropriate implementation or research tool. Muse supports consultation, design and review; Kurotchi provides a lab-side entry point to CLI, browser and repository development work.
-3. The private lounge provides asynchronous information sharing. A received message is information, not permission to execute it.
-4. Results and review evidence return to the owner for acceptance. A logical connection does not mean every task or tool combination has been accepted end to end.
-
-This public overview intentionally omits internal operating status, schedules, test transcripts, account details and security configuration. Updating the documentation does not change any runtime, permission or deployment.
-
-## Read more
-
-- [Detailed role map and source notes](docs/network-topology-2026-11-08.md)
-- Guides: [AI team](docs/ai-team.md), [routing](docs/routing-guide.md), [handoffs](docs/handoff-templates.md), [review pipeline](docs/pr-review-pipeline.md)
-- History: [archive index](docs/archive/README.md), [changelog](CHANGELOG.md)
-- Reference: [tools](tools/README.md), [configuration guides](configs/), [templates](templates/), [tests](tests/), [diagram sources](tools/architecture/README.md)
+Documentation grants no API spending, source export, write authority, workflow activation or merge permission. Coding tools are chosen per authorized task; historical model trials are not global defaults.

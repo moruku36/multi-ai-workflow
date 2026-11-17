@@ -1,91 +1,46 @@
-# Multi-AI Workflow Architecture
+# Multi-AI Workflow
 
-[English](README.md) | [日本語](README.ja.md)
+[English](README.md) · [日本語](README.ja.md)
 
-## 現在の状態 — 2026-11-12
+人が判断するAI開発チームの構成、source-only PRレビューツール、設定テンプレートをまとめています。
 
-構成・設定テンプレートに加え、実際のPR差分を読むレビュー用ツールを実装しています。
-**コードのマージと、自動稼働の受入完了は別です。**
+> **次の開発の入口：[全リポジトリPR品質ゲート・詳細設計](docs/global-review-design.ja.md)**
+> 実装開始予定は **2026-11-18 JST**。本更新は文書のみで、今夜は有効化しません。
 
-| 項目 | 確認できた段階 | 残る作業 |
+## 現在あるもの / 次に作るもの
+
+| 項目 | 現source・証拠 | 次の段階 |
 |---|---|---|
-| このリポジトリのPRレビュー | Alibaba OpenCodeReview＋MiMoと、Cloudflare手法を使う別のMiMoレビューをマージ・有効化済み。限定的な疎通用実行は成功しましたが、その後のPRレビューは未完了でした。 | 失敗laneの診断と現在revisionの確認。予約済みレビューを盲目的に再送しないこと。 |
-| 中央レビューhub | 本体・無効状態のconfig・workflow・日英手順を[#49](https://github.com/moruku36/multi-ai-workflow/pull/49)・[#50](https://github.com/moruku36/multi-ai-workflow/pull/50)でマージ済み。mockを使ったオフライン5ケースは成功。 | configの両ゲートはfalseのまま。複数リポジトリへの実行・定期有効化は未受入。 |
-| チーム間の連絡 | 非公開ラウンジを非同期の情報共有境界として扱います。 | 構成図の矢印・ローカル保存・投稿だけでは、配送・受領・作業実行の証明になりません。 |
+| PRレビュー | Alibaba OpenCodeReviewとCloudflare手法のlaneはXiaomi MiMo `mimo-v2.6-pro`を使用。過去の限定smoke成功と、その後の不完全なレビューを記録。 | freshな固定revisionで両laneの完全受入。同providerの2laneをprovider独立承認と呼ばない。 |
+| 中央hub | poll、予約、署名one-targetのsourceあり。checked-in recurring configはfalse、現在のlive設定は未確認。 | 既存hubを拡張し、対象台帳・提案webhook・最新identityのCI集約を追加。 |
+| merge保護・修正 | 人のmerge方針あり。全repo強制とbounded修正自動化はlive受入済みではない。 | 1repoのno-write gate → 既存/新repo登録・保護 → 人承認の修正handoffから段階導入。 |
 
-このプロジェクトの現在の開発ワーカーは、Codex CLIの
-`gpt-6.1-sol`／`xhigh`を選択しています。PRレビューはXiaomi
-`mimo-v2.6-pro`を使用します。Alibabaはレビューツール、
-Cloudflareは監査手法の提供元であり、別々のモデルproviderではありません。
-同じproviderの2系統を、別providerによる独立承認とは扱いません。
+基準SHA、過去記録の不一致、残る受入は[現状照合表](docs/global-review-design.ja.md#2-現状の照合sourceとliveを分ける)へ。Appの導入やlaneの緑だけでは、全PR保護の証明になりません。
 
-根拠・対象範囲・上限・残る受入手順は、
-[自動PRレビュー](docs/automatic-dual-review.ja.md)と
-[中央レビューの設定・制限](docs/central-review-hub.ja.md)を参照してください。
-この文書更新でworkflowの有効化・権限変更・マージ権限付与は行いません。
-
-## 過去の試行方針：2026-11-09 — GPT-6.1 Sol / xhigh を1週間試す
-
-- **期間：** 2026-11-09（月）から2026-11-16（月）まで（日本時間）。終了時に振り返ります。
-- **新規作業：** この期間に開始する Codex と Dots が調整する ChatGPT Work の作業は、**GPT-6.1 Sol**（`gpt-6.1-sol`）の **Extra high**（`xhigh`）を使います。進行中の作業は現在の構成のままで構いません。
-- **使用量の目標：** 既に必要な、価値のある作業を進めて、週次利用枠の **90%以上、可能な範囲で100%近く** を使うことを目指します。固定の生トークン数ではなく、公式の使用状況画面に表示される割合で確認します。
-- **作業量の境界：** 枠の消化だけを目的に、新しいタスクを作ったり、理由なく試験を繰り返したり、対象を広げたりしません。既存の予算・権限・停止条件は維持します。
-- **2026-11-16の振り返り：** 完了した作業・品質・所要時間・実使用量を比較し、このモデル選択を続けるか調整するか判断します。
-- **リセット枠の計画：** 期限までに2回分のリセット枠をどう使うか検討します。有効期限は公式のアカウント画面で要確認とし、具体的な作業の割り当ては未定です。
-
-[公式の使用量ガイド](https://learn.chatgpt.com/docs/pricing)では、Codex と ChatGPT Work は利用枠を共有し、現在の上限・リセット日時は使用状況画面で確認すると説明されています。「11月からProの利用枠が一律2倍」という変更は、2026-11-09に確認した公式資料では裏付けられていません。この節は試行方針の記録であり、全環境のモデル設定を変更済みとするものではありません。
-
-複数の AI ツールをチームとして使うための、大枠の構成をまとめたリポジトリです。Dots は調整・調査、Muse（フワッチ）は設計・レビュー、クロッチは OpenClaw を通じたラボ側の作業とリポジトリ開発を担います。このページは現在の構成を中心にし、以前の記録は[アーカイブ索引](docs/archive/README.ja.md)から辿れます。
-
-## 前回の更新：2026-11-08
-
-- 現在の役割分担と論理構成がわかる概要へ整理しました。
-- Mac / OpenClaw のラボ、開発ツール、ブラウザ、共有ラウンジを図にまとめました。
-- 過去の更新・旧概要全文への入口をアーカイブ索引に集約しました。既存の日付付き文書と過去の図も維持しています。
-
-## 構成の全体像
+## 構成
 
 ```mermaid
-flowchart TB
-    OWNER["本人 / 判断と受入れ"]
-    DOTS["Dots<br/>調整と調査"]
-    MUSE["Muse / フワッチ<br/>相談・設計・レビュー"]
-    LOUNGE["非公開 GitHub ラウンジ<br/>非同期の情報共有"]
-    subgraph LAB["Mac ラボ"]
-        KURO["クロッチ / OpenClaw<br/>ラボ作業とリポジトリ開発"]
-        CLI["Codex / Claude Code"]
-        BROWSER["専用ブラウザ"]
-    end
-    WORKERS["案件ごとの開発ツール<br/>Codex / Claude Code / 公式 Antigravity"]
-    API["オンデマンドのモデル API"]
-    OWNER --> DOTS
-    OWNER --> MUSE
-    OWNER --> KURO
-    DOTS <--> LOUNGE
-    MUSE <--> LOUNGE
-    KURO <--> LOUNGE
-    KURO --> CLI
-    KURO --> BROWSER
-    DOTS -.->|"案件ごとに選択"| WORKERS
-    DOTS -.-> API
-    MUSE -.-> API
-    KURO -.-> API
+flowchart LR
+    O[本人 / 判断] --> A[AI調整・実装]
+    A --> P[PR / 固定head]
+    P --> H[既存の中央polling hub]
+    E[提案 App webhook] -.-> H
+    H --> R[バグ + セキュリティレビュー]
+    C[隔離されたrepo CI] --> G[提案 最新identity gate]
+    R --> G
+    G --> M[必須保護 + 人のmerge]
+    R --> F[検証済み指摘 / bounded修正handoff]
+    F --> A
 ```
 
-矢印は役割と情報共有の論理的な関係です。物理的な通信経路や、常時の自動運用を保証するものではありません。点線は案件に応じた選択肢です。開発ツールやモデル API は必要な作業で呼び出すもので、追加の常駐メンバーではありません。Antigravity は公式クライアントを指します。
+テキスト版：人が範囲を決める → 実装AIがPRを作る → hubがレビューを集める → 隔離CIと最新revisionで集約 → 保護設定と人がmerge判断。検証済み指摘を上限付きの修正handoffで戻します。「提案」は稼働済みを意味しません。
 
-## 作業の流れ
+## 読み方
 
-1. 本人が目的を決め、重要な判断を行います。
-2. Dots が作業を調整し、適切な実装・調査ツールを選びます。Muse は相談・設計・レビューを支え、クロッチはラボ側の CLI・ブラウザ作業とリポジトリ開発の入口になります。
-3. 非公開ラウンジで非同期に情報を共有します。受信したメッセージを、そのまま操作の許可とは扱いません。
-4. 成果とレビューの根拠を本人へ戻し、受入れを確認します。論理的な接続があることと、あらゆる作業・ツールの組合せが端から端まで受入れ済みであることは別です。
+- **次の実装を進める：** [詳細設計](docs/global-review-design.ja.md)のP0–P3、未実行の受入ケース、停止条件。
+- **既存ツールを使う：** [ツール](tools/README.ja.md)、[2系統レビュー](docs/dual-review.ja.md)、[自動レビュー設定](docs/automatic-dual-review.ja.md)、[中央hub設定と制限](docs/central-review-hub.ja.md)、[署名one-target草案](docs/central-one-shot.ja.md)。
+- **チームを理解する：** [AIチーム](docs/ai-team.ja.md)、[routing](docs/routing-guide.ja.md)、[handoff](docs/handoff-templates.ja.md)、[役割・構成参考](docs/network-topology-2026-11-08.ja.md)。
+- **設定・貢献：** [configs](configs/)、[templates](templates/)、[レビュー方針](docs/pr-review-pipeline.ja.md)、[repo方針](AGENTS.md)。`docs/*`、`feat/*`、`fix/*`等の短命branchから`main`へPRを作ります。
+- **履歴を確認する：** [以前の入口](docs/archive/landing-before-global-review.ja.md)、[archive索引](docs/archive/README.ja.md)、[変更履歴](CHANGELOG.ja.md)。日付付き観測は現在のruntimeの証明ではありません。
 
-この公開概要には、内部の稼働状況、定期設定、試験の本文、アカウント情報、セキュリティ設定を載せません。文書の更新で実行構成・権限・デプロイを変更することもありません。
-
-## 詳細と過去の記録
-
-- [役割分担の詳細と出典](docs/network-topology-2026-11-08.ja.md)
-- 手順：[AI チーム](docs/ai-team.ja.md)、[ルーティング](docs/routing-guide.ja.md)、[引継ぎ](docs/handoff-templates.ja.md)、[レビュー](docs/pr-review-pipeline.ja.md)
-- 履歴：[アーカイブ索引](docs/archive/README.ja.md)、[更新履歴](CHANGELOG.ja.md)
-- 参照：[ツール](tools/README.ja.md)、[構成ガイド](configs/)、[テンプレート](templates/)、[検査](tests/)、[図の原本](tools/architecture/README.md)
+文書はAPI課金・source外部送信・書込み権限・workflow有効化・mergeを許可しません。開発workerは承認された案件ごとに選び、過去のmodel試行を全環境のdefaultと解釈しません。
