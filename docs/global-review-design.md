@@ -2,39 +2,37 @@
 
 [日本語：canonical engineering specification](global-review-design.ja.md) · [Home](../README.md)
 
-**Documentation only. Implementation is planned from 2026-11-18 JST. Nothing is activated by this change.** The Japanese specification is the normative, owner-readable detailed design; this English companion is its navigation and contract summary, not a separate implementation specification.
+**Documentation only; implementation planned from 2026-11-18 JST. Nothing is activated.** The Japanese specification is normative; this companion provides navigation.
 
 ## Current truth
 
-Source baseline: `main` at `3be4c4739b046ad7e52642d98aff11c6fc8d664f`. This includes PR56's `1695df06` repair. Existing central polling, reservations and signed one-target authorization are extended, not replaced. Checked-in recurring gates are false. Current runtime variables, installation permissions, account/plan and protections are unknown. Historical real reviews were incomplete; old trusted-base runs do not accept the new correction. Historical mocked-case records disagree across evidence sources and must be reconciled in P0, not added together or replayed.
+Baseline: `main` at `3be4c4739b046ad7e52642d98aff11c6fc8d664f`, including PR56 repair `1695df06`. Extend existing polling, reservations and signed one-target authorization. Checked-in recurring gates are false; current runtime variables, installation permissions, account/plan and protections are UNKNOWN. Historical real reviews were incomplete; old-base runs do not accept the correction. Reconcile conflicting mock records in P0; do not combine or replay them.
 
-Alibaba OpenCodeReview v1.13.7 and Cloudflare guidance pinned at `c1c8a8c1471069fb0e188eeaff69b8e8db6564a8` currently execute through Xiaomi MiMo `mimo-v2.6-pro`. Different methods on one provider are not provider independence. Existing lane success is not aggregate CI/independence/human acceptance.
+Alibaba OpenCodeReview v1.13.7 and Cloudflare guidance (`c1c8a8c1471069fb0e188eeaff69b8e8db6564a8`) both use Xiaomi MiMo `mimo-v2.6-pro`: different methods are not provider independence. Lane success is not aggregate acceptance.
 
 ## Specification map
 
-| Japanese section | Engineering contract |
+| Japanese section | Contract |
 |---|---|
-| 1–2: purpose and reconciliation | Source pointers, implemented vs historical/live vs unknown, acceptance gaps |
-| 3: architecture | Proposed signed/deduplicated App webhook ingress plus existing polling fallback; trusted pinned controller and reusable adapters; isolated CI |
-| 4: coverage | Public/private/future repositories, drafts, forks, non-default targets, old backlog, large changes, deletions/renames/binary/submodules/generated files, archive/transfer/App removal and hub self-review |
-| 5: contracts | Installation/repository ID, PR/head/base/merge-base, policy/controller/engine/source digests; event/job/finding/lane/aggregate receipts; idempotency, leases and stale invalidation |
-| 6: enforcement | Org rulesets only where plan/account permits; personal per-repo bootstrap; expected App binding, future-repo race, drift audit and scoped audited human exceptions |
-| 7: repair loop | Validated findings → data-separated instructions → separate write worker → isolated patch → independent review → new-head CI/review → human merge; proposed max two cycles |
-| 8: implementation | P0 truth, P1 one-repo no-write gate, P2 coverage/protection/webhook, P3 human-approved fix handoff before bounded automation; proposed files, dependencies, DoD, rollout and abort |
-| 9–10: operations | Privacy-safe receipts, retention proposal, metrics, onboarding, safe kill-switch, runbook and unresolved decisions |
+| 1–2 | Invariants; source/live/history/UNKNOWN reconciliation |
+| 3 | Architecture diagram; proposed signed/deduplicated webhook, existing poll fallback, pinned controller/adapters, isolated CI |
+| 4 | Existing/future public/private repositories; drafts, forks, branches, backlog, large/unsupported inputs, transfers, App removal, hub and upstream boundaries |
+| 5 | Canonical identity; event/job/finding/lane/aggregate schemas; dedupe, leases, reservations, stale invalidation and CI binding |
+| 6 | Plan-dependent org rulesets or personal bootstrap; expected App, enrollment, protection race, drift and audited exceptions |
+| 7 | Validated finding → bounded separate worker → independent review → fresh CI/review; human merge, proposed two-cycle cap |
+| 8 | P0 truth → P1 one-repo no-write gate → P2 coverage/enrollment → P3 human-approved repair; files, dependencies, DoD, rollout/abort and T01–T14 |
+| 9–10 | Privacy/retention, metrics, runbook, kill-switch, handoff and open decisions |
 
-## Non-negotiable gate semantics
+## Gate contract
 
-The proposed required Check is `global-review/merge-gate`, distinct from existing lane Checks. Only complete valid reviews, required provider independence, resolved blocking findings, current trusted CI and a fresh matching identity can produce `success`. Pending/running have no conclusion; unresolved findings/manual/incomplete/oversized become `action_required`; error/unknown/stale become `failure`; deliberate abort is `cancelled`. Never emit `neutral` or `skipped` as a passing required gate. Bind required checks to the expected App/source; same-name checks from other integrations or PR-edited policy are not evidence.
+Proposed required Check: `global-review/merge-gate`, separate from existing lanes. `success` requires full valid coverage, required provider independence, no blocking findings, trusted required CI explicitly successful, and fresh matching identity. Pending/running have no conclusion; findings/manual/incomplete/oversized use `action_required`; error/unknown/stale use `failure`; abort uses `cancelled`. Never pass `neutral`/`skipped`. Bind CI to expected App/workflow source, not merely its name. Section 5 specifies test-merge parents and separate merge-group identity; invalidate old evidence/approvals on identity changes.
 
-No partial coverage is green. Private source export consent is unresolved: off/manual by default. Forks, non-default branches, merge queue and unsupported blobs require separate acceptance. All-repositories App access does not install merge protections, and administrators with effective bypass can defeat enforcement; disclose that limitation. Foreign upstream enforcement is outside owner control.
+No partial green or secret-bearing privileged PR execution. Private export needs consent; forks, non-default branches, queues and unsupported inputs need separate acceptance. App installation alone provides no merge protection; disclose effective administrator bypass and foreign-upstream limits. Read-only reviewers cannot push. Separate workers have bounded authority; this design grants none. Planned worker: Claude Code CLI `claude-sonnet-5-5`, no silent fallback.
 
-Latest-head checks alone are insufficient when base, policy or reviewer version moves. Invalidate the old identity, including approvals; merge queue needs a separate merge-group SHA contract. Unknown or timed-out reservations remain consumed until reconciled; no blind retries or refunds. The read-only reviewer App cannot push; a separate limited worker authority would be needed, and this document grants none. The next selected implementation worker is planned as Claude Code CLI `claude-sonnet-5-5`, with no silent fallback or provider-independence assumption.
+## Acceptance and operations
 
-## Rollout and verification
+T01–T14 are **proposed; execution count zero here**. Preserve historical records, budgets and UNKNOWN reservations: timeout/lease expiry grants no retry or refund. Kill-switch stops dispatch without greening pending/error gates; retain protections and human merge hold. P1 must prove actual merge blocking before expansion; P3 starts with human-approved handoff, not automatic writes.
 
-P0 reconciles source/live truth and old UNKNOWNs. P1 proves one repository can block merge on missing/failed review or CI without any repair write. P2 adds explicit enrollment and protection/drift coverage before claiming all existing/new repositories. P3 first hands validated findings to humans; low-risk bounded automation needs a later decision.
+The existing collector limits both diff and combined before/after snapshots to 65,536 bytes (20 paths). Keep documentation changes within both budgets without omitting required design or historical evidence; oversize input is not a review finding or model failure.
 
-All T01–T14 acceptance scenarios in the canonical specification are **proposed, execution count zero for this documentation task**: known-good, actual-bug/counterexample, outage/incomplete, stale/base/policy, replay/concurrency, unprotected new repo, fork attacks, input boundaries, private/draft/backlog, forged CI source, App removal/transfer/truncation, queue identity, correction limit/UNKNOWN and out-of-scope writes. Old budgets and reservations are not reset. Kill-switch stops dispatch, never converts pending gates to green; preserve protections and human merge hold.
-
-Open decisions include live account/plan features, private model consent, independent provider, hard quotas, webhook hosting/durable ledger, fork/queue/large-input support and explicit repair time/token/cost budgets. See the canonical specification for the full source matrix, JSON sample, file-level work units, retention proposal and operator handoff.
+See sections 9–10 for retention, live plan/protection gaps, private consent, independent provider, quotas, webhook/ledger, unsupported coverage and explicit repair budgets.
