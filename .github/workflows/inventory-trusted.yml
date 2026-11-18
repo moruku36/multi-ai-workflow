@@ -1,0 +1,47 @@
+name: inventory-trusted
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize]
+permissions:
+  contents: read
+jobs:
+  inventory-trusted:
+    if: github.repository == 'moruku36/multi-ai-workflow' && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.repo.id == github.event.repository.id && github.event.pull_request.head.ref == 'feat/review-inventory-consumer-v1' && github.sha == github.event.pull_request.base.sha
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          path: base
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
+          lfs: false
+          persist-credentials: false
+      - name: fetch PR head ref as data (never checked out)
+        timeout-minutes: 1
+        working-directory: base
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          export LC_ALL=C
+          if [ "$HEAD_REF" != "feat/review-inventory-consumer-v1" ]; then echo "PR head branch mismatch"; exit 1; fi
+          case "$PR_NUMBER" in ''|0*|*[!0-9]*) echo "invalid PR number"; exit 1;; esac
+          if [ "${#PR_NUMBER}" -gt 10 ]; then echo "invalid PR number"; exit 1; fi
+          /usr/bin/env -i HOME=/nonexistent PATH=/usr/bin:/bin LC_ALL=C GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/false GIT_NO_REPLACE_OBJECTS=1 GIT_PROTOCOL_FROM_USER=0 /usr/bin/git -c protocol.allow=never -c protocol.https.allow=always -c credential.helper= -c http.extraHeader= -c http.followRedirects=false -c transfer.fsckObjects=true -c core.hooksPath=/dev/null fetch --no-tags --no-recurse-submodules --no-write-fetch-head --depth=1 https://github.com/moruku36/multi-ai-workflow.git "refs/pull/${PR_NUMBER}/head:refs/inventory/pr-${PR_NUMBER}-head" >/dev/null 2>&1 || { echo "fetch of PR head ref failed"; exit 1; }
+      - name: provision
+        timeout-minutes: 2
+        working-directory: base
+        run: |
+          /usr/bin/env -i HEAD_SHA="$HEAD_SHA" BASE_SHA="$BASE_SHA" PR_NUMBER="$PR_NUMBER" GITHUB_SHA="$GITHUB_SHA" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_EVENT_PATH="$GITHUB_EVENT_PATH" GITHUB_REF="$GITHUB_REF" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_WORKFLOW_REF="$GITHUB_WORKFLOW_REF" GITHUB_WORKFLOW_SHA="$GITHUB_WORKFLOW_SHA" ImageOS="$ImageOS" ImageVersion="$ImageVersion" RUNNER_OS="$RUNNER_OS" RUNNER_ARCH="$RUNNER_ARCH" /usr/bin/python3 -I -S -B tools/check_review_inventory_ci.py provision
+      - name: execute
+        timeout-minutes: 1
+        working-directory: base
+        run: |
+          /usr/bin/env -i HEAD_SHA="$HEAD_SHA" BASE_SHA="$BASE_SHA" PR_NUMBER="$PR_NUMBER" GITHUB_SHA="$GITHUB_SHA" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" GITHUB_EVENT_NAME="$GITHUB_EVENT_NAME" GITHUB_EVENT_PATH="$GITHUB_EVENT_PATH" GITHUB_REF="$GITHUB_REF" GITHUB_REPOSITORY="$GITHUB_REPOSITORY" GITHUB_WORKFLOW_REF="$GITHUB_WORKFLOW_REF" GITHUB_WORKFLOW_SHA="$GITHUB_WORKFLOW_SHA" ImageOS="$ImageOS" ImageVersion="$ImageVersion" RUNNER_OS="$RUNNER_OS" RUNNER_ARCH="$RUNNER_ARCH" /usr/bin/python3 -I -S -B tools/check_review_inventory_ci.py execute
