@@ -1,0 +1,40 @@
+name: inventory-trusted
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize]
+permissions:
+  contents: read
+jobs:
+  inventory-trusted:
+    if: github.repository == 'moruku36/multi-ai-workflow' && github.event.pull_request.number == 59 && github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/disconnected-review-inventory' && github.sha == github.event.pull_request.base.sha
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          path: base
+          fetch-depth: 1
+          fetch-tags: false
+          submodules: false
+          lfs: false
+          persist-credentials: false
+      - name: fetch PR head ref as data (never checked out)
+        timeout-minutes: 1
+        working-directory: base
+        run: |
+          /usr/bin/env -i HOME=/nonexistent PATH=/usr/bin:/bin LC_ALL=C GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_ASKPASS=/bin/false GIT_NO_REPLACE_OBJECTS=1 GIT_PROTOCOL_FROM_USER=0 /usr/bin/git -c protocol.allow=never -c protocol.https.allow=always -c credential.helper= -c http.extraHeader= -c http.followRedirects=false -c transfer.fsckObjects=true -c core.hooksPath=/dev/null fetch --no-tags --no-recurse-submodules --no-write-fetch-head --depth=1 https://github.com/moruku36/multi-ai-workflow.git refs/pull/59/head:refs/inventory/pr59-head
+      - name: provision
+        timeout-minutes: 2
+        working-directory: base
+        run: |
+          /usr/bin/env -i HEAD_SHA="$HEAD_SHA" BASE_SHA="$BASE_SHA" GITHUB_SHA="$GITHUB_SHA" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" ImageOS="$ImageOS" ImageVersion="$ImageVersion" RUNNER_OS="$RUNNER_OS" RUNNER_ARCH="$RUNNER_ARCH" /usr/bin/python3 -I -S -B tools/check_review_inventory_ci.py provision
+      - name: execute
+        timeout-minutes: 1
+        working-directory: base
+        run: |
+          /usr/bin/env -i HEAD_SHA="$HEAD_SHA" BASE_SHA="$BASE_SHA" GITHUB_SHA="$GITHUB_SHA" GITHUB_WORKSPACE="$GITHUB_WORKSPACE" RUNNER_TEMP="$RUNNER_TEMP" GITHUB_RUN_ID="$GITHUB_RUN_ID" ImageOS="$ImageOS" ImageVersion="$ImageVersion" RUNNER_OS="$RUNNER_OS" RUNNER_ARCH="$RUNNER_ARCH" /usr/bin/python3 -I -S -B tools/check_review_inventory_ci.py execute
