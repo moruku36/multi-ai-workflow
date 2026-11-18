@@ -1,0 +1,30 @@
+name: inventory-offline
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+permissions:
+  contents: read
+jobs:
+  inventory-offline:
+    if: github.repository == 'moruku36/multi-ai-workflow' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'feat/disconnected-review-inventory'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: head
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+      - timeout-minutes: 2
+        run: /usr/bin/python3 -I -S -B head/tools/check_review_inventory_ci.py provision
+      - timeout-minutes: 1
+        run: /usr/bin/python3 -I -S -B head/tools/check_review_inventory_ci.py execute
