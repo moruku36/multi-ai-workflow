@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import HTTPServer
 import json
 import os
 from pathlib import Path
@@ -15,6 +15,7 @@ import tempfile
 import threading
 
 import ocr_mimo_connection as connection
+from ocr_review_handler import review_handler
 
 FIXTURES = Path(__file__).resolve().parents[1] / "tests/fixtures/synthetic_samples"
 SAMPLES = {"clean": "app/service/data_processor.py",
@@ -132,31 +133,11 @@ def run_review(binary, *, live=False):
         raise connection.ProbeError("MIMO_API_KEY is not available")
     relay = ReviewRelay(live=live, api_key=key)
 
-    class Handler(BaseHTTPRequestHandler):
-        def log_message(self, *_args):
-            pass
+    handler = review_handler(
+        relay, request_limit=MAX_BYTES, timeout=connection.REQUEST_TIMEOUT,
+        error_body=b'{"error":{"message":"review stopped; no upstream retry"}}')
 
-        def do_POST(self):
-            self.connection.settimeout(connection.REQUEST_TIMEOUT)
-            try:
-                size = int(self.headers.get("Content-Length", "-1"))
-                if not 0 < size <= MAX_BYTES or self.headers.get("Transfer-Encoding"):
-                    raise ValueError()
-                raw = self.rfile.read(size)
-                if len(raw) != size:
-                    raise ValueError()
-                body = relay.exchange(raw, self.headers.get("Authorization", ""), self.path)
-                status = 200
-            except Exception:
-                relay.halted = True
-                body, status = b'{"error":{"message":"review stopped; no upstream retry"}}', 400
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-
-    server = HTTPServer(("127.0.0.1", 0), Handler)
+    server = HTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     results = []
