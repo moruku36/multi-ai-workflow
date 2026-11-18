@@ -25,6 +25,14 @@ PINS = {
   'docs/review-inventory.ja.md': '7c5125578f278eb3af847299d07b3471bef2986ae08030be4ab1d1c39f64dc46',
 }
 ALLOWED = tuple(PINS)
+# Event/workflow identity is a consistency check inside the trusted runner boundary, not attestation.
+REPO, REPO_ID, HEADBR = 'moruku36/multi-ai-workflow', 1365934149, 'feat/review-inventory-consumer-v1'
+WF_PATH = '.github/workflows/inventory-trusted.yml'  # must match this workflow's file name
+EVENT_CAP = 1 << 20
+RKEYS = {'tests', 'names', 'failures', 'errors', 'skipped', 'expected_failures', 'unexpected_successes', 'ok'}
+GFILES = ('/usr/bin/env', '/usr/local/bin/python3.13', '/usr/local/lib/python3.13/os.py')
+STAGED_DST = ('/target/tools/review_inventory.py', '/target/tests/check_review_inventory.py')
+GMOUNTS = ('/proc/sys', '/proc/sysrq-trigger') + STAGED_DST
 DCAP = SCAP = 65536
 MAXPATHS = 20
 TESTS = (
@@ -51,8 +59,11 @@ EMPTY = ('CapAdd', 'Binds', 'Devices', 'DeviceRequests', 'ExtraHosts', 'Links', 
   'Sysctls', 'GroupAdd', 'PortBindings', 'Dns', 'DnsOptions', 'DnsSearch', 'PidMode',
   'UsernsMode', 'UTSMode', 'CgroupParent', 'PublishAllPorts', 'AutoRemove')
 
-GUARD = r'''
-import hashlib, json, os, resource, runpy, stat, sys, unittest
+# The guard measures the container, then os.execv replaces its interpreter with a fresh one that runs the
+# controller-owned driver. exec keeps the same process/cgroup/mount/limit boundary but clears guard interpreter
+# state. The exact-source target result is still not independent attestation. The target never runs in the guard.
+GUARD_SRC = r'''
+import hashlib, json, os, resource, stat, sys
 assert (os.getuid(), os.getgid()) == (65534, 65534)
 assert dict(os.environ) == {'HOME': '/scratch', 'TMPDIR': '/scratch', 'XDG_CACHE_HOME': '/scratch', 'LC_ALL': 'C'}
 assert sys.version_info[:3] == (3, 13, 18), sys.version
@@ -75,6 +86,11 @@ for line in open('/proc/self/mountinfo'):
 for p in ('/', '/sys', '/sys/fs/cgroup', '/dev/pts', '/dev/mqueue', '/etc/hosts', '/etc/hostname', '/etc/resolv.conf'):
   assert 'ro' in mounts[p][0], (p, mounts[p])
 assert not os.path.exists('/dev/shm') and 'rw' in mounts['/scratch'][0]
+ro_named = {}
+for p in ('/proc/sys', '/proc/sysrq-trigger', '/target/tools/review_inventory.py', '/target/tests/check_review_inventory.py'):
+  ro_named[p] = {'present': p in mounts, 'ro': p in mounts and 'ro' in mounts[p][0]}
+for p in ro_named:
+  assert ro_named[p] == {'present': True, 'ro': True}, p
 s = os.stat('/dev')
 assert s.st_uid == 0 and stat.S_IMODE(s.st_mode) == 0o755
 # runc can bind the /dev tmpfs null node over this optional proc file.
@@ -96,6 +112,8 @@ for p, (o, fs) in mounts.items():
 st = dict(l.split(':', 1) for l in open('/proc/self/status').read().splitlines() if ':' in l)
 assert st['NoNewPrivs'].strip() == '1' and st['Seccomp'].strip() == '2'
 assert all(int(st[k].strip(), 16) == 0 for k in ('CapEff', 'CapPrm', 'CapBnd'))
+sec = {'seccomp': int(st['Seccomp'].strip()), 'no_new_privs': int(st['NoNewPrivs'].strip()),
+  'cap_eff': int(st['CapEff'].strip(), 16), 'cap_prm': int(st['CapPrm'].strip(), 16), 'cap_bnd': int(st['CapBnd'].strip(), 16)}
 for n, w in (('RLIMIT_CPU', 5), ('RLIMIT_NOFILE', 32), ('RLIMIT_FSIZE', 1048576), ('RLIMIT_CORE', 0)):
   assert resource.getrlimit(getattr(resource, n)) == (w, w), n
 cg = lambda n: open('/sys/fs/cgroup/' + n).read().strip()
@@ -103,7 +121,13 @@ for k, v in (('memory.max', '134217728'), ('memory.swap.max', '0'), ('pids.max',
   assert cg(k) == v, k
 quota, period = cg('cpu.max').split()
 assert int(quota) > 0 and int(period) == 2 * int(quota), 'cpu.max is not 0.5 CPU'
-print('INFRA_GUARD_OK ' + json.dumps(meas, sort_keys=True), flush=True)
+G = {'files': meas, 'seccomp': sec, 'mounts': ro_named, 'latency_mask': 'absent' if mask_info is None else 'verified'}
+DRIVER = %D%
+print('INFRA_GUARD_OK ' + json.dumps(G, sort_keys=True), flush=True)
+sys.stdout.flush()
+os.execv(sys.executable, [sys.executable, '-I', '-S', '-B', '-c', DRIVER])
+#--DRIVER--
+import json, runpy, sys, unittest
 EXPECTED = %T%
 ns = runpy.run_path('/target/tests/check_review_inventory.py', run_name='inventory_target')
 cls = ns['InventoryTests']
@@ -118,6 +142,8 @@ S['ok'] = bool(r.wasSuccessful() and r.testsRun == 10 and not any(S[k] for k in 
 print('INVENTORY_RESULT ' + json.dumps(S, sort_keys=True), flush=True)
 sys.exit(0 if S['ok'] else 1)
 '''.replace('%T%', repr(TESTS)).replace('%B%', repr(BAD))
+GUARD_HEAD, DRIVER = GUARD_SRC.split('#--DRIVER--' + chr(10))
+GUARD = GUARD_HEAD.replace('%D%', repr(DRIVER))
 
 
 class Failure(Exception):
@@ -201,6 +227,7 @@ def bounded_run(argv, env, end, cap, acct):
 class Ctl:
   def __init__(self, end):
     self.end, self.cend, self.acct = end, None, [0]
+    self.ev = {}
 
   def call(self, args, cl=False):
     rc, out, err = bounded_run([DOCKER] + args, DENV, self.cend if cl else self.end,
@@ -414,6 +441,12 @@ def verify_manifest(desc, where):
       and p.get('variant', '') in ('', 'v1'), where + ' manifest platform')
 
 
+def desc_fields(d):
+  p = d.get('platform')
+  return {'mediaType': d['mediaType'], 'digest': d['digest'], 'size': d['size'],
+    'platform': None if p is None else '%s/%s' % (p.get('os'), p.get('architecture'))}
+
+
 def docker_info(ctl):
   v = json.loads(ctl.call(['image', 'inspect', '--format', '{{json .}}', REF]))
   image_id, digs, desc = v.get('Id'), v.get('RepoDigests'), v.get('Descriptor')
@@ -422,6 +455,8 @@ def docker_info(ctl):
   require(image_id in (CONFIG_DIGEST, MANIFEST_DIGEST), 'unexpected Engine image ID')
   if desc is not None:
     verify_manifest(desc, 'image')
+  ctl.ev['image'] = {'id_kind': 'config_id' if image_id == CONFIG_DIGEST else 'manifest_id',
+    'manifest_descriptor': None if desc is None else desc_fields(desc)}
   return image_id, digs, image_id == MANIFEST_DIGEST and desc is not None
 
 
@@ -431,7 +466,7 @@ def provenance(ctl):
   require(s.get('Version'), 'no docker server version')
   run = {k: os.environ.get(k, 'unset')[:80] for k in ('ImageOS', 'ImageVersion', 'RUNNER_OS', 'RUNNER_ARCH')}
   return {'client': c.get('Version'), 'server': s.get('Version'), 'api': s.get('ApiVersion'),
-    'server_os_arch': '%s/%s' % (s.get('Os'), s.get('Arch')), 'runner': run}
+    'server_os_arch': '%s/%s' % (s.get('Os'), s.get('Arch')), 'runner': run, 'runner_self_reported': True}
 
 
 def verify_container(v, name, image_id, cmd, binds, expect_manifest):
@@ -452,50 +487,129 @@ def verify_container(v, name, image_id, cmd, binds, expect_manifest):
     ('mount types', all(m['Type'] == 'bind' or (m['Type'] == 'tmpfs' and m['Destination'] in TMPFS) for m in ms)),
     ('binds', seen == {(s, d, False) for s, d in binds})) if not ok]
   require(not bad, 'container differs: ' + ', '.join(bad))
+  return {'manifest_descriptor': None if desc is None else desc_fields(desc),
+    'mounts': [[m['Destination'], m['Type'], m.get('RW')] for m in sorted(ms, key=lambda m: m['Destination'])]}
+
+
+def check_guard(g):
+  hx = lambda v: isinstance(v, str) and len(v) == 64 and set(v) <= set('0123456789abcdef')
+  require(isinstance(g, dict) and set(g) == {'files', 'seccomp', 'mounts', 'latency_mask'}, 'guard keys')
+  f, s, m = g['files'], g['seccomp'], g['mounts']
+  require(isinstance(f, dict) and set(f) == set(GFILES) and all(hx(v) for v in f.values()), 'guard files')
+  require(isinstance(s, dict) and set(s) == {'seccomp', 'no_new_privs', 'cap_eff', 'cap_prm', 'cap_bnd'}
+    and all(type(v) is int for v in s.values()) and s['seccomp'] == 2 and s['no_new_privs'] == 1
+    and s['cap_eff'] == 0 and s['cap_prm'] == 0 and s['cap_bnd'] == 0, 'guard process state')
+  require(isinstance(m, dict) and set(m) == set(GMOUNTS) and all(isinstance(v, dict) and set(v) == {'present', 'ro'}
+    and type(v['present']) is bool and type(v['ro']) is bool for v in m.values()), 'guard mounts')
+  require(all(m[p] == {'present': True, 'ro': True} for p in GMOUNTS), 'required mounts not present and read-only')
+  require(g['latency_mask'] in ('absent', 'verified'), 'guard latency mask')
+  return g
 
 
 def parse_target(text):
   ls = text.split(chr(10))
-  g = [l for l in ls if l.startswith('INFRA_GUARD_OK ')]
-  r = [l for l in ls if l.startswith('INVENTORY_RESULT ')]
-  require(len(g) == 1 and len(r) == 1, 'markers')
-  res = json.loads(r[0].split(' ', 1)[1])
-  require(res.get('ok') is True and res.get('tests') == 10 and res.get('names') == sorted(TESTS)
-    and not any(res.get(k) for k in BAD), 'result not ten passes')
-  return json.loads(g[0].split(' ', 1)[1]), res
+  gi = [i for i, l in enumerate(ls) if l.startswith('INFRA_GUARD_OK ')]
+  ri = [i for i, l in enumerate(ls) if l.startswith('INVENTORY_RESULT ')]
+  require(len(gi) == 1 and len(ri) == 1 and gi[0] < ri[0], 'markers')
+  require(text.count('INFRA_GUARD_OK ') == 1 and text.count('INVENTORY_RESULT ') == 1, 'marker duplicates')
+  res = json.loads(ls[ri[0]].split(' ', 1)[1])
+  guard = json.loads(ls[gi[0]].split(' ', 1)[1])
+  isint = lambda v: type(v) is int
+  require(isinstance(res, dict) and set(res) == RKEYS, 'result keys')
+  require(res['ok'] is True and isint(res['tests']) and res['tests'] == 10 and res['names'] == sorted(TESTS)
+    and all(isint(res[k]) and res[k] == 0 for k in BAD), 'result not ten passes')
+  return check_guard(guard), res
+
+
+def clean_path(p, what):
+  require(isinstance(p, str) and 2 <= len(p) <= 1024 and p.isascii() and p.startswith('/')
+    and not p.startswith('//') and p == posixpath.normpath(p)
+    and not any(c in p for c in (',', chr(34))) and not any(ord(c) < 32 or ord(c) == 127 for c in p),
+    'bad ' + what + ' path')
+  return p
+
+
+def read_event(path, end):
+  clean_path(path, 'event')
+  f = walk(path, FL)
+  try:
+    a = os.fstat(f)
+    require(stat.S_ISREG(a.st_mode) and a.st_size <= EVENT_CAP, 'bad event file')
+    data = b''
+    while len(data) <= EVENT_CAP:
+      due(end, 'event read')
+      chunk = os.read(f, min(8192, EVENT_CAP + 1 - len(data)))
+      if not chunk:
+        break
+      data += chunk
+    require(len(data) <= EVENT_CAP, 'event too large')
+  finally:
+    os.close(f)
+  try:
+    return json.loads(data.decode('utf-8'))
+  except ValueError:
+    raise Failure('event not JSON') from None
+
+
+def check_event(e, ev, head, base, esha, pr):
+  ids = [e.get(k, '') for k in ('GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT')]
+  for v in ids:
+    require(1 <= len(v) <= 20 and v.isascii() and v.isdigit() and v[0] != '0', 'bad run identity')
+  wf = REPO + '/' + WF_PATH + '@refs/heads/main'
+  require(e.get('GITHUB_EVENT_NAME') == 'pull_request_target' and e.get('GITHUB_REF') == 'refs/heads/main'
+    and e.get('GITHUB_REPOSITORY') == REPO and e.get('GITHUB_WORKFLOW_REF') == wf
+    and e.get('GITHUB_WORKFLOW_SHA') == esha, 'workflow identity')
+  require(isinstance(ev, dict) and ev.get('action') in ('opened', 'synchronize'), 'event action')
+  pro, repo = ev.get('pull_request'), ev.get('repository')
+  require(isinstance(pro, dict) and isinstance(repo, dict), 'event shape')
+  isn = lambda v: type(v) is int and v > 0 and v == pr
+  require(isn(ev.get('number')) and isn(pro.get('number')), 'event PR number')
+  rp = lambda r: isinstance(r, dict) and type(r.get('id')) is int and r['id'] == REPO_ID and r.get('full_name') == REPO
+  b, h = pro.get('base'), pro.get('head')
+  require(isinstance(b, dict) and isinstance(h, dict) and rp(repo) and rp(b.get('repo')) and rp(h.get('repo')),
+    'event repository')
+  require(b.get('ref') == 'main' and h.get('ref') == HEADBR and b.get('sha') == base and h.get('sha') == head
+    and base == esha, 'event refs')
+  return {'action': ev['action'], 'event_name': 'pull_request_target', 'workflow_ref': wf, 'workflow_sha': esha,
+    'run_id': int(ids[0]), 'run_attempt': int(ids[1]), 'repository_id': REPO_ID, 'consistency_only': True}
 
 
 def context():
+  t0 = time.monotonic()
   e = os.environ
   head, base, ws, temp, esha = (e.get(k, '') for k in ('HEAD_SHA', 'BASE_SHA', 'GITHUB_WORKSPACE', 'RUNNER_TEMP', 'GITHUB_SHA'))
   for sha in (head, base, esha):
     require(len(sha) == 40 and set(sha) <= set('0123456789abcdef'), 'bad SHA input')
-  require(ws.startswith('/') and temp.startswith('/') and ',' not in temp, 'bad workspace/temp')
+  ws, temp = clean_path(ws, 'workspace'), clean_path(temp, 'temp')
+  for p in (ws, temp):
+    os.close(walk(p, DF))
   pr = e.get('PR_NUMBER', '')
   require(1 <= len(pr) <= 10 and pr.isascii() and pr.isdigit() and pr[0] != '0', 'bad PR number')
-  ws = ws.rstrip('/')
+  evd = check_event(e, read_event(e.get('GITHUB_EVENT_PATH', ''), t0 + 5), head, base, esha, int(pr))
   return {'head': head, 'base': base, 'sha': esha, 'base_dir': ws + '/base',
-    'pr': int(pr), 'headref': 'refs/inventory/pr-%s-head' % pr,
-    'temp': temp.rstrip('/'), 'run': e.get('GITHUB_RUN_ID', '')[:40]}
+    'pr': int(pr), 'headref': 'refs/inventory/pr-%s-head' % pr, 'remote_ref': 'refs/pull/%s/head' % pr,
+    'temp': temp, 'run': e.get('GITHUB_RUN_ID', ''), 'event': evd, 't0': t0}
 
 
 def emit(ctx, mode, image_id, digs, prov, extra):
   extra.update(mode=mode, head=ctx['head'], base=ctx['base'], event_sha=ctx['sha'], run=ctx['run'], pr_number=ctx['pr'], image_ref=REF,
+    event=ctx['event'], head_ref={'remote': ctx['remote_ref'], 'local_verified': ctx['headref'], 'verified_sha': ctx['head']},
     source_count=len(PINS), test_count=len(TESTS),
     engine_image_id=image_id, pinned_manifest_digest=MANIFEST_DIGEST, pinned_config_digest=CONFIG_DIGEST,
     config_digest_evidence='engine_image_id' if image_id == CONFIG_DIGEST else 'verified_manifest_pin',
+    engine_image_id_kind='config_id' if image_id == CONFIG_DIGEST else 'manifest_id',
     repo_digests=digs, provenance=prov)
   print(json.dumps(extra, sort_keys=True, indent=1))
 
 
 def provision(ctx):
-  ctl = Ctl(time.monotonic() + 60)
+  ctl = Ctl(ctx['t0'] + 60)
   bd = bind(ctx, ctl.end)
   ctl.call(['pull', '--quiet', '--platform=linux/amd64', REF])
   image_id, digs, _ = docker_info(ctl)
   prov = provenance(ctl)
   due(ctl.end, 'provision')
-  emit(ctx, 'provision', image_id, digs, prov, {'target_executed': False, 'caps': bd['caps']})
+  emit(ctx, 'provision', image_id, digs, prov, {'target_executed': False, 'caps': bd['caps'], 'engine': ctl.ev})
   return 0
 
 
@@ -514,6 +628,8 @@ def run_target(ctx, ctl, st):
     (stage + '/check_review_inventory.py', '/target/tests/check_review_inventory.py')]
   cmd = ['-i', 'HOME=/scratch', 'TMPDIR=/scratch', 'XDG_CACHE_HOME=/scratch', 'LC_ALL=C',
     PY, '-I', '-S', '-B', '-c', GUARD]
+  for s, _ in binds:
+    clean_path(s, 'mount source')
   args = ['create', '--name', name] + OPTS
   for p, o in TMPFS.items():
     args += ['--tmpfs', p + ':' + o]
@@ -521,7 +637,7 @@ def run_target(ctx, ctl, st):
     args += ['--mount', 'type=bind,src=%s,dst=%s,readonly' % (s, d)]
   st['created'] = True
   ctl.call(args + [image_id] + cmd)
-  verify_container(json.loads(ctl.call(['inspect', '--format', '{{json .}}', name])),
+  ctl.ev['container'] = verify_container(json.loads(ctl.call(['inspect', '--format', '{{json .}}', name])),
     name, image_id, cmd, binds, expect_manifest)
   raw = ctl.call(['start', '--attach', name])
   state = json.loads(ctl.call(['inspect', '--format', '{{json .State}}', name]))
@@ -531,11 +647,11 @@ def run_target(ctx, ctl, st):
   measured, result = parse_target(text)
   due(end, 'result')
   return {'text': text, 'measured': measured, 'result': result, 'image_id': image_id, 'digs': digs,
-    'prov': prov, 'bd': bd}
+    'prov': prov, 'bd': bd, 'ev': ctl.ev}
 
 
 def execute(ctx):
-  t0 = time.monotonic()
+  t0 = ctx['t0']
   ctl = Ctl(t0 + 15)
   st = {'name': 'inventory-offline-' + uuid.uuid4().hex, 'stage': None, 'created': False}
   out, fail = None, Failure('did not complete')
@@ -561,7 +677,7 @@ def execute(ctx):
     return 1
   bd = out['bd']
   emit(ctx, 'execute', out['image_id'], out['digs'], out['prov'], {'changed_paths': bd['changed'], 'caps': bd['caps'],
-    'sources[sha256,head_blob,base_blob]': bd['manifest'], 'guard_measured_in_container': out['measured'],
+    'sources[sha256,head_blob,base_blob]': bd['manifest'], 'guard_measured_in_container': out['measured']['files'], 'guard_evidence': out['measured'], 'engine': out['ev'],
     'result': out['result'], 'lifecycle': rep})
   print('--- target output (unauthenticated wrapper) ---')
   print(out['text'])
