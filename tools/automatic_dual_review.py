@@ -227,6 +227,10 @@ RESPONSE_REASONS = frozenset((
 # Where our own sender/relay budget stopped; never a provider or transport diagnosis.
 STOP_REASONS = frozenset((
     'attempt_cap', 'deadline', 'payload_size', 'cumulative_payload'))
+HALT_REASONS = frozenset((
+    'request_framing', 'request_read', 'relay_rejected', 'response_write',
+    'handler_error'))
+HALT_OBSERVATIONS = frozenset(('post_cli', 'settled_cleanup'))
 
 
 def observe_response_reason(lane, relay, raw):
@@ -308,10 +312,16 @@ def safe_diagnostics(lane, values=None):
     stop = values.get('stop_reason')
     if type(stop) is str and stop in STOP_REASONS:
         result['stop_reason'] = stop
+    first, seen = values.get('first_halt_reason'), values.get('halt_observation')
+    if (lane == 'alibaba' and result['relay_halted'] is True
+            and type(first) is str and first in HALT_REASONS
+            and type(seen) is str and seen in HALT_OBSERVATIONS):
+        result['first_halt_reason'], result['halt_observation'] = first, seen
     return result
 
 
-def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None):
+def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None, *,
+                      first_halt_reason=None, halt_observation=None):
     reason = stop = None
     try:
         reason = getattr(relay, 'response_reason', None)
@@ -324,21 +334,32 @@ def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None):
         'http_attempts': getattr(relay, 'attempts', None),
         'completed_responses': getattr(relay, 'completed', None),
         'relay_halted': getattr(relay, 'halted', None),
-        'usage': getattr(relay, 'usage', None), 'response_reason': reason})
+        'usage': getattr(relay, 'usage', None), 'response_reason': reason,
+        'first_halt_reason': first_halt_reason, 'halt_observation': halt_observation})
 
 
 class LaneError(ValueError):
     """Only this bounded diagnostic projection crosses a failed-lane boundary."""
 
-    def __init__(self, lane, stage, relay=None, cli_exit_code=None):
+    def __init__(self, lane, stage, relay=None, cli_exit_code=None, *,
+                 first_halt_reason=None, halt_observation=None):
         super().__init__('Review lane incomplete or unknown')
         self.lane = lane
-        self.diagnostics = relay_diagnostics(lane, stage, relay, cli_exit_code)
+        self.diagnostics = relay_diagnostics(
+            lane, stage, relay, cli_exit_code,
+            first_halt_reason=first_halt_reason, halt_observation=halt_observation)
 
 
 def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
     stage, failure, cli_exit_code = 'preflight', None, None
     relay = server = thread = workspace = None
+    first_halt = halt_seen = None
+
+    def latch(reason):
+        nonlocal first_halt
+        if first_halt is None:
+            first_halt = reason
+
     try:
         binary, digest = connection.checked_binary(binary)
         for name in ('config.json', 'rule.json'):
@@ -354,27 +375,38 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
 
             def do_POST(self):
                 self.connection.settimeout(30)
+                why = 'request_framing'
                 try:
                     size = int(self.headers.get('Content-Length', '-1'))
                     if not 0 < size <= MAX_REQUEST_BYTES or self.headers.get('Transfer-Encoding'):
                         raise ValueError()
+                    why = 'request_read'
                     raw = self.rfile.read(size)
                     if len(raw) != size:
                         raise ValueError()
+                    why = 'relay_rejected'
                     body = relay.exchange(raw, self.headers.get('Authorization', ''), self.path)
                     status = 200
                 except Exception:
+                    latch(why)
                     relay.halted = True
                     body, status = b'{"error":{"message":"stopped; do not retry"}}', 400
-                self.send_response(status)
-                self.send_header('Content-Length', str(len(body)))
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(body)
+                try:
+                    self.send_response(status)
+                    self.send_header('Content-Length', str(len(body)))
+                    self.send_header('Content-Type', 'application/json')
+                    self.end_headers()
+                    self.wfile.write(body)
+                except TimeoutError:
+                    raise
+                except Exception:
+                    latch('response_write')
+                    raise
 
         class Server(HTTPServer):
             def handle_error(self, *_args):
                 # No background traceback containing request/exception text.
+                latch('handler_error')
                 relay.halted = True
 
         server = Server(('127.0.0.1', 0), Handler)
@@ -442,6 +474,7 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
             raise ValueError()
         stage = 'relay_halted'
         if relay.halted:
+            halt_seen = 'post_cli'
             raise ValueError()
         stage = 'no_completed_response'
         if not relay.completed:
@@ -500,9 +533,14 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
         if not settled:
             failure = failure or 'cleanup'
         elif relay is not None and relay.halted:
+            if halt_seen is None:
+                halt_seen = 'settled_cleanup'
             failure = failure or 'relay_halted'
     if failure:
-        raise LaneError('alibaba', failure, relay if settled else None, cli_exit_code) from None
+        raise LaneError('alibaba', failure, relay if settled else None,
+                        cli_exit_code,
+                        first_halt_reason=first_halt if settled else None,
+                        halt_observation=halt_seen if settled else None) from None
     stats = relay_diagnostics('alibaba', 'internal', relay, cli_exit_code)
     return {'findings': findings, 'unresolved': [], 'binary_sha256': digest,
             **{key: value for key, value in stats.items() if key != 'failure_stage'}}
