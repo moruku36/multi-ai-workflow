@@ -1,5 +1,6 @@
 """Bounded, fixed-vocabulary failure diagnostics for the automatic dual review lanes."""
 from ocr_mimo_review import MAX_CALLS
+from ocr_review_handler import WRITE_EXCEPTIONS, WRITE_PHASES
 
 # Stages identify the stopping point, not a proven provider/root cause.
 FAILURE_STAGES = {
@@ -72,15 +73,26 @@ def safe_diagnostics(lane, values=None):
             and type(first) is str and first in HALT_REASONS
             and type(seen) is str and seen in HALT_OBSERVATIONS):
         result['first_halt_reason'], result['halt_observation'] = first, seen
+        # Write detail is meaningful only as a pair, for a response_write halt.
+        phase = values.get('response_write_phase')
+        kind = values.get('response_write_exception')
+        if (first == 'response_write'
+                and type(phase) is str and phase in WRITE_PHASES
+                and type(kind) is str and kind in WRITE_EXCEPTIONS):
+            result['response_write_phase'] = phase
+            result['response_write_exception'] = kind
     return result
 
 
 def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None, *,
                       first_halt_reason=None, halt_observation=None):
-    reason = stop = None
+    reason = stop = phase = kind = None
     try:
         reason = getattr(relay, 'response_reason', None)
         stop = getattr(relay, 'stop_reason', None)
+        detail = getattr(relay, 'response_write_detail', None)
+        if type(detail) is tuple and len(detail) == 2:
+            phase, kind = detail
     except Exception:
         pass
     return safe_diagnostics(lane, {
@@ -90,7 +102,8 @@ def relay_diagnostics(lane, stage, relay=None, cli_exit_code=None, *,
         'completed_responses': getattr(relay, 'completed', None),
         'relay_halted': getattr(relay, 'halted', None),
         'usage': getattr(relay, 'usage', None), 'response_reason': reason,
-        'first_halt_reason': first_halt_reason, 'halt_observation': halt_observation})
+        'first_halt_reason': first_halt_reason, 'halt_observation': halt_observation,
+        'response_write_phase': phase, 'response_write_exception': kind})
 
 
 class LaneError(ValueError):
