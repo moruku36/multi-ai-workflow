@@ -3,7 +3,7 @@
 from __future__ import annotations
 import hashlib
 import http.client
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import HTTPServer
 import json
 import os
 from pathlib import Path
@@ -16,6 +16,7 @@ import time
 import dual_review
 import ocr_mimo_connection as connection
 from ocr_mimo_review import MAX_CALLS, ReviewRelay
+from ocr_review_handler import review_handler
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_SOURCE = 65536  # Compatibility name; no caller may raise this via PR input.
@@ -369,39 +370,10 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
         relay = BoundedReviewRelay(live=True, api_key=os.environ['MIMO_API_KEY'],
                                    attempt_cap=attempt_cap, attempt_deadline=attempt_deadline)
 
-        class Handler(BaseHTTPRequestHandler):
-            def log_message(self, *_args):
-                pass
-
-            def do_POST(self):
-                self.connection.settimeout(30)
-                why = 'request_framing'
-                try:
-                    size = int(self.headers.get('Content-Length', '-1'))
-                    if not 0 < size <= MAX_REQUEST_BYTES or self.headers.get('Transfer-Encoding'):
-                        raise ValueError()
-                    why = 'request_read'
-                    raw = self.rfile.read(size)
-                    if len(raw) != size:
-                        raise ValueError()
-                    why = 'relay_rejected'
-                    body = relay.exchange(raw, self.headers.get('Authorization', ''), self.path)
-                    status = 200
-                except Exception:
-                    latch(why)
-                    relay.halted = True
-                    body, status = b'{"error":{"message":"stopped; do not retry"}}', 400
-                try:
-                    self.send_response(status)
-                    self.send_header('Content-Length', str(len(body)))
-                    self.send_header('Content-Type', 'application/json')
-                    self.end_headers()
-                    self.wfile.write(body)
-                except TimeoutError:
-                    raise
-                except Exception:
-                    latch('response_write')
-                    raise
+        handler = review_handler(
+            relay, request_limit=MAX_REQUEST_BYTES, timeout=30, latch=latch,
+            content_length_first=True,
+            error_body=b'{"error":{"message":"stopped; do not retry"}}')
 
         class Server(HTTPServer):
             def handle_error(self, *_args):
@@ -409,7 +381,7 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
                 latch('handler_error')
                 relay.halted = True
 
-        server = Server(('127.0.0.1', 0), Handler)
+        server = Server(('127.0.0.1', 0), handler)
         worker = threading.Thread(target=server.serve_forever, daemon=True)
         worker.start()
         thread = worker
