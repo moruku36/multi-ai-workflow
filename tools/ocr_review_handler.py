@@ -39,6 +39,11 @@ def review_handler(relay, *, request_limit, timeout, error_body, latch=None,
                 self.end_headers()
                 self.wfile.write(body)
             except TimeoutError:
+                # BaseHTTPRequestHandler may consume a timeout before
+                # HTTPServer.handle_error can halt the trusted lane.
+                if latch is not None:
+                    latch('response_write')
+                    relay.halted = True
                 raise
             except Exception:
                 if latch is not None:
