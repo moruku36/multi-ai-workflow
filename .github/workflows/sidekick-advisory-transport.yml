@@ -1,0 +1,56 @@
+name: Sidekick advisory transport witness
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type WRITE ONE NEUTRAL SIDEKICK PR 26 ADVISORY CHECK'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sidekick-advisory-transport-v1
+  cancel-in-progress: false
+
+jobs:
+  witness:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'moruku36/multi-ai-workflow' &&
+      github.repository_id == '1365934149' &&
+      github.event.repository.default_branch == 'main' &&
+      github.ref == 'refs/heads/main' &&
+      github.event.repository.owner.id == 12478466 &&
+      github.actor_id == '12478466' &&
+      github.run_attempt == '1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Check out the immutable Hub dispatch revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: moruku36/multi-ai-workflow
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact confirmation and configured App ID
+        env:
+          CONFIGURED_APP_ID: ${{ vars.APP_ID }}
+        run: python3 -I -S -B tools/sidekick_advisory_transport.py authorize
+      - name: Mint Sidekick-only installation token
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: moruku36
+          repositories: local-ai-sidekick
+          permission-pull-requests: read
+          permission-checks: write
+      - name: Verify and record one advisory transport check
+        env:
+          SIDEKICK_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: python3 -I -S -B tools/sidekick_advisory_transport.py
