@@ -111,6 +111,10 @@ def unique_object(pairs):
     return result
 
 
+class RateLimited(Blocked):
+    pass
+
+
 class GitHub:
     def __init__(self, token=None):
         require(token is None or re.fullmatch(r"[A-Za-z0-9_\-.]+", token),
@@ -139,6 +143,9 @@ class GitHub:
             response = connection.getresponse()
             if body is None and response.status == 404:
                 raise NotFound("GitHub returned HTTP 404.")
+            if (body is None and response.status in (403, 429)
+                    and response.getheader("X-RateLimit-Remaining", "") == "0"):
+                raise RateLimited(f"GitHub returned HTTP {response.status} (rate limit exhausted).")
             require(response.status == (200 if body is None else 201),
                     f"GitHub returned HTTP {response.status}.")
             link = response.getheader("Link", "")
@@ -158,6 +165,14 @@ class GitHub:
         result, relations = self.request(path, **kwargs)
         require(not relations, "Unexpected pagination for a single GitHub response.")
         return result
+
+
+class ReadbackGitHub(GitHub):
+    # Read-only client: refuses every payload before any network use and sends the
+    # ephemeral read token (if one exists) on GET requests only.
+    def request(self, path, *, authenticated=False, payload=None):
+        require(payload is None, "Read-only client cannot write.")
+        return super().request(path, authenticated=self.token is not None)
 
 
 def is_repo(repo, name, identity):
@@ -356,13 +371,29 @@ def recheck_release(api, classic):
     require(verify_target(api) == classic, "Classic Sidekick branch protection changed.")
 
 
-def reconcile():
-    # GET-only: no installation token and no write path.
-    api = GitHub()
-    verify_public_source(api, PINNED_RELEASE)
+def phased(phase, operation):
+    # Fixed phase labels only; no raw body, headers or token text.
+    try:
+        return operation()
+    except Blocked as error:
+        raise Blocked(f"{phase}: {error}") from None
+    except (ValueError, OSError, http.client.HTTPException, subprocess.SubprocessError,
+            KeyError, TypeError, AttributeError, RecursionError):
+        raise Blocked(f"{phase}: Unreadable input or GitHub response.") from None
+
+
+def check_protection(api):
     require(verify_target(api) == CLASSIC_SHA256, "Classic Sidekick branch protection changed.")
-    visible(lambda: read_published(api, CHECK_ID))
-    visible(lambda: verify_checks(api, published_id=CHECK_ID))
+
+
+def reconcile():
+    # GET-only: the optional ephemeral read token is never a write credential and
+    # the client refuses every payload. Anonymous mode remains when it is absent.
+    api = ReadbackGitHub(os.environ.get("SIDEKICK_READBACK_TOKEN") or None)
+    phased("source", lambda: verify_public_source(api, PINNED_RELEASE))
+    phased("protection", lambda: check_protection(api))
+    phased("direct-readback", lambda: visible(lambda: read_published(api, CHECK_ID)))
+    phased("listing", lambda: visible(lambda: verify_checks(api, published_id=CHECK_ID)))
     print(f"Reconciled existing neutral Sidekick HOLD advisory check {CHECK_ID}; "
           "no new check was published.")
 

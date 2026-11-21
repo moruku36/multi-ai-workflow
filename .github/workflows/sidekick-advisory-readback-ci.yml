@@ -6,6 +6,8 @@ on:
 
 permissions:
   contents: read
+  checks: read
+  pull-requests: read
 
 jobs:
   readback:
@@ -20,4 +22,6 @@ jobs:
       - name: Run focused tests
         run: python3 -I -S -B tests/test_sidekick_advisory_transport.py
       - name: Reconcile pinned public advisory
+        env:
+          SIDEKICK_READBACK_TOKEN: ${{ github.token }}
         run: python3 -I -S -B tools/sidekick_advisory_transport.py reconcile

@@ -186,8 +186,9 @@ class AdvisoryTransport(unittest.TestCase):
         posted = False
         for (method, path), authorization in zip(fake.calls[before:], fake.authorizations[before:]):
             posted = posted or method == "POST"
-            uses_token = not args and (path == WRITE or (
-                not posted and (path in (SCOPE, SUITES) or path.startswith(RUNS))))
+            readback_token = bool(args) and method == "GET" and "SIDEKICK_READBACK_TOKEN" in (env or {})
+            uses_token = readback_token or (not args and (path == WRITE or (
+                not posted and (path in (SCOPE, SUITES) or path.startswith(RUNS)))))
             self.assertEqual(authorization, "Bearer ghs_fake" if uses_token else None)
         preflight_output = "".join(call.args[0] for call in opened.return_value.write.call_args_list)
         return code, stdout.getvalue() + stderr.getvalue(), preflight_output
@@ -513,6 +514,57 @@ class AdvisoryTransport(unittest.TestCase):
         self.assertTrue(all(method == "GET" for method, _ in fake.calls))
         self.assertEqual(set(fake.authorizations), {None})
         self.assertEqual(fake.calls.count(("GET", READBACK)), 3)
+
+    def test_reconcile_uses_ephemeral_read_token_for_get_only(self):
+        fake = self.published_fake()
+        code, output, _ = self.reconcile(fake, {"SIDEKICK_READBACK_TOKEN": "ghs_fake"})
+        self.assertEqual(code, 0)
+        self.assertIn("no new check was published", output)
+        self.assertTrue(all(method == "GET" for method, _ in fake.calls))
+        self.assertEqual(set(fake.authorizations), {"Bearer ghs_fake"})
+
+    def test_read_only_client_rejects_every_payload_before_network(self):
+        client = transport.ReadbackGitHub("ghs_fake")
+        with patch("http.client.HTTPSConnection") as connect:
+            for payload in ({}, {"a": 1}, []):
+                with self.subTest(payload=payload):
+                    with self.assertRaises(transport.Blocked):
+                        client.request("/x", authenticated=True, payload=payload)
+        connect.assert_not_called()
+
+    def test_rate_limit_is_classified_only_with_exhausted_header(self):
+        from unittest.mock import Mock
+        cases = (
+            (403, "0", "HTTP 403 (rate limit exhausted)"),
+            (429, "0", "HTTP 429 (rate limit exhausted)"),
+            (403, "7", "HTTP 403."),
+            (403, None, "HTTP 403."),
+            (500, "0", "HTTP 500."),
+        )
+        for status, remaining, expected in cases:
+            with self.subTest(status=status, remaining=remaining):
+                response = Mock(status=status)
+                response.getheader.side_effect = (
+                    lambda name, default=None, value=remaining:
+                    value if name == "X-RateLimit-Remaining" else default)
+                response.read.return_value = b'{"message": "private diagnostic"}'
+                connection = Mock()
+                connection.getresponse.return_value = response
+                with patch("http.client.HTTPSConnection", return_value=connection):
+                    with self.assertRaises(transport.Blocked) as caught:
+                        transport.GitHub().request("/x")
+                self.assertIn(expected, str(caught.exception))
+                self.assertNotIn("private diagnostic", str(caught.exception))
+
+    def test_reconcile_failure_uses_fixed_phase_label(self):
+        fake = self.published_fake()
+        with patch.object(transport, "verify_target",
+                          side_effect=transport.RateLimited("GitHub returned HTTP 403 (rate limit exhausted).")):
+            code, output, _ = self.reconcile(fake)
+        self.assertEqual(code, 1)
+        self.assertIn("Reconciliation failed. protection: GitHub returned HTTP 403 (rate limit exhausted).",
+                      output)
+        self.assertTrue(all(method == "GET" for method, _ in fake.calls))
 
     def test_reconcile_fails_closed_without_any_post(self):
         for change in (
