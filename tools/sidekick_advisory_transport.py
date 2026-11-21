@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 HUB = "moruku36/multi-ai-workflow"
 HUB_ID = 1365934149
@@ -47,10 +48,22 @@ CHECK = {
 MAX_RESPONSE = 4 * 1024 * 1024
 PAGE_SIZE = 50
 MAX_PAGES = 10
+PINNED_RELEASE = "e0b679cc4c101b55b408361cfeffbb20b79b38b9"
+CHECK_ID = 136774058834
+CLASSIC_SHA256 = "a277945f0f1f109f55e2565dba4b1d735015a05afba596f2c57060085254a883"
+VISIBILITY_DELAYS = (1, 2)
 
 
 class Blocked(ValueError):
     """A fixed diagnostic safe for the workflow log."""
+
+
+class NotFound(Blocked):
+    """A GET returned HTTP 404."""
+
+
+class Invisible(Blocked):
+    """The acknowledged check is not publicly visible yet."""
 
 
 def require(condition, message):
@@ -79,7 +92,10 @@ def verify_source(api):
         ["/usr/bin/git", "rev-parse", "--verify", "HEAD"], env={},
         stderr=subprocess.DEVNULL, text=True, timeout=5).strip()
     require(checked_out == release, "Hub checkout does not match the tagged revision.")
+    verify_public_source(api, release)
 
+
+def verify_public_source(api, release):
     require(is_public_main(api.one(HUB_REPO), HUB, HUB_ID), "Public Hub repository drifted.")
     main = api.one(f"{HUB_REPO}/branches/main")
     require(main["name"] == "main" and main["commit"]["sha"] == HUB_MAIN, "Hub main drifted.")
@@ -121,6 +137,8 @@ class GitHub:
         try:
             connection.request("GET" if body is None else "POST", path, body, headers)
             response = connection.getresponse()
+            if body is None and response.status == 404:
+                raise NotFound("GitHub returned HTTP 404.")
             require(response.status == (200 if body is None else 201),
                     f"GitHub returned HTTP {response.status}.")
             link = response.getheader("Link", "")
@@ -170,7 +188,14 @@ def verify_scope(api):
     require(is_public_main(repos[0], TARGET, TARGET_ID), "Installation repository identity drifted.")
 
 
-def verify_checks(api, *, authenticated=False, published_id=None):
+def ci_identity(row):
+    app_id = row["app"]["id"]
+    return {"id": row["id"], "head_sha": row["head_sha"], "name": row["name"],
+            "external_id": row["external_id"], "status": row["status"],
+            "conclusion": row["conclusion"], "app_id": app_id}
+
+
+def verify_checks(api, *, authenticated=False, published_id=None, expected_ci=None):
     commit = f"{REPO}/commits/{HEAD}"
     suites, relations = api.request(f"{commit}/check-suites?per_page=1", authenticated=authenticated)
     # The check-runs endpoint can omit runs beyond the most recent 1,000 suites.
@@ -207,7 +232,7 @@ def verify_checks(api, *, authenticated=False, published_id=None):
                         and row["status"] == "completed" and row["conclusion"] == "success",
                         "The pinned CI check did not match.")
                 ci = row
-            if name.casefold() == NAME or external_id == EXTERNAL_ID:
+            if identity == published_id or name.casefold() == NAME or external_id == EXTERNAL_ID:
                 require(identity == published_id, "Unexpected advisory context or transport ID.")
                 verify_published(row, published_id)
                 published_seen = True
@@ -215,8 +240,11 @@ def verify_checks(api, *, authenticated=False, published_id=None):
         require(("next" in relations) == (len(seen) < count), "Incomplete check-run pagination.")
         if "next" not in relations:
             require(ci is not None, "The pinned CI check was not found.")
-            require(published_id is None or published_seen, "Published check missing from the scan.")
-            return ci
+            pinned_ci = ci_identity(ci)
+            require(expected_ci is None or pinned_ci == expected_ci, "The pinned CI check changed.")
+            if published_id is not None and not published_seen:
+                raise Invisible("Published check missing from the scan.")
+            return pinned_ci
     raise Blocked("Check-run scan exceeded its page limit.")
 
 
@@ -288,13 +316,29 @@ def verify_published(saved, identity):
             "Published check did not match the HOLD advisory.")
 
 
-def write_and_read_back(api):
+def acknowledge_write(api):
     created = api.one(f"{REPO}/check-runs", authenticated=True, payload=CHECK)
     identity = created["id"]
     require(type(identity) is int and identity > 0, "Missing created check ID.")
-    saved = api.one(f"{REPO}/check-runs/{identity}", authenticated=True)
-    verify_published(saved, identity)
     return identity
+
+
+def read_published(api, identity):
+    try:
+        saved = api.one(f"{REPO}/check-runs/{identity}")
+    except NotFound:
+        raise Invisible("Published check is not directly visible yet.") from None
+    verify_published(saved, identity)
+
+
+def visible(operation):
+    for delay in (*VISIBILITY_DELAYS, None):
+        try:
+            return operation()
+        except Invisible:
+            if delay is None:
+                raise
+            time.sleep(delay)
 
 
 def preflight():
@@ -312,11 +356,27 @@ def recheck_release(api, classic):
     require(verify_target(api) == classic, "Classic Sidekick branch protection changed.")
 
 
+def reconcile():
+    # GET-only: no installation token and no write path.
+    api = GitHub()
+    verify_public_source(api, PINNED_RELEASE)
+    require(verify_target(api) == CLASSIC_SHA256, "Classic Sidekick branch protection changed.")
+    visible(lambda: read_published(api, CHECK_ID))
+    visible(lambda: verify_checks(api, published_id=CHECK_ID))
+    print(f"Reconciled existing neutral Sidekick HOLD advisory check {CHECK_ID}; "
+          "no new check was published.")
+
+
 def main(args):
-    writing = False
+    phase = None
+    identity = None
+    reconciling = args == ["reconcile"]
     try:
         if args == ["preflight"]:
             preflight()
+            return 0
+        if reconciling:
+            reconcile()
             return 0
         require(not args, "Unknown transport command.")
         api = GitHub(os.environ.get("SIDEKICK_APP_TOKEN", ""))
@@ -325,20 +385,28 @@ def main(args):
         require(re.fullmatch(r"[0-9a-f]{64}", classic), "Missing preflight protection fingerprint.")
         recheck_release(api, classic)
         ci = verify_checks(api, authenticated=True)
-        writing = True
+        phase = "post-acknowledgment"
         print("Submitting the single HOLD advisory check.", flush=True)
-        identity = write_and_read_back(api)
-        require(verify_checks(api, authenticated=True, published_id=identity) == ci,
-                "The pinned CI check changed.")
-        recheck_release(api, classic)
+        identity = acknowledge_write(api)
+        public = GitHub()
+        phase = "direct-readback"
+        visible(lambda: read_published(public, identity))
+        phase = "listing"
+        visible(lambda: verify_checks(public, published_id=identity, expected_ci=ci))
+        phase = "recheck"
+        recheck_release(public, classic)
         print(f"Verified neutral Sidekick HOLD advisory check {identity}.")
         return 0
     except (ValueError, OSError, http.client.HTTPException, subprocess.SubprocessError,
             KeyError, TypeError, AttributeError, RecursionError) as error:
-        if writing:
-            message = "Check write or readback unverified. Reconcile in GitHub. Do not replay."
+        detail = str(error) if isinstance(error, Blocked) else "Unreadable input or GitHub response."
+        if phase is not None:
+            known = "" if identity is None else f" for check {identity}"
+            message = (f"Check write unverified at {phase}{known}. "
+                       "Reconcile in GitHub. Do not replay.")
+        elif reconciling:
+            message = f"Reconciliation failed. {detail}"
         else:
-            detail = str(error) if isinstance(error, Blocked) else "Unreadable input or GitHub response."
             message = f"Blocked before write. {detail}"
         print(message, file=sys.stderr)
         return 1

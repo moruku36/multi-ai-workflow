@@ -109,6 +109,9 @@ class FakeGitHub:
         self.post_response = None
         self.readback = None
         self.after_write = None
+        self.readback_response = None
+        self.hidden_reads = 0
+        self.hidden_scans = 0
 
     def data(self, path):
         return self.reads[path][1]
@@ -130,9 +133,17 @@ class FakeGitHub:
             return Response(*self.post_response)
         assert self.method == "GET"
         if self.path == READBACK:
+            if self.hidden_reads:
+                self.hidden_reads -= 1
+                return Response(404, {"message": "Not Found"})
+            if self.readback_response is not None:
+                return Response(*self.readback_response)
             return Response(200, self.saved if self.readback is None else self.readback)
         if self.path.startswith(RUNS) and self.path not in self.reads:
-            rows = self.rows + ([self.saved] if self.saved and self.show_saved else [])
+            hide = self.saved is not None and self.path == RUNS + "1" and self.hidden_scans > 0
+            if hide:
+                self.hidden_scans -= 1
+            rows = self.rows + ([self.saved] if self.saved and self.show_saved and not hide else [])
             page = int(self.path.removeprefix(RUNS))
             link = f'<https://api.github.com{RUNS}{page + 1}>; rel="next"' if len(rows) > page * 50 else ""
             page_rows = rows[(page - 1) * 50:page * 50]
@@ -162,16 +173,21 @@ class AdvisoryTransport(unittest.TestCase):
               patch("builtins.open", opened),
               patch("subprocess.check_output", return_value=fake.checkout + "\n") as checkout,
               patch("http.client.HTTPSConnection", return_value=fake) as connect,
+              patch("time.sleep") as sleep,
               redirect_stdout(stdout), redirect_stderr(stderr)):
             code = transport.main(list(args))
+            self.slept = [call.args[0] for call in sleep.call_args_list]
         self.assertEqual(connect.call_count, len(fake.calls) - before)
         for call in connect.call_args_list:
             self.assertEqual(call.args, ("api.github.com",))
         for call in checkout.call_args_list:
             self.assertEqual(call.args[0], ["/usr/bin/git", "rev-parse", "--verify", "HEAD"])
             self.assertEqual(call.kwargs["env"], {})
-        for (_, path), authorization in zip(fake.calls[before:], fake.authorizations[before:]):
-            uses_token = not args and (path in (SCOPE, SUITES, WRITE, READBACK) or path.startswith(RUNS))
+        posted = False
+        for (method, path), authorization in zip(fake.calls[before:], fake.authorizations[before:]):
+            posted = posted or method == "POST"
+            uses_token = not args and (path == WRITE or (
+                not posted and (path in (SCOPE, SUITES) or path.startswith(RUNS))))
             self.assertEqual(authorization, "Bearer ghs_fake" if uses_token else None)
         preflight_output = "".join(call.args[0] for call in opened.return_value.write.call_args_list)
         return code, stdout.getvalue() + stderr.getvalue(), preflight_output
@@ -385,6 +401,140 @@ class AdvisoryTransport(unittest.TestCase):
                 fake = FakeGitHub()
                 fake.after_write = change
                 self.assert_unverified_write(fake)
+
+
+    def test_late_public_visibility_retries_only_get_requests(self):
+        fake = FakeGitHub()
+        fake.hidden_reads, fake.hidden_scans = 2, 1
+        code, output, _ = self.invoke(fake)
+        self.assertEqual(code, 0)
+        self.assertIn("Verified neutral Sidekick HOLD advisory check 73", output)
+        self.assertEqual(self.slept, [1, 2, 1])
+        self.assertEqual(fake.calls.count(("POST", WRITE)), 1)
+        self.assertEqual(fake.calls.count(("GET", READBACK)), 3)
+
+    def test_invisible_after_three_attempts_stops_without_second_post(self):
+        for attribute, phase, reads in (("hidden_reads", "direct-readback", 3),
+                                        ("hidden_scans", "listing", 1)):
+            with self.subTest(attribute=attribute):
+                fake = FakeGitHub()
+                setattr(fake, attribute, 3)
+                code, output, _ = self.invoke(fake)
+                self.assertEqual(code, 1)
+                self.assertIn(f"{phase} for check 73", output)
+                self.assertNotIn("Verified neutral", output)
+                self.assertEqual(self.slept, [1, 2])
+                self.assertEqual(fake.calls.count(("POST", WRITE)), 1)
+                self.assertEqual(fake.calls.count(("GET", READBACK)), reads)
+
+    def test_wrong_or_malformed_readback_is_never_retried(self):
+        for response in ((403, {"message": "private diagnostic"}), (200, b'{"id":73,"id":73}'),
+                         (200, [{"id": 73}]), (200, {"id": 73})):
+            with self.subTest(response=response):
+                fake = FakeGitHub()
+                fake.readback_response = response
+                self.assert_unverified_write(fake)
+                self.assertEqual(self.slept, [])
+                self.assertEqual(fake.calls.count(("GET", READBACK)), 1)
+
+    def test_listing_collisions_and_duplicates_are_never_retried(self):
+        def duplicate(fake):
+            fake.rows.append({**fake.saved, "id": 74})
+
+        def hidden_collision(fake):
+            fake.show_saved = False
+            duplicate(fake)
+
+        for change in (duplicate, hidden_collision):
+            with self.subTest(change=change.__name__):
+                fake = FakeGitHub()
+                fake.after_write = change
+                self.assert_unverified_write(fake)
+                self.assertEqual(self.slept, [])
+                self.assertEqual(fake.calls.count(("GET", RUNS + "1")), 2)
+
+    def test_definitive_listing_drift_does_not_retry(self):
+        def wrong_identity_metadata(fake):
+            fake.show_saved = False
+            fake.rows.append({**fake.saved, "name": "wrong", "external_id": None})
+
+        def changed_ci_with_hidden_advisory(fake):
+            fake.show_saved = False
+            fake.rows[0]["external_id"] = "changed"
+
+        for change in (wrong_identity_metadata, changed_ci_with_hidden_advisory):
+            with self.subTest(change=change.__name__):
+                fake = FakeGitHub()
+                fake.after_write = change
+                self.assert_unverified_write(fake)
+                self.assertEqual(self.slept, [])
+
+    def test_unrelated_ci_representation_change_is_not_identity_drift(self):
+        fake = FakeGitHub()
+        fake.after_write = lambda github: github.rows[0]["app"].update(description="public metadata")
+        code, output, _ = self.invoke(fake)
+        self.assertEqual(code, 0)
+        self.assertIn("Verified neutral Sidekick HOLD advisory check 73", output)
+        self.assertEqual(fake.calls.count(("POST", WRITE)), 1)
+
+    def test_acknowledgement_and_readback_failures_use_fixed_phase_labels(self):
+        fake = FakeGitHub()
+        fake.post_response = (201, {})
+        code, output, _ = self.invoke(fake)
+        self.assertEqual(code, 1)
+        self.assertIn("post-acknowledgment. Reconcile", output)
+        self.assertEqual(fake.calls[-1], ("POST", WRITE))
+        fake = FakeGitHub()
+        fake.readback_response = (403, {"message": "private diagnostic"})
+        code, output, _ = self.invoke(fake)
+        self.assertIn("direct-readback for check 73. Reconcile", output)
+        self.assertNotIn("private diagnostic", output)
+
+    def reconcile(self, fake, env=None):
+        with patch.multiple(transport, PINNED_RELEASE=RELEASE, CHECK_ID=73,
+                            CLASSIC_SHA256=CLASSIC_HASH):
+            return self.invoke(fake, ("reconcile",), env)
+
+    def published_fake(self):
+        fake = FakeGitHub()
+        fake.saved = {"id": 73, "name": NAME, "head_sha": HEAD, "external_id": EXTERNAL_ID,
+                      "status": "completed", "conclusion": "neutral", "app": dict(APP),
+                      "output": dict(transport.CHECK["output"])}
+        return fake
+
+    def test_reconcile_is_get_only_credential_free_and_tolerates_late_visibility(self):
+        fake = self.published_fake()
+        fake.hidden_reads, fake.hidden_scans = 2, 1
+        code, output, _ = self.reconcile(fake, {"SIDEKICK_APP_TOKEN": "ghs_fake"})
+        self.assertEqual(code, 0)
+        self.assertIn("no new check was published", output)
+        self.assertNotIn("Verified neutral", output)
+        self.assertEqual(self.slept, [1, 2, 1])
+        self.assertTrue(all(method == "GET" for method, _ in fake.calls))
+        self.assertEqual(set(fake.authorizations), {None})
+        self.assertEqual(fake.calls.count(("GET", READBACK)), 3)
+
+    def test_reconcile_fails_closed_without_any_post(self):
+        for change in (
+            lambda fake: fake.rows.append({**fake.saved, "id": 74}),
+            lambda fake: fake.saved.update(conclusion="success"),
+            lambda fake: fake.data(BRANCH)["protection"].update(enabled=True),
+            lambda fake: fake.data(PULL).update(merge_commit_sha=RELEASE),
+            lambda fake: setattr(fake, "show_saved", False),
+        ):
+            with self.subTest(change=change):
+                fake = self.published_fake()
+                change(fake)
+                code, output, _ = self.reconcile(fake)
+                self.assertEqual(code, 1)
+                self.assertIn("Reconciliation failed.", output)
+                self.assertNotIn(("POST", WRITE), fake.calls)
+                self.assertTrue(all(method == "GET" for method, _ in fake.calls))
+
+    def test_reconcile_accepts_no_extra_arguments(self):
+        fake = self.published_fake()
+        self.assert_no_write(fake, ("reconcile", "extra"))
+        self.assertEqual(fake.calls, [])
 
 
 class WorkflowSource(unittest.TestCase):

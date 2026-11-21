@@ -1,0 +1,23 @@
+name: Sidekick advisory readback CI
+
+on:
+  push:
+    branches: [fix/sidekick-hold-readback-20261121]
+
+permissions:
+  contents: read
+
+jobs:
+  readback:
+    if: github.repository == 'moruku36/multi-ai-workflow'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Run focused tests
+        run: python3 -I -S -B tests/test_sidekick_advisory_transport.py
+      - name: Reconcile pinned public advisory
+        run: python3 -I -S -B tools/sidekick_advisory_transport.py reconcile
