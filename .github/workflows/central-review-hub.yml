@@ -1,64 +1,68 @@
-name: Central review hub
+name: Sidekick HOLD advisory transport
 
+# Operator runbook
+# Stage the release on an inert branch and obtain independent approval of its
+# full 40-hex commit SHA. The pinned issuer requests only Sidekick checks:write.
+# Validate its installation/slug and the actual token's singleton repository
+# listing before the write; read the App, head and HOLD back from GitHub.
+# The separate installation-wide settings audit is not a token-scope receipt.
+# Create the exact lightweight tag below at the approved SHA once. Never
+# force, move, delete or recreate it. On an uncertain write, reconcile in GitHub.
 on:
-  schedule:
-    - cron: '*/30 * * * *'
-  workflow_dispatch:
-    inputs:
-      one_shot_envelope:
-        description: 'Optional canonical signed one-target envelope; no recurring activation'
-        required: false
-        default: ''
-        type: string
-
-permissions:
-  contents: read
+  push:
+    tags: [sidekick-hold-26-20261121]
 
 concurrency:
-  group: central-review-hub
+  group: sidekick-advisory-transport-v1
   cancel-in-progress: false
 
 jobs:
-  review:
-    if: ${{ github.repository == 'moruku36/multi-ai-workflow' && github.ref == 'refs/heads/main' && (vars.CENTRAL_REVIEW_ENABLED == 'true' || (github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '')) }}
+  witness:
+    if: >-
+      github.event_name == 'push' &&
+      github.repository == 'moruku36/multi-ai-workflow' &&
+      github.repository_id == '1365934149' &&
+      github.event.repository.default_branch == 'main' &&
+      github.event.repository.owner.id == 12478466 &&
+      github.actor_id == '12478466' &&
+      github.ref == 'refs/tags/sidekick-hold-26-20261121' &&
+      github.event.ref == github.ref &&
+      github.event.created == true &&
+      github.event.deleted == false &&
+      github.event.forced == false &&
+      github.event.before == '0000000000000000000000000000000000000000' &&
+      github.event.after == github.sha &&
+      github.run_attempt == '1'
     permissions:
       contents: read
-      id-token: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 4
     steps:
-      - name: Check out trusted hub controller
+      - name: Check out the tagged Hub revision
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: moruku36/multi-ai-workflow
           ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
-      - name: Create installation token for all installed repositories
+      - name: Verify public release and target before minting
+        id: preflight
+        env:
+          CONFIGURED_APP_ID: ${{ vars.APP_ID }}
+        run: python3 -I -S -B tools/sidekick_advisory_transport.py preflight
+      - name: Mint Sidekick-only installation token
         id: app-token
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         with:
-          app-id: ${{ vars.APP_ID }}
+          app-id: '5715914'
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          permission-contents: read
-          permission-pull-requests: read
+          owner: moruku36
+          repositories: local-ai-sidekick
           permission-checks: write
-          # Deliberately omit repositories: discover all installation repos.
-      - name: Download and verify pinned Alibaba CLI
+      - name: Verify and publish one neutral HOLD check
         env:
-          OCR_BINARY: ${{ runner.temp }}/opencodereview
-        run: |
-          set -euo pipefail
-          curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --tlsv1.2 --max-time 60 --output "$OCR_BINARY" https://github.com/alibaba/open-code-review/releases/download/v1.13.7/opencodereview-linux-amd64
-          echo "8c1ff786161b6dc0e8dcb06107f18bda8b6181b39ce573400add4a39f90cf19d  $OCR_BINARY" | sha256sum --check --status
-          chmod 500 "$OCR_BINARY"
-      - name: Run central source review coordinator
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          MIMO_API_KEY: ${{ secrets.MIMO_API_KEY }}
-          OCR_BINARY: ${{ runner.temp }}/opencodereview
-          CENTRAL_REVIEW_ENABLED: ${{ vars.CENTRAL_REVIEW_ENABLED }}
-          CENTRAL_REVIEW_SINCE: ${{ vars.CENTRAL_REVIEW_SINCE }}
-          CENTRAL_ONE_SHOT_ENVELOPE: ${{ inputs.one_shot_envelope }}
-        run: python3 tools/central_review_hub.py
+          SIDEKICK_APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          SIDEKICK_INSTALLATION_ID: ${{ steps.app-token.outputs.installation-id }}
+          SIDEKICK_APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          CLASSIC_PROTECTION_SHA256: ${{ steps.preflight.outputs.classic-protection-sha256 }}
+        run: python3 -I -S -B tools/sidekick_advisory_transport.py
