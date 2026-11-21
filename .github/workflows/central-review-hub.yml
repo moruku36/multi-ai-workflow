@@ -26,6 +26,9 @@ jobs:
       id-token: write
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      CENTRAL_ONE_SHOT_REPOSITORIES: 'multi-ai-workflow,local-ai-sidekick'
+      CENTRAL_RECURRING_REPOSITORIES: 'multi-ai-workflow,local-ai-sidekick'
     steps:
       - name: Check out trusted hub controller
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -34,17 +37,49 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 1
           persist-credentials: false
-      - name: Create installation token for all installed repositories
+      - name: Verify pilot scope before token creation
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '' }}
+        timeout-minutes: 1
+        env:
+          CENTRAL_ONE_SHOT_ENVELOPE: ${{ inputs.one_shot_envelope }}
+        run: python3 -B tools/central_pilot_pre_token.py
+      - name: Verify recurring scope before token creation
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '') }}
+        timeout-minutes: 1
+        env:
+          CENTRAL_REVIEW_ENABLED: ${{ vars.CENTRAL_REVIEW_ENABLED }}
+          CENTRAL_REVIEW_SINCE: ${{ vars.CENTRAL_REVIEW_SINCE }}
+        run: python3 -B tools/central_recurring_scope.py pre-token
+      - name: Create installation token scoped to verified recurring repositories
         id: app-token
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '') }}
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
         with:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ env.CENTRAL_RECURRING_REPOSITORIES }}
           permission-contents: read
           permission-pull-requests: read
           permission-checks: write
-          # Deliberately omit repositories: discover all installation repos.
+      - name: Read back recurring installation scope
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '') }}
+        timeout-minutes: 1
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: python3 -B tools/central_recurring_scope.py readback
+      - name: Create installation token scoped to verified pilot repositories
+        id: pilot-token
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.one_shot_envelope != '' }}
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ env.CENTRAL_ONE_SHOT_REPOSITORIES }}
+          permission-contents: read
+          permission-pull-requests: read
+          permission-checks: write
       - name: Download and verify pinned Alibaba CLI
         env:
           OCR_BINARY: ${{ runner.temp }}/opencodereview
@@ -55,7 +90,7 @@ jobs:
           chmod 500 "$OCR_BINARY"
       - name: Run central source review coordinator
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token || steps.pilot-token.outputs.token }}
           MIMO_API_KEY: ${{ secrets.MIMO_API_KEY }}
           OCR_BINARY: ${{ runner.temp }}/opencodereview
           CENTRAL_REVIEW_ENABLED: ${{ vars.CENTRAL_REVIEW_ENABLED }}

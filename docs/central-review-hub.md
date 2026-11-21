@@ -2,83 +2,96 @@
 
 [日本語](central-review-hub.ja.md)
 
-The [2026-11-12 bounded source-only draft](bounded-hub-draft.md) adds fail-closed
-one-shot preparation; it does not enable recurring execution or live paid authority.
+[Signed one-shot preparation](central-one-shot.md) is separate from recurring
+authorization. The linked [2026-11-12 draft](bounded-hub-draft.md) is historical.
 
-**Inactive draft; local evidence only.** The earlier five mocked offline test
-cases were reported passed in one invocation and have not been rerun. The later
-three mocked repair cases are reported as **3 PASS / 1 invocation / 0.005s**;
-they were not rerun for this readiness change and are not live acceptance.
-The workflow and live integration have not been accepted on a real PR. Both `enabled` and
-`paid_execution_authorized` in [the central config](../config/central-review-hub.json)
-are currently `false`. These files do not establish live automation or review
-quality acceptance.
+**Dormant advisory candidate; offline evidence only.** The recurring token is
+scoped to two repositories: `moruku36/multi-ai-workflow` (ID 1365934149) for the
+shared reservation ledger and `moruku36/local-ai-sidekick` (ID 1369269341) as
+the only review target. Neither recurring nor signed one-shot execution has live
+acceptance. Both `enabled` and `paid_execution_authorized` in the
+[central config](../config/central-review-hub.json) default to `false`, and the
+[one-shot trust list](../config/central-one-shot-trust.json) is empty. The
+historical mock results below are not hosted or real-PR acceptance.
 
 ## One-time central setup
 
-1. Create a GitHub App with repository permissions **Contents: read**, **Pull
-   requests: read**, and **Checks: read and write**; GitHub also supplies mandatory
-   Metadata read access. No Actions, administration, or source write permission is
-   needed. Install it on the configured owner with **All repositories**, including
-   the hub. This covers current and future repositories under that installation.
-   The token can access private installation repositories even though discovery
-   excludes them; protect the hub and App key accordingly.
-2. In the hub alone, configure Actions variable `APP_ID` and secret
-   `APP_PRIVATE_KEY`. Keep the existing `MIMO_API_KEY` secret in the hub alone.
-   No target workflow, key, setting, or code-policy change is required per target.
-   The pinned App-token action receives the owner and deliberately omits
-   `repositories`, giving discovery access to the whole installation. It explicitly
-   requests Contents read, Pull requests read, and Checks write. `GITHUB_TOKEN`
-   has only Contents read; the App token supplies cross-repository writes.
-3. Complete one central code-policy review of the trusted workflow, controller,
-   config, all-repository access, provider source disclosure, reservation limits,
-   and recurring paid execution. Resolve findings and the repository's required
-   review/acceptance gates. In that reviewed central change, explicitly authorize
-   paid execution and set **both** `enabled: true` and
-   `paid_execution_authorized: true`. Merge through the existing human gates onto
-   trusted `main`. This is a future activation procedure, not authorization from
-   the draft itself.
-4. After the human merge, obtain a **new explicit paid allowance** for one bounded,
-   fresh real-target PR acceptance on the reviewed trusted revision. Reconcile
-   consumed reservations first; use a fresh, unreserved immutable base/head/diff
-   binding within the unchanged 20-path and 65,536-byte diff and total
-   before-plus-after blob caps. Oversized input stays blocked: do not increase
-   caps or omit paths. Complete both actual-source lanes, record the actual
-   provider/model, resolve findings, and meet independence and human acceptance
-   gates. Keep recurring execution disabled. A separately reviewed bounded
-   acceptance route while that gate is off has not been established here; until
-   available, this step is blocked. Caller flags and local evidence cannot bypass
-   that missing route or authorize spend.
+1. For this cohort, use one installation on the configured owner with **Only
+   select repositories**: the hub and Sidekick. Do not grant **All repositories**.
+   Confirm effective repository membership, accepted permissions and that the
+   installation is not suspended; reconcile any pending grant changes. The App
+   needs **Contents: read**, **Pull requests: read**, **Checks: read and write**
+   and GitHub's mandatory Metadata read. It needs no Actions, administration or
+   source write access. The workflow narrows the **minted token**, not the App's
+   installation grants or what its private key can authorize across its
+   installations. Token readback does not audit those underlying grants.
+2. In the hub alone, provision Actions variable `APP_ID` and secrets
+   `APP_PRIVATE_KEY` and `MIMO_API_KEY`. Do not copy workflows or keys to the target.
+   The pinned App-token action explicitly requests the two repository names
+   and Contents read, Pull requests read and Checks write. `GITHUB_TOKEN` is
+   limited to Contents read; the scoped App token supplies cross-repository
+   Checks writes. The App key is separate from the one-shot operator signing
+   key, which stays outside the repository and workflow.
+3. Review the trusted workflow, controller, config, exact cohort, provider source
+   disclosure, reservation limits and separate recurring paid authority. Resolve
+   findings and meet existing review and human merge gates on trusted `main`.
+   Keep the runtime gate off during preparation. Both recurring config gates must
+   be explicitly authorized and set to `true` by reviewed policy before recurring
+   activation; the source draft does not grant that authority.
+4. For fresh real-PR acceptance without enabling recurring work, the signed
+   one-shot path requires a new, explicit paid allowance for one run, external
+   signer custody and reviewed public-key trust, and a fresh, unreserved Sidekick
+   PR bound to the reviewed/landed immutable controller revision and base/head/diff.
+   Reconcile consumed reservations first and keep the limits of 20 paths and
+   65,536 bytes each for the diff and total before-plus-after blobs. Do not raise
+   limits or omit paths. Verify hosted launcher/OIDC and scoped token issuance;
+   complete both actual-source lanes, record their actual provider/model, and
+   resolve findings under the existing independence and human acceptance gates.
+   The route is not usable with the empty trust list; local evidence and caller
+   flags do not authorize spend.
 5. Read back the final target Check/receipt and hub reservation/ledger. Confirm
    the exact current base/head/diff, completion and safe diagnostics, retained
    consumed failures/unknowns, and durable deduplication across hub revisions.
    Accept those readbacks explicitly; mocks or a successful Check alone do not
    establish acceptance. Never replay a reserved pair or delete its markers.
-6. Only after acceptance, deliberately choose the **then-current UTC instant**
-   and set `CENTRAL_REVIEW_SINCE` in strict `YYYY-MM-DDTHH:MM:SSZ` format. Do not
-   reuse a historical cutoff, backdate it to include acceptance/backlog PRs, or
-   replay earlier work. Read back that exact cutoff, then set
-   `CENTRAL_REVIEW_ENABLED` to exactly `true` and read it back. Config gates,
-   accepted fresh real-PR/ledger evidence and this final runtime gate are separate
-   requirements. Leave the runtime variable unset or `false` until then.
+6. Only after those readbacks are accepted and recurring execution is separately
+   authorized, set `CENTRAL_REVIEW_SINCE` to the **then-current UTC instant** in
+   strict `YYYY-MM-DDTHH:MM:SSZ` format and read it back. Do not reuse or
+   backdate the cutoff to include the acceptance PR or backlog. Set
+   `CENTRAL_REVIEW_ENABLED` to exactly `true` and read it back only for
+   the authorized cohort activation; leave it unset or `false` until then.
+   Hosted recurring token mint, exact scope readback and launcher/OIDC must
+   succeed on the reviewed revision before recurring operation is accepted.
+   One-shot acceptance does not establish any of those recurring results.
 
 ## Discovery and execution
 
-The draft workflow defines a 30-minute schedule and permits manual dispatch without
-inputs. The job requires the configured hub, `refs/heads/main`, and the runtime
-enable variable. It checks out immutable `github.sha`; there is no arbitrary
-manual source ref. One `central-review-hub` concurrency group serializes runs
-without cancellation on Ubuntu 24.04, with a 20-minute job timeout.
+Recurring mode is the 30-minute schedule or manual dispatch with an empty
+`one_shot_envelope`. The job requires the configured hub and `refs/heads/main`
+and checks out immutable `github.sha`. Before minting a recurring token, the
+workflow checks the exact scope, both config gates, the runtime gate and a valid
+non-future UTC cutoff without App or provider credentials. After minting and
+before CLI download or controller execution, a token-only readback requires a
+complete REST listing of exactly the two named repositories and stable IDs,
+explicit public visibility, the configured owner, and an eligible Sidekick
+target. Missing, extra, substituted or incomplete results stop the run. The
+controller separately verifies hosted launcher provenance.
 
-Discovery uses installation repositories and open PRs, excluding the hub,
+A non-empty `one_shot_envelope` selects the signed one-shot path. It verifies
+the exact envelope and GitHub-hosted OIDC provenance before minting its own
+hub-plus-Sidekick token; it reviews only the authorized target PR and never
+falls back to recurring discovery even on failure. Both modes share the
+`central-review-hub` concurrency group and ledger, without cancellation, on
+Ubuntu 24.04 with a 20-minute job timeout.
+
+Recurring discovery uses the verified token scope. It excludes the hub,
 private, forked, archived or disabled repositories, foreign owners, draft PRs,
-fork/deleted heads, and bases other than each target's default branch. A PR must
-have `updated_at` **strictly after** the cutoff. Discovery scans open PRs and then
-filters by `updated_at`; there is no historical backlog review processing. A PR
-last updated at or before activation is skipped. An older PR updated
-after activation can qualify. Do not move the cutoff backward to replay history.
-New eligible repositories require no per-target setup under the all-repository
-installation.
+fork/deleted heads, and bases other than the target's default branch. A PR must
+have `updated_at` **strictly after** the cutoff. Discovery filters open PRs;
+it does not process historical backlog. An older PR updated after activation
+can qualify. Do not move the cutoff backward. No repository is enrolled
+automatically. Expansion requires a separately reviewed cohort with verified
+ownership, eligibility and App membership; preserve the shared ledger and limits.
 
 Current default-branch tip and PR head are rechecked. Both lanes receive the same
 immutable merge-base/head source diff; receipts also bind the discovered base
@@ -121,8 +134,11 @@ reservation ceilings, **not a dollar cap**; token usage, billing, and unknown
 responses still matter. Cloudflare supplies methodology, not the model provider.
 Two lanes on the same provider/model do not establish independence. Findings need
 resolution, required independent-provider evidence, and human merge authority.
+The Hub produces advisory Checks only, not merge enforcement. Receipts set
+`merge_authorized=false` and `review_quality_accepted=false`.
 `BOTH_RECORDED_NOT_ACCEPTED` and even a successful Check do not authorize merge.
-Changed or unverifiable bindings fail the receipt.
+Existing human merge gates remain in force. Changed or unverifiable bindings
+fail the receipt.
 
 ## Limits, stop procedure and remaining gaps
 
@@ -147,8 +163,9 @@ accepted policy and a deliberate cutoff, without historical replay.
 Before this 2026-11-12 draft, unsupported Markdown handling in the Alibaba adapter
 was recorded as unresolved; failed lanes consumed their reservations. That
 historical observation is not a diagnosis of any particular failed run. Real-PR
-acceptance, durable GitHub behavior, App installation scope, and the full-fetch
-resource controls remain unvalidated.
+acceptance, durable GitHub behavior, effective App grants, hosted token issuance
+and scope readback, launcher/OIDC, and full-fetch resource controls remain
+unvalidated.
 
 ## Static repair — 2026-11-12
 
