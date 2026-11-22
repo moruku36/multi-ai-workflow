@@ -108,8 +108,14 @@ class GitHub:
             link = response.getheader("Link", "")
             require(len(link) <= 4096)
             # Never follow the URL. Only a bounded, locally constructed next page.
-            require(not link or all(re.fullmatch(r'<[^<>]+>; rel="(?:next|prev|first|last)"',
-                                                part.strip()) for part in link.split(",")))
+            more = False
+            if link:
+                for part in link.split(","):
+                    match = re.fullmatch(r'<[^<>]+>; rel="(next|prev|first|last)"', part.strip())
+                    require(match is not None)
+                    if match[1] == "next":
+                        require(not more)
+                        more = True
             chunks, size = [], 0
             while True:
                 left = end - time.monotonic()
@@ -122,7 +128,7 @@ class GitHub:
                 chunks.append(chunk)
                 size += len(chunk)
                 require(size <= self.limits["github_response_bytes"])
-            return strict_json(b"".join(chunks)), 'rel="next"' in link
+            return strict_json(b"".join(chunks)), more
         finally:
             conn.close()
 

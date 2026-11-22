@@ -1,13 +1,66 @@
 """Qualify the extracted engine against the existing in-memory Hub contract."""
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 from urllib.parse import urlsplit
 
 from check_central_review_hub import BASE, ENV, HEAD, NOW, TARGET, Harness
 from check_one_shot_integration import payload, target_ready
 import _central_review_hub_engine as engine
 import _central_review_hub_support as support
+
+
+class GitHubPaginationTests(unittest.TestCase):
+    def test_link_relations(self):
+        cases = (
+            ("", False),
+            ('<https://example.invalid/?page=2>; rel="next", '
+             '<https://example.invalid/?page=3>; rel="last"', True),
+            ('<https://example.invalid/?page=1>; rel="first", '
+             '<https://example.invalid/?page=2>; rel="prev"', False),
+            ('<https://example.invalid/?label=rel="next">; rel="last"', False),
+            ('<https://example.invalid/>; rel="unsupported"', None),
+            ('<https://example.invalid/>; rel="next", '
+             '<https://example.invalid/?page=3>; rel="next"', None),
+            ('<' + 'x' * 4096 + '>; rel="last"', None),
+        )
+        path = "/example?page=1"
+        for link, expected in cases:
+            with self.subTest(link=link[:100]):
+                response = Mock(status=200)
+                response.getheader.return_value = link
+                response.read1.side_effect = [b"{}", b""]
+                connection = Mock(sock=None)
+                connection.getresponse.return_value = response
+                with patch.object(engine, "token", return_value="fixture"), patch.object(
+                    engine.http.client, "HTTPSConnection", return_value=connection
+                ):
+                    api = engine.GitHub(support.load_config()["limits"], time.monotonic() + 5)
+                    if expected is None:
+                        with self.assertRaises(support.Blocked):
+                            api("GET", path)
+                        response.read1.assert_not_called()
+                    else:
+                        self.assertEqual(api("GET", path), ({}, expected))
+                    self.assertEqual(connection.request.call_args.args[:2], ("GET", path))
+                    connection.close.assert_called_once_with()
+
+    def test_counted_pages_require_the_complete_collection(self):
+        path = "/example?filter=all"
+        first = [{"id": identity} for identity in range(1, 51)]
+        final = [{"id": 51}]
+        api = Mock(side_effect=[
+            ({"total_count": 51, "rows": first}, True),
+            ({"total_count": 51, "rows": final}, False),
+        ])
+        self.assertEqual(support.pages(api, path, "rows", 60), first + final)
+        self.assertEqual([call.args[1] for call in api.call_args_list],
+                         [path + "&per_page=50&page=1", path + "&per_page=50&page=2"])
+
+        incomplete = Mock(return_value=({"total_count": 51, "rows": first}, False))
+        with self.assertRaises(support.Blocked):
+            support.pages(incomplete, path, "rows", 60)
+        incomplete.assert_called_once_with("GET", path + "&per_page=50&page=1")
 
 
 class CentralHubEngineTests(unittest.TestCase):
