@@ -281,22 +281,16 @@ def _reject_json_constant(_value):
     raise ValueError()
 
 
-def _is_bounded_owned_file(info):
-    return (stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid()
-            and info.st_nlink == 1 and 0 <= info.st_size <= _MAX_FAILURE_OUTPUT_BYTES)
+def _output_stamp(info):
+    if (stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid()
+            and info.st_nlink == 1 and 0 <= info.st_size <= _MAX_FAILURE_OUTPUT_BYTES):
+        # Reading can update atime.
+        return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
 
-def _same_failure_output(before, after):
-    # Reading can update atime. Check metadata that can reveal writes or replacement.
-    return (os.path.samestat(before, after) and _is_bounded_owned_file(after)
-            and before.st_size == after.st_size
-            and before.st_mtime_ns == after.st_mtime_ns
-            and before.st_ctime_ns == after.st_ctime_ns)
-
-
-def _has_request_context_timeout(report):
-    """Detect an OCR context timeout, which can reflect caller or request deadlines."""
-    if type(report) is not dict or report.get('schema_version') != 'ocr.llm-retry-report/v1':
+def _has_request_context_timeout(report, run_id):
+    if ('\0' in run_id or type(report) is not dict
+            or report.get('schema_version') != 'ocr.llm-retry-report/v1'):
         return False
     requests = report.get('requests')
     if type(requests) is not list:
@@ -308,8 +302,19 @@ def _has_request_context_timeout(report):
         if type(attempts) is not list or not attempts:
             continue
         last = attempts[-1]
-        if (type(last) is dict and last.get('outcome') == 'error'
-                and last.get('error_class') == 'timeout' and last.get('failure_phase') == 'context'):
+        if (type(last) is not dict or last.get('outcome') != 'error'
+                or last.get('error_class') != 'timeout' or last.get('failure_phase') != 'context'):
+            continue
+        number = request.get('request_no')
+        fields = [request.get(key) for key in ('provider', 'model', 'file_path', 'task_type')]
+        if (type(number) is not int or number <= 0 or not all(fields[1:])
+                or any(type(field) is not str or '\0' in field for field in fields)):
+            continue
+        try:
+            raw = '\0'.join(('ocr.llm-request/v1', run_id, *fields, str(number), '')).encode()
+        except ValueError:
+            continue
+        if hashlib.sha256(raw).hexdigest() == request.get('logical_request_id'):
             return True
     return False
 
@@ -318,24 +323,18 @@ def _read_cli_failure_diagnostics(output):
     """Read the failed CLI's exact --output leaf in the caller's private scratch directory."""
     try:
         named = output.lstat()
-        if not _is_bounded_owned_file(named):
+        stamp = _output_stamp(named)
+        if stamp is None:
             return {}
-        fd = os.open(output, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        try:
-            opened = os.fstat(fd)
-            if not _same_failure_output(named, opened):
+        with open(output, 'rb', opener=lambda path, flags:
+                  os.open(path, flags | os.O_NOFOLLOW | os.O_NONBLOCK)) as source:
+            fd = source.fileno()
+            if _output_stamp(os.fstat(fd)) != stamp:
                 return {}
-            raw = bytearray()
-            while len(raw) <= _MAX_FAILURE_OUTPUT_BYTES:
-                chunk = os.read(fd, _MAX_FAILURE_OUTPUT_BYTES + 1 - len(raw))
-                if not chunk:
-                    break
-                raw.extend(chunk)
-            if (len(raw) != opened.st_size or not _same_failure_output(opened, os.fstat(fd))
-                    or not _same_failure_output(opened, output.lstat())):
+            raw = source.read(_MAX_FAILURE_OUTPUT_BYTES + 1)
+            if (len(raw) != named.st_size or _output_stamp(os.fstat(fd)) != stamp
+                    or _output_stamp(output.lstat()) != stamp):
                 return {}
-        finally:
-            os.close(fd)
         envelope = json.loads(raw.decode('utf-8'), object_pairs_hook=_unique_json_object,
                               parse_constant=_reject_json_constant)
         manifest = envelope['manifest']
@@ -361,7 +360,9 @@ def _read_cli_failure_diagnostics(output):
             classification = failure.get('classification')
             if type(classification) is str and classification in CLI_RUN_FAILURE_CLASSIFICATIONS:
                 diagnostics[_CLI_RUN_FAILURE_FIELD] = classification
-        if _has_request_context_timeout(envelope.get('retry_report')):
+        if 'run_failure' in manifest and not diagnostics:
+            return {}
+        if _has_request_context_timeout(envelope.get('retry_report'), run_id):
             diagnostics[_CLI_REQUEST_CONTEXT_TIMEOUT_FIELD] = True
         return diagnostics
     except Exception:
