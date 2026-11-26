@@ -32,6 +32,7 @@ MAX_LANE_CALLS = MAX_CALLS
 MAX_OUTPUT_TOKENS = 2048
 _MAX_FAILURE_OUTPUT_BYTES = 262144
 _CLI_RUN_FAILURE_FIELD = 'cli_run_failure_classification'
+_CLI_REQUEST_CONTEXT_TIMEOUT_FIELD = 'cli_request_context_timeout'
 CLI_RUN_FAILURE_CLASSIFICATIONS = frozenset((
     'input', 'configuration', 'timeout', 'cancelled', 'budget', 'internal', 'unknown'))
 
@@ -255,13 +256,15 @@ def observe_response_reason(lane, relay, raw):
 
 
 def safe_diagnostics(lane, values=None):
-    """Project the base diagnostics and the optional OCR failure classification."""
+    """Project the base diagnostics and optional OCR failure observations."""
     result = _base_safe_diagnostics(lane, values)
     if (lane == 'alibaba' and result['failure_stage'] == 'cli_exit_nonzero'
             and result['cli_exit_code'] not in (None, 0) and type(values) is dict):
         classification = values.get(_CLI_RUN_FAILURE_FIELD)
         if type(classification) is str and classification in CLI_RUN_FAILURE_CLASSIFICATIONS:
             result[_CLI_RUN_FAILURE_FIELD] = classification
+        if values.get(_CLI_REQUEST_CONTEXT_TIMEOUT_FIELD) is True:
+            result[_CLI_REQUEST_CONTEXT_TIMEOUT_FIELD] = True
     return result
 
 
@@ -278,41 +281,60 @@ def _reject_json_constant(_value):
     raise ValueError()
 
 
-def _is_bounded_owned_file(info):
-    return (stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid()
-            and info.st_nlink == 1 and 0 <= info.st_size <= _MAX_FAILURE_OUTPUT_BYTES)
+def _output_stamp(info):
+    if (stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid()
+            and info.st_nlink == 1 and 0 <= info.st_size <= _MAX_FAILURE_OUTPUT_BYTES):
+        # Reading can update atime.
+        return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
 
-def _same_failure_output(before, after):
-    # Reading can update atime. Check metadata that can reveal writes or replacement.
-    return (os.path.samestat(before, after) and _is_bounded_owned_file(after)
-            and before.st_size == after.st_size
-            and before.st_mtime_ns == after.st_mtime_ns
-            and before.st_ctime_ns == after.st_ctime_ns)
+def _has_request_context_timeout(report, run_id):
+    if ('\0' in run_id or type(report) is not dict
+            or report.get('schema_version') != 'ocr.llm-retry-report/v1'):
+        return False
+    requests = report.get('requests')
+    if type(requests) is not list:
+        return False
+    for request in requests:
+        if type(request) is not dict or request.get('outcome') != 'failed':
+            continue
+        attempts = request.get('attempts')
+        if type(attempts) is not list or not attempts:
+            continue
+        last = attempts[-1]
+        if (type(last) is not dict or last.get('outcome') != 'error'
+                or last.get('error_class') != 'timeout' or last.get('failure_phase') != 'context'):
+            continue
+        number = request.get('request_no')
+        fields = [request.get(key) for key in ('provider', 'model', 'file_path', 'task_type')]
+        if (type(number) is not int or number <= 0 or not all(fields[1:])
+                or any(type(field) is not str or '\0' in field for field in fields)):
+            continue
+        try:
+            raw = '\0'.join(('ocr.llm-request/v1', run_id, *fields, str(number), '')).encode()
+        except ValueError:
+            continue
+        if hashlib.sha256(raw).hexdigest() == request.get('logical_request_id'):
+            return True
+    return False
 
 
-def read_cli_run_failure_classification(output):
+def _read_cli_failure_diagnostics(output):
     """Read the failed CLI's exact --output leaf in the caller's private scratch directory."""
     try:
         named = output.lstat()
-        if not _is_bounded_owned_file(named):
-            return None
-        fd = os.open(output, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-        try:
-            opened = os.fstat(fd)
-            if not _same_failure_output(named, opened):
-                return None
-            raw = bytearray()
-            while len(raw) <= _MAX_FAILURE_OUTPUT_BYTES:
-                chunk = os.read(fd, _MAX_FAILURE_OUTPUT_BYTES + 1 - len(raw))
-                if not chunk:
-                    break
-                raw.extend(chunk)
-            if (len(raw) != opened.st_size or not _same_failure_output(opened, os.fstat(fd))
-                    or not _same_failure_output(opened, output.lstat())):
-                return None
-        finally:
-            os.close(fd)
+        stamp = _output_stamp(named)
+        if stamp is None:
+            return {}
+        with open(output, 'rb', opener=lambda path, flags:
+                  os.open(path, flags | os.O_NOFOLLOW | os.O_NONBLOCK)) as source:
+            fd = source.fileno()
+            if _output_stamp(os.fstat(fd)) != stamp:
+                return {}
+            raw = source.read(_MAX_FAILURE_OUTPUT_BYTES + 1)
+            if (len(raw) != named.st_size or _output_stamp(os.fstat(fd)) != stamp
+                    or _output_stamp(output.lstat()) != stamp):
+                return {}
         envelope = json.loads(raw.decode('utf-8'), object_pairs_hook=_unique_json_object,
                               parse_constant=_reject_json_constant)
         manifest = envelope['manifest']
@@ -329,23 +351,33 @@ def read_cli_run_failure_classification(output):
                 or envelope.get('session_id', run_id) != run_id or 'parent_run_id' in manifest
                 or type(manifest['repository']) is not dict or type(manifest['coverage']) is not dict
                 or type(elapsed) is not int or elapsed < 0):
-            return None
-        failure = manifest['run_failure']
-        if type(failure) is not dict or failure.keys() - {'classification', 'reason'}:
-            return None
-        if type(failure.get('reason', '')) is not str:
-            return None
-        classification = failure['classification']
-        if type(classification) is str and classification in CLI_RUN_FAILURE_CLASSIFICATIONS:
-            return classification
+            return {}
+        diagnostics = {}
+        # Item-only failures may omit run_failure from the failed review.
+        failure = manifest.get('run_failure')
+        if (type(failure) is dict and not failure.keys() - {'classification', 'reason'}
+                and type(failure.get('reason', '')) is str):
+            classification = failure.get('classification')
+            if type(classification) is str and classification in CLI_RUN_FAILURE_CLASSIFICATIONS:
+                diagnostics[_CLI_RUN_FAILURE_FIELD] = classification
+        if 'run_failure' in manifest and not diagnostics:
+            return {}
+        if _has_request_context_timeout(envelope.get('retry_report'), run_id):
+            diagnostics[_CLI_REQUEST_CONTEXT_TIMEOUT_FIELD] = True
+        return diagnostics
     except Exception:
         pass  # Optional observation must preserve the original CLI failure.
-    return None
+    return {}
+
+
+def read_cli_run_failure_classification(output):
+    """Return the allowlisted run failure classification or None."""
+    return _read_cli_failure_diagnostics(output).get(_CLI_RUN_FAILURE_FIELD)
 
 
 def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
     stage, failure, cli_exit_code = 'preflight', None, None
-    cli_run_failure_classification = None
+    cli_failure_diagnostics = {}
     relay = server = thread = workspace = None
     first_halt = halt_seen = None
 
@@ -437,7 +469,7 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
         stage = 'cli_exit_nonzero'
         if cli_exit_code:
             if type(cli_exit_code) is int and -255 <= cli_exit_code <= 255:
-                cli_run_failure_classification = read_cli_run_failure_classification(output)
+                cli_failure_diagnostics = _read_cli_failure_diagnostics(output)
             raise ValueError()
         stage = 'relay_halted'
         if relay.halted:
@@ -507,9 +539,9 @@ def alibaba(binary, snapshots, *, attempt_cap=None, attempt_deadline=None):
         error = LaneError('alibaba', failure, relay if settled else None, cli_exit_code,
                           first_halt_reason=first_halt if settled else None,
                           halt_observation=halt_seen if settled else None)
-        if cli_run_failure_classification is not None:
+        if cli_failure_diagnostics:
             error.diagnostics = safe_diagnostics(error.lane, {
-                **error.diagnostics, _CLI_RUN_FAILURE_FIELD: cli_run_failure_classification})
+                **error.diagnostics, **cli_failure_diagnostics})
         raise error from None
     stats = relay_diagnostics('alibaba', 'internal', relay, cli_exit_code)
     return {'findings': findings, 'unresolved': [], 'binary_sha256': digest,
